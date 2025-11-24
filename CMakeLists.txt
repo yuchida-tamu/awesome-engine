@@ -7,6 +7,8 @@ project(AwesomeEngine VERSION 1.0)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../bin)
+
 # Find the OpenGL package provided by CMake
 find_package(OpenGL REQUIRED)
 
@@ -15,14 +17,15 @@ find_package(glfw3 REQUIRED)
 
 # Add our executable target with all its source files
 add_executable(awesome-engine
-    main.cpp
+    src/main.cpp
     vendor/glad/src/glad.c
 )
 
 # Tell our target where to find its public header files
 # This is especially important for IntelliSense to work correctly
 target_include_directories(awesome-engine PUBLIC
-    vendor/glad/include
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/vendor/glad/include
 )
 
 # Link the libraries.
