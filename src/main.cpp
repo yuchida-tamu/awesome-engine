@@ -1,6 +1,7 @@
 #include <iostream>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include "core/Input.h"
 
 void error_callback(int error, const char *description)
 {
@@ -44,12 +45,21 @@ int main()
         return -1;
     }
 
+    Input::Initialize(window);
+
     // Main loop
     while (!glfwWindowShouldClose(window))
     {
         // Clear the screen (black)
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
+
+        Input::Update();
+
+        if (Input::IsKeyDown(GLFW_KEY_ESCAPE))
+        {
+            glfwSetWindowShouldClose(window, true);
+        }
 
         // Swap buffers and poll events
         glfwSwapBuffers(window);

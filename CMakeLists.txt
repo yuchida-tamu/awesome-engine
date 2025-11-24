@@ -18,6 +18,7 @@ find_package(glfw3 REQUIRED)
 # Add our executable target with all its source files
 add_executable(awesome-engine
     src/main.cpp
+    src/core/Input.cpp
     vendor/glad/src/glad.c
 )
 
