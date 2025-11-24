@@ -1,5 +1,5 @@
 #include <iostream>
-
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
 void error_callback(int error, const char *description)
@@ -35,6 +35,14 @@ int main()
         return -1;
     }
     glfwMakeContextCurrent(window);
+
+    // Initialize GLAD after create the context
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    {
+        std::cerr << "Failed to initialize GLAD" << std::endl;
+        glfwTerminate();
+        return -1;
+    }
 
     // Main loop
     while (!glfwWindowShouldClose(window))
