@@ -2,6 +2,23 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include "core/Input.h"
+#include <string>
+#include <fstream>
+#include <sstream>
+
+std::string loadShaderAsString(const std::string &filepath)
+{
+    std::ifstream fileStream(filepath);
+    if (!fileStream.is_open())
+    {
+        std::cerr << "Error: Could not open shader file at path: " << filepath << std::endl;
+        return "";
+    }
+
+    std::stringstream buffer;
+    buffer << fileStream.rdbuf();
+    return buffer.str();
+}
 
 void error_callback(int error, const char *description)
 {
@@ -46,6 +63,37 @@ int main()
     }
 
     Input::Initialize(window);
+
+    float vertices[] = {
+        -0.5f, -0.5f, 0.0f,
+        0.5f, -0.5f, 0.0f,
+        0.0f, 0.5f, 0.0f};
+
+    unsigned int VBO;
+    glGenBuffers(1, &VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    // load shader files
+    std::string vertexShaderString = loadShaderAsString("shaders/simple.vert");
+    const char *vertexShaderSource = vertexShaderString.c_str();
+
+    unsigned int vertexShader;
+    vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
+    glCompileShader(vertexShader);
+
+    // Check if compile went successfully
+    int success;
+    char infoLog[512];
+    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+
+    if (!success)
+    {
+        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
+        std::cerr << "Error: Vertex Shader compilation failed\n"
+                  << infoLog << std::endl;
+    }
 
     // Main loop
     while (!glfwWindowShouldClose(window))

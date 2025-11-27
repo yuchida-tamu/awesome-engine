@@ -33,3 +33,23 @@ target_include_directories(awesome-engine PUBLIC
 # The order is important here. We link our executable to GLFW.
 # GLFW then needs to link to the system's OpenGL library.
 target_link_libraries(awesome-engine PRIVATE glfw OpenGL::GL)
+
+
+# Define the output directory for the shaders
+set(SHADER_OUTPUT_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/shaders)
+
+# Create the output directory
+file(MAKE_DIRECTORY ${SHADER_OUTPUT_DIR})
+
+# Find all shader files in the NEW asset source directory
+file(GLOB SHADER_FILES "${CMAKE_SOURCE_DIR}/assets/shaders/*.vert" "${CMAKE_SOURCE_DIR}/assets/shaders/*.frag")
+
+# For each shader file, add a command to copy it to the output directory
+foreach(SHADER_FILE ${SHADER_FILES})
+    add_custom_command(
+        TARGET awesome-engine POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${SHADER_FILE}
+        ${SHADER_OUTPUT_DIR}
+    )
+endforeach()
