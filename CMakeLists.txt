@@ -20,6 +20,7 @@ add_executable(awesome-engine
     src/main.cpp
     src/core/Input.cpp
     vendor/glad/src/glad.c
+    src/shader/Shader.cpp
 )
 
 # Tell our target where to find its public header files

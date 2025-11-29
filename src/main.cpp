@@ -1,24 +1,12 @@
 #include <iostream>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include "core/Input.h"
 #include <string>
 #include <fstream>
 #include <sstream>
 
-std::string loadShaderAsString(const std::string &filepath)
-{
-    std::ifstream fileStream(filepath);
-    if (!fileStream.is_open())
-    {
-        std::cerr << "Error: Could not open shader file at path: " << filepath << std::endl;
-        return "";
-    }
-
-    std::stringstream buffer;
-    buffer << fileStream.rdbuf();
-    return buffer.str();
-}
+#include "core/Input.h"
+#include "shader/Shader.h"
 
 void error_callback(int error, const char *description)
 {
@@ -65,15 +53,13 @@ int main()
     Input::Initialize(window);
 
     float vertices[] = {
-        0.5f, 0.5f, 0.0f,   // top right
-        0.5f, -0.5f, 0.0f,  // bottom right
-        -0.5f, -0.5f, 0.0f, // bottom left
-        -0.5f, 0.5f, 0.0f   // top left
+        // position         //color
+        0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f,  // bottom right
+        -0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, // bottom left
+        0.0f, 0.5f, 0.0f, 0.0f, 0.0f, 0.1f    // top
     };
 
-    unsigned int indices[] = {
-        0, 2, 3,
-        0, 1, 2};
+    unsigned int indices[] = {0, 1, 2};
 
     unsigned int VAO, VBO, EBO;
     glGenVertexArrays(1, &VAO);
@@ -87,75 +73,30 @@ int main()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+    // position attribute
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
+    // color attribute
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
 
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-    // load shader files
-    std::string vertexShaderString = loadShaderAsString("shaders/simple.vert");
-    std::string fragShaderString = loadShaderAsString("shaders/simple.frag");
-    const char *vertexShaderSource = vertexShaderString.c_str();
-    const char *fragShaderSource = fragShaderString.c_str();
+    Shader shader{};
+    shader.AddShader("shaders/simple.vert", GL_VERTEX_SHADER);
+    shader.AddShader("shaders/simple.frag", GL_FRAGMENT_SHADER);
+    shader.LinkProgram();
 
-    unsigned int vertexShader, fragmentShader;
-    int success;
-    char infoLog[512];
-
-    // Compile vertext shader
-    vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-
-    if (!success)
-    {
-        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-        std::cerr << "Error: Vertex Shader compilation failed\n"
-                  << infoLog << std::endl;
-    }
-
-    // Compile fragment shader
-    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragShaderSource, NULL);
-    glCompileShader(fragmentShader);
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-
-    if (!success)
-    {
-        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-        std::cerr << "Error: Frag Shader compilation failed\n"
-                  << infoLog << std::endl;
-    }
-
-    // Link the compiled shaders to a program
-    unsigned int shaderProgram;
-    shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if (!success)
-    {
-        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-        std::cerr << "Error: Shader Program linking failed\n"
-                  << infoLog << std::endl;
-    }
-
-    // No longer needs shaders after attaching them to a program
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
-
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    // Uncomment to render in wireframe mode
+    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     // Main loop
     while (!glfwWindowShouldClose(window))
     {
         // Clear the screen (black)
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClearColor(0.2f, 0.25f, 0.27f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
         Input::Update();
@@ -165,9 +106,9 @@ int main()
             glfwSetWindowShouldClose(window, true);
         }
 
-        glUseProgram(shaderProgram);
+        shader.UseProgram();
         glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
 
         // Swap buffers and poll events
         glfwSwapBuffers(window);
