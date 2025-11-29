@@ -16,6 +16,8 @@ public:
     void LinkProgram();
     void UseProgram();
 
+    void SetUniformInt(const std::string &uniformName, int value);
+
 private:
     std::vector<unsigned int> m_shaderIds;
     unsigned int m_programId;
