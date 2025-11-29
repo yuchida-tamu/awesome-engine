@@ -21,6 +21,7 @@ add_executable(awesome-engine
     src/core/Input.cpp
     vendor/glad/src/glad.c
     src/shader/Shader.cpp
+    vendor/loader/src/stb_image.cpp
 )
 
 # Tell our target where to find its public header files
@@ -28,6 +29,7 @@ add_executable(awesome-engine
 target_include_directories(awesome-engine PUBLIC
     ${CMAKE_SOURCE_DIR}/src
     ${CMAKE_SOURCE_DIR}/vendor/glad/include
+    ${CMAKE_SOURCE_DIR}/vendor/loader/include
 )
 
 # Link the libraries.
@@ -39,11 +41,19 @@ target_link_libraries(awesome-engine PRIVATE glfw OpenGL::GL)
 # Define the output directory for the shaders
 set(SHADER_OUTPUT_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/shaders)
 
+# Define the output directory for the textures
+set(TEXTURE_OUTPUT_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/textures)
+
 # Create the output directory
 file(MAKE_DIRECTORY ${SHADER_OUTPUT_DIR})
+file(MAKE_DIRECTORY ${TEXTURE_OUTPUT_DIR})
 
 # Find all shader files in the NEW asset source directory
 file(GLOB SHADER_FILES "${CMAKE_SOURCE_DIR}/assets/shaders/*.vert" "${CMAKE_SOURCE_DIR}/assets/shaders/*.frag")
+
+# Find all texture files in the asset directory
+file(GLOB TEXTURE_FILES "${CMAKE_SOURCE_DIR}/assets/textures/*.png" "${CMAKE_SOURCE_DIR}/assets/textures/*.jpg")
+
 
 # For each shader file, add a command to copy it to the output directory
 foreach(SHADER_FILE ${SHADER_FILES})
@@ -52,5 +62,15 @@ foreach(SHADER_FILE ${SHADER_FILES})
         COMMAND ${CMAKE_COMMAND} -E copy
         ${SHADER_FILE}
         ${SHADER_OUTPUT_DIR}
+    )
+endforeach()
+
+# For each texture file, add a command to copy it to the output directory
+foreach(TEXTURE_FILE ${TEXTURE_FILES})
+    add_custom_command(
+        TARGET awesome-engine POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${TEXTURE_FILE}
+        ${TEXTURE_OUTPUT_DIR}
     )
 endforeach()
