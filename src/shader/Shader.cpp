@@ -68,6 +68,11 @@ void Shader::SetUniformInt(const std::string &name, int value)
     glUniform1i(glGetUniformLocation(m_programId, name.c_str()), value);
 }
 
+void Shader::SetUniformMatrix4FloatPtr(const std::string &name, const float *ptr)
+{
+    glUniformMatrix4fv(glGetUniformLocation(m_programId, name.c_str()), 1, GL_FALSE, ptr);
+}
+
 std::string Shader::LoadFileAsString(const std::string &filepath)
 {
     std::ifstream fileStream(filepath);

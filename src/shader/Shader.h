@@ -6,6 +6,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <glm/glm.hpp>
 
 class Shader
 {
@@ -17,6 +18,7 @@ public:
     void UseProgram();
 
     void SetUniformInt(const std::string &uniformName, int value);
+    void SetUniformMatrix4FloatPtr(const std::string &uniformName, const float *ptr);
 
 private:
     std::vector<unsigned int> m_shaderIds;

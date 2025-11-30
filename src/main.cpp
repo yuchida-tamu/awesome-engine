@@ -1,9 +1,9 @@
 #include <iostream>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <string>
-#include <fstream>
-#include <sstream>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include "stb_image.h"
 #include "core/Input.h"
@@ -157,9 +157,14 @@ int main()
             glfwSetWindowShouldClose(window, true);
         }
 
+        glm::mat4 trans = glm::mat4(1.0f);
+        trans = glm::translate(trans, glm::vec3(0.5f, -0.5f, 0.0f));
+        trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));
+
         shader.UseProgram();
         shader.SetUniformInt("texture1", 0);
         shader.SetUniformInt("texture2", 1);
+        shader.SetUniformMatrix4FloatPtr("transform", glm::value_ptr(trans));
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture1);
         glActiveTexture(GL_TEXTURE1);

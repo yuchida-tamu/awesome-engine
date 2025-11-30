@@ -30,6 +30,7 @@ target_include_directories(awesome-engine PUBLIC
     ${CMAKE_SOURCE_DIR}/src
     ${CMAKE_SOURCE_DIR}/vendor/glad/include
     ${CMAKE_SOURCE_DIR}/vendor/loader/include
+    ${CMAKE_SOURCE_DIR}/vendor/glm
 )
 
 # Link the libraries.
