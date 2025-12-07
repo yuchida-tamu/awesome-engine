@@ -174,6 +174,7 @@ int main()
     glBindTexture(GL_TEXTURE_2D, 0);
 
     glEnable(GL_DEPTH_TEST);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     glm::mat4 projection = glm::mat4(1.0f);
 
@@ -211,6 +212,8 @@ int main()
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
         float cameraSpeed = 2.5f * deltaTime;
+
+        cameraFront = Input::GetFrontDirection();
 
         Input::Update();
 
