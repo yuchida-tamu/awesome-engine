@@ -219,19 +219,19 @@ int main()
             glfwSetWindowShouldClose(window, true);
         }
 
-        if (Input::IsKeyDown(GLFW_KEY_W))
+        if (Input::IsKeyHeld(GLFW_KEY_W))
         {
             cameraPosition += cameraSpeed * cameraFront;
         }
-        if (Input::IsKeyDown(GLFW_KEY_S))
+        if (Input::IsKeyHeld(GLFW_KEY_S))
         {
             cameraPosition -= cameraSpeed * cameraFront;
         }
-        if (Input::IsKeyDown(GLFW_KEY_A))
+        if (Input::IsKeyHeld(GLFW_KEY_A))
         {
             cameraPosition -= cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
         }
-        if (Input::IsKeyDown(GLFW_KEY_D))
+        if (Input::IsKeyHeld(GLFW_KEY_D))
         {
             cameraPosition += cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
         }
@@ -254,7 +254,7 @@ int main()
         glBindVertexArray(VAO);
         // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
-                for (unsigned int i = 0; i < 10; i++)
+        for (unsigned int i = 0; i < 10; i++)
         {
             glm::mat4 model = glm::mat4(1.0f);
             glm::mat4 view = glm::mat4(1.0f);

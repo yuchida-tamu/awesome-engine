@@ -23,9 +23,20 @@ void Input::Update()
     memcpy(s_Keys, s_KeysRaw, sizeof(s_Keys));
 }
 
+/**
+ * Returns true only on the single frame the key is first pressed.
+ */
 bool Input::IsKeyDown(int key)
 {
     return s_Keys[key] && !s_KeysLastFrame[key];
+}
+
+/**
+ * Returns true every single frame that the key is held down.
+ */
+bool Input::IsKeyHeld(int key)
+{
+    return s_Keys[key];
 }
 
 // This is the function that GLFW calls. It runs on the main thread, but

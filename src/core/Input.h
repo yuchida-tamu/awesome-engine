@@ -10,6 +10,7 @@ public:
     static void Initialize(GLFWwindow *window);
     static void Update();
     static bool IsKeyDown(int key);
+    static bool IsKeyHeld(int key);
 
 private:
     static void KeyCallBack(GLFWwindow *window, int key, int scancode, int action, int mods);
