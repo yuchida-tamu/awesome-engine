@@ -193,6 +193,12 @@ int main()
         glm::vec3(-1.3f, 1.0f, -1.5f)};
 
     const float radius = 10.0f;
+    glm::vec3 cameraPosition = glm::vec3(0.0f, 0.0f, 3.0f);
+    glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+    glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+    float deltaTime = 0.0f;
+    float lastFrame = 0.0f;
 
     // Main loop
     while (!glfwWindowShouldClose(window))
@@ -201,11 +207,33 @@ int main()
         glClearColor(0.2f, 0.25f, 0.27f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        float currentFrame = glfwGetTime();
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+        float cameraSpeed = 2.5f * deltaTime;
+
         Input::Update();
 
         if (Input::IsKeyDown(GLFW_KEY_ESCAPE))
         {
             glfwSetWindowShouldClose(window, true);
+        }
+
+        if (Input::IsKeyDown(GLFW_KEY_W))
+        {
+            cameraPosition += cameraSpeed * cameraFront;
+        }
+        if (Input::IsKeyDown(GLFW_KEY_S))
+        {
+            cameraPosition -= cameraSpeed * cameraFront;
+        }
+        if (Input::IsKeyDown(GLFW_KEY_A))
+        {
+            cameraPosition -= cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
+        }
+        if (Input::IsKeyDown(GLFW_KEY_D))
+        {
+            cameraPosition += cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
         }
 
         // Uncomment to render in wireframe mode
@@ -226,7 +254,7 @@ int main()
         glBindVertexArray(VAO);
         // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
-        for (unsigned int i = 0; i < 10; i++)
+                for (unsigned int i = 0; i < 10; i++)
         {
             glm::mat4 model = glm::mat4(1.0f);
             glm::mat4 view = glm::mat4(1.0f);
@@ -235,9 +263,7 @@ int main()
             model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
             shader.SetUniformMatrix4FloatPtr("model", glm::value_ptr(model));
 
-            float camX = sin(glfwGetTime()) * radius;
-            float camZ = cos(glfwGetTime()) * radius;
-            view = glm::lookAt(glm::vec3(camX, 0.0f, camZ), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+            view = glm::lookAt(cameraPosition, cameraPosition + cameraFront, cameraUp);
             shader.SetUniformMatrix4FloatPtr("view", glm::value_ptr(view));
 
             glDrawArrays(GL_TRIANGLES, 0, 36);
