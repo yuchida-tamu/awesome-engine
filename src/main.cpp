@@ -140,6 +140,16 @@ int main()
     stbi_image_free(textureData2);
     glBindTexture(GL_TEXTURE_2D, 0);
 
+    glm::mat4 model = glm::mat4(1.0f);
+    glm::mat4 view = glm::mat4(1.0f);
+    glm::mat4 projection = glm::mat4(1.0f);
+    // tilt an object back for 55 degree.
+    model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    // move the scene backward
+    view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+    // apply perspective projection
+    projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+
     // Uncomment to render in wireframe mode
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
@@ -164,7 +174,9 @@ int main()
         shader.UseProgram();
         shader.SetUniformInt("texture1", 0);
         shader.SetUniformInt("texture2", 1);
-        shader.SetUniformMatrix4FloatPtr("transform", glm::value_ptr(trans));
+        shader.SetUniformMatrix4FloatPtr("model", glm::value_ptr(model));
+        shader.SetUniformMatrix4FloatPtr("view", glm::value_ptr(view));
+        shader.SetUniformMatrix4FloatPtr("projection", glm::value_ptr(projection));
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture1);
         glActiveTexture(GL_TEXTURE1);
