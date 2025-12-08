@@ -22,6 +22,7 @@ add_executable(awesome-engine
     vendor/glad/src/glad.c
     src/shader/Shader.cpp
     vendor/loader/src/stb_image.cpp
+    src/camera/Camera.cpp
 )
 
 # Tell our target where to find its public header files

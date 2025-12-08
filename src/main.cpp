@@ -8,6 +8,7 @@
 #include "stb_image.h"
 #include "core/Input.h"
 #include "shader/Shader.h"
+#include "camera/Camera.h"
 
 void error_callback(int error, const char *description)
 {
@@ -193,13 +194,12 @@ int main()
         glm::vec3(1.5f, 0.2f, -1.5f),
         glm::vec3(-1.3f, 1.0f, -1.5f)};
 
-    const float radius = 10.0f;
-    glm::vec3 cameraPosition = glm::vec3(0.0f, 0.0f, 3.0f);
-    glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-    glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-
     float deltaTime = 0.0f;
     float lastFrame = 0.0f;
+
+    Camera camera{};
+    glm::vec3 cameraPosition = glm::vec3(0, 0, -3.0f);
+    float cameraSpeed;
 
     // Main loop
     while (!glfwWindowShouldClose(window))
@@ -211,11 +211,13 @@ int main()
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
-        float cameraSpeed = 2.5f * deltaTime;
-
-        cameraFront = Input::GetFrontDirection();
+        cameraSpeed = 2.5f * deltaTime;
 
         Input::Update();
+
+        glm::vec2 offset = Input::GetMouseOffset();
+
+        camera.UpdateFront(offset.x, offset.y);
 
         if (Input::IsKeyDown(GLFW_KEY_ESCAPE))
         {
@@ -224,20 +226,21 @@ int main()
 
         if (Input::IsKeyHeld(GLFW_KEY_W))
         {
-            cameraPosition += cameraSpeed * cameraFront;
+            cameraPosition = camera.GetPosition() + camera.GetFront() * cameraSpeed;
         }
         if (Input::IsKeyHeld(GLFW_KEY_S))
         {
-            cameraPosition -= cameraSpeed * cameraFront;
+            cameraPosition = camera.GetPosition() - camera.GetFront() * cameraSpeed;
         }
         if (Input::IsKeyHeld(GLFW_KEY_A))
         {
-            cameraPosition -= cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
+            cameraPosition = camera.GetPosition() - camera.GetRight() * cameraSpeed;
         }
         if (Input::IsKeyHeld(GLFW_KEY_D))
         {
-            cameraPosition += cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
+            cameraPosition = camera.GetPosition() + camera.GetRight() * cameraSpeed;
         }
+        camera.UpdatePosition(cameraPosition);
 
         // Uncomment to render in wireframe mode
         // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -260,14 +263,12 @@ int main()
         for (unsigned int i = 0; i < 10; i++)
         {
             glm::mat4 model = glm::mat4(1.0f);
-            glm::mat4 view = glm::mat4(1.0f);
+
             model = glm::translate(model, cubePositions[i]);
             float angle = 20.0f * i;
             model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
             shader.SetUniformMatrix4FloatPtr("model", glm::value_ptr(model));
-
-            view = glm::lookAt(cameraPosition, cameraPosition + cameraFront, cameraUp);
-            shader.SetUniformMatrix4FloatPtr("view", glm::value_ptr(view));
+            shader.SetUniformMatrix4FloatPtr("view", glm::value_ptr(camera.GetCameraView()));
 
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }

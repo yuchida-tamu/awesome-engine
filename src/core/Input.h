@@ -13,7 +13,7 @@ public:
     static void Update();
     static bool IsKeyDown(int key);
     static bool IsKeyHeld(int key);
-    static glm::vec3 GetFrontDirection();
+    static glm::vec2 GetMouseOffset();
 
 private:
     static void KeyCallBack(GLFWwindow *window, int key, int scancode, int action, int mods);
@@ -23,7 +23,8 @@ private:
     static bool s_KeysLastFrame[];
     static bool s_KeysRaw[];
     static bool s_FirstMouse;
-    static float s_LastX, s_LastY;
-    static float s_Yaw, s_Pitch;
+    static double s_LastX, s_LastY;
+    static double s_CurrentX, s_CurrentY;
+    static float s_XOffset, s_YOffset;
     static float s_Sensitivity;
 };
