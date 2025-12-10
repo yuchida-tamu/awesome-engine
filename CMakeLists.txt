@@ -76,3 +76,40 @@ foreach(TEXTURE_FILE ${TEXTURE_FILES})
         ${TEXTURE_OUTPUT_DIR}
     )
 endforeach()
+
+# ===================================================================
+# Unit Testing Setup
+# ===================================================================
+
+# We only want to build tests if this option is enabled.
+option(BUILD_TESTING "Build the unit tests" ON)
+
+if(BUILD_TESTING)
+    # Enable the CTest module, which helps run tests
+    enable_testing()
+
+    # Add a new executable for our tests.
+    # It needs to compile the test file AND the source files it depends on.
+    add_executable(run-tests
+        tests/InputTests.cpp
+        src/core/Input.cpp
+    )
+
+    # Add a compile definition to expose private members for testing
+    target_compile_definitions(run-tests PRIVATE UNIT_TEST)
+
+    # The test executable needs to know where to find headers, just like our main app.
+    target_include_directories(run-tests PUBLIC
+        ${CMAKE_SOURCE_DIR}/src
+        ${CMAKE_SOURCE_DIR}/vendor/doctest
+        # We need GLFW headers because Input.h includes it
+        ${CMAKE_SOURCE_DIR}/vendor/glfw/include #<-- You might need to adjust this path
+    )
+
+    # Link the test executable to the libraries it needs.
+    # We need GLFW because the Input class calls GLFW functions.
+    target_link_libraries(run-tests PRIVATE glfw)
+
+    # Add the test to CTest so we can run it easily
+    add_test(NAME InputTests COMMAND run-tests)
+endif()

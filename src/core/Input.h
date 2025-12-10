@@ -15,7 +15,12 @@ public:
     static bool IsKeyHeld(int key);
     static glm::vec2 GetMouseOffset();
 
+#ifdef UNIT_TEST
+public:
+#else
 private:
+#endif
+    // The actual callback that GLFW will call.
     static void KeyCallBack(GLFWwindow *window, int key, int scancode, int action, int mods);
     static void MouseCallBack(GLFWwindow *window, double xPos, double yPos);
     // We need three states for robust polling: current frame, previous frame, and raw state.
