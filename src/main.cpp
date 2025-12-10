@@ -7,8 +7,8 @@
 
 #include "stb_image.h"
 #include "core/Input.h"
-#include "shader/Shader.h"
-#include "camera/Camera.h"
+#include "shaders/Shader.h"
+#include "cameras/Camera.h"
 
 void error_callback(int error, const char *description)
 {

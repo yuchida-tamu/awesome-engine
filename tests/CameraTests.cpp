@@ -5,7 +5,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "camera/Camera.h"
+#include "cameras/Camera.h"
 
 // Helper function to compare floating point values with tolerance
 bool FloatEquals(float a, float b, float epsilon = 0.0001f)

@@ -20,9 +20,9 @@ add_executable(awesome-engine
     src/main.cpp
     src/core/Input.cpp
     vendor/glad/src/glad.c
-    src/shader/Shader.cpp
+    src/shaders/Shader.cpp
     vendor/loader/src/stb_image.cpp
-    src/camera/Camera.cpp
+    src/cameras/Camera.cpp
 )
 
 # Tell our target where to find its public header files
@@ -94,7 +94,7 @@ if(BUILD_TESTING)
         tests/InputTests.cpp
         tests/CameraTests.cpp
         src/core/Input.cpp
-        src/camera/Camera.cpp
+        src/cameras/Camera.cpp
     )
 
     # Add a compile definition to expose private members for testing
