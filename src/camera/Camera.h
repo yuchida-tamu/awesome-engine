@@ -15,7 +15,11 @@ public:
     glm::vec3 GetRight();
     glm::mat4 GetCameraView();
 
+#ifdef UNIT_TEST
+public:
+#else
 private:
+#endif
     const float m_maxRange = 89.0f;
     const float m_minRange = -89.0f;
     float m_pitch, m_yaw;

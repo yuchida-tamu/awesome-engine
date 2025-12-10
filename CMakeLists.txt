@@ -89,10 +89,12 @@ if(BUILD_TESTING)
     enable_testing()
 
     # Add a new executable for our tests.
-    # It needs to compile the test file AND the source files it depends on.
+    # It needs to compile the test files AND the source files they depend on.
     add_executable(run-tests
         tests/InputTests.cpp
+        tests/CameraTests.cpp
         src/core/Input.cpp
+        src/camera/Camera.cpp
     )
 
     # Add a compile definition to expose private members for testing
