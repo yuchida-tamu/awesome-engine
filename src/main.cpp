@@ -112,7 +112,7 @@ int main()
     float lastFrame = 0.0f;
 
     Camera camera{};
-    glm::vec3 cameraPosition = glm::vec3(0, 0, -3.0f);
+    glm::vec3 cameraPosition = glm::vec3(0, 0, 3.0f);
     float cameraSpeed;
 
     std::unique_ptr<Cube> cube = std::make_unique<Cube>();
