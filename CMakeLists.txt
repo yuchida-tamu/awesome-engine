@@ -23,6 +23,7 @@ add_executable(awesome-engine
     src/shaders/Shader.cpp
     vendor/loader/src/stb_image.cpp
     src/cameras/Camera.cpp
+    src/shapes/Cube.cpp
 )
 
 # Tell our target where to find its public header files
