@@ -95,9 +95,16 @@ void Shader::Clear()
     {
         glDeleteShader(shaderId);
     }
+    m_shaderIds.clear(); // Clear the vector to prevent double-deletion
 }
 
 Shader::~Shader()
 {
     Clear();
+    // Delete the shader program
+    if (m_programId != 0)
+    {
+        glDeleteProgram(m_programId);
+        m_programId = 0;
+    }
 }
