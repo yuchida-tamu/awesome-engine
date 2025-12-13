@@ -13,6 +13,15 @@ class Shader
 public:
     Shader(const std::string &vertexShaderPath, const std::string &fragmentShaderPath);
     ~Shader();
+
+    // Rule of 5: Delete copy operations (OpenGL handles can't be safely copied)
+    Shader(const Shader &) = delete;
+    Shader &operator=(const Shader &) = delete;
+
+    // Allow move operations for efficiency
+    Shader(Shader &&other) noexcept;
+    Shader &operator=(Shader &&other) noexcept;
+
     void UseProgram();
 
     void SetUniformInt(const std::string &uniformName, int value);

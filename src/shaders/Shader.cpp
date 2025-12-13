@@ -1,4 +1,5 @@
 #include "Shader.h"
+#include <cstring>
 
 Shader::Shader(const std::string &vertexShaderPath, const std::string &fragmentShaderPath)
 {
@@ -107,4 +108,43 @@ Shader::~Shader()
         glDeleteProgram(m_programId);
         m_programId = 0;
     }
+}
+
+Shader::Shader(Shader &&other) noexcept
+    : m_shaderIds(std::move(other.m_shaderIds)),
+      m_programId(other.m_programId),
+      m_success(other.m_success)
+{
+    // Copy the info log string
+    std::memcpy(m_infoLog, other.m_infoLog, sizeof(m_infoLog));
+
+    // Clear the moved-from object to prevent double-deletion
+    other.m_shaderIds.clear();
+    other.m_programId = 0;
+    other.m_success = true;
+}
+
+Shader &Shader::operator=(Shader &&other) noexcept
+{
+    if (this != &other)
+    {
+        // Clean up current resources
+        Clear();
+        if (m_programId != 0)
+        {
+            glDeleteProgram(m_programId);
+        }
+
+        // Move resources from other
+        m_shaderIds = std::move(other.m_shaderIds);
+        m_programId = other.m_programId;
+        m_success = other.m_success;
+        std::memcpy(m_infoLog, other.m_infoLog, sizeof(m_infoLog));
+
+        // Clear the moved-from object
+        other.m_shaderIds.clear();
+        other.m_programId = 0;
+        other.m_success = true;
+    }
+    return *this;
 }

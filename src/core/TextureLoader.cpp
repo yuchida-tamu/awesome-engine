@@ -17,6 +17,29 @@ TextureLoader::~TextureLoader()
     Clear();
 }
 
+TextureLoader::TextureLoader(TextureLoader &&other) noexcept
+    : m_textures(std::move(other.m_textures))
+{
+    // Clear the moved-from object's textures to prevent double-deletion
+    other.m_textures.clear();
+}
+
+TextureLoader &TextureLoader::operator=(TextureLoader &&other) noexcept
+{
+    if (this != &other)
+    {
+        // Clean up current resources
+        Clear();
+
+        // Move resources from other
+        m_textures = std::move(other.m_textures);
+
+        // Clear the moved-from object
+        other.m_textures.clear();
+    }
+    return *this;
+}
+
 void TextureLoader::Clear()
 {
     if (!m_textures.empty())
