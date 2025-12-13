@@ -49,7 +49,7 @@ void Shader::LinkProgram()
         throw std::runtime_error("Failed to create shader program");
     }
 
-    for (unsigned int shaderId : m_shaderIds)
+    for (GLuint shaderId : m_shaderIds)
     {
         glAttachShader(m_programId, shaderId);
     }
