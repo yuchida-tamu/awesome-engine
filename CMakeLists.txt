@@ -52,8 +52,8 @@ set(TEXTURE_OUTPUT_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/textures)
 file(MAKE_DIRECTORY ${SHADER_OUTPUT_DIR})
 file(MAKE_DIRECTORY ${TEXTURE_OUTPUT_DIR})
 
-# Find all shader files in the NEW asset source directory
-file(GLOB SHADER_FILES "${CMAKE_SOURCE_DIR}/assets/shaders/*.vert" "${CMAKE_SOURCE_DIR}/assets/shaders/*.frag")
+# Find all files in the shaders directory (copy everything, not just .vert/.frag)
+file(GLOB SHADER_FILES "${CMAKE_SOURCE_DIR}/assets/shaders/*")
 
 # Find all texture files in the asset directory
 file(GLOB TEXTURE_FILES "${CMAKE_SOURCE_DIR}/assets/textures/*.png" "${CMAKE_SOURCE_DIR}/assets/textures/*.jpg")
