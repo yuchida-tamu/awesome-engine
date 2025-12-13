@@ -22,7 +22,7 @@ public:
     void Bind();
 
 private:
-    std::vector<unsigned int> m_textures;
-    void Load2D(unsigned int *texture, std::string &filepath);
+    std::vector<GLuint> m_textures;
+    void Load2D(GLuint *texture, std::string &filepath);
     void Clear();
 };

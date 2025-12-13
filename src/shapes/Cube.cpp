@@ -108,8 +108,9 @@ void Cube::Render(Shader *shader)
     shader->SetUniformMatrix4FloatPtr("model", glm::value_ptr(m_ModelMatrix));
     glBindVertexArray(m_VAO);
     glDrawArrays(GL_TRIANGLES, 0, CUBE_VERTEX_COUNT);
+    glBindVertexArray(0); // Unbind VAO after rendering
 }
-unsigned int Cube::GetVertexCount() const
+GLuint Cube::GetVertexCount() const
 {
     return CUBE_VERTEX_COUNT;
 }

@@ -6,7 +6,7 @@ TextureLoader::TextureLoader(std::vector<std::string> filepaths)
 
     for (std::string path : filepaths)
     {
-        unsigned int texture;
+        GLuint texture;
         Load2D(&texture, path);
         m_textures.push_back(texture);
     }
@@ -78,9 +78,15 @@ void TextureLoader::Bind()
     }
 }
 
-void TextureLoader::Load2D(unsigned int *texture, std::string &filepath)
+void TextureLoader::Load2D(GLuint *texture, std::string &filepath)
 {
     glGenTextures(1, texture);
+    if (*texture == 0)
+    {
+        std::cerr << "Error: Failed to generate texture object for: " << filepath << std::endl;
+        return;
+    }
+
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, *texture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -91,6 +97,14 @@ void TextureLoader::Load2D(unsigned int *texture, std::string &filepath)
     unsigned char *textureData = stbi_load(filepath.c_str(), &width, &height, &nrChannels, 0);
     if (textureData)
     {
+        if (width <= 0 || height <= 0)
+        {
+            std::cerr << "Error: Invalid texture dimensions for: " << filepath << " (width: " << width << ", height: " << height << ")" << std::endl;
+            stbi_image_free(textureData);
+            glBindTexture(GL_TEXTURE_2D, 0);
+            return;
+        }
+
         GLenum format = (nrChannels == 4) ? GL_RGBA : GL_RGB;
         GLenum internalFormat = (nrChannels == 4) ? GL_RGBA : GL_RGB;
         glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, GL_UNSIGNED_BYTE, textureData);

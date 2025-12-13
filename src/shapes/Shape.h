@@ -39,13 +39,13 @@ public:
      *
      * @return The number of vertices
      */
-    virtual unsigned int GetVertexCount() const = 0;
+    virtual GLuint GetVertexCount() const = 0;
 
 protected:
     // Protected members can be accessed by derived classes
-    unsigned int m_VAO = 0;                   // Vertex Array Object
-    unsigned int m_VBO = 0;                   // Vertex Buffer Object
-    unsigned int m_EBO = 0;                   // Element Buffer Object (optional, 0 if not used)
+    GLuint m_VAO = 0;                   // Vertex Array Object
+    GLuint m_VBO = 0;                   // Vertex Buffer Object
+    GLuint m_EBO = 0;                   // Element Buffer Object (optional, 0 if not used)
     glm::mat4 m_ModelMatrix = glm::mat4(1.0); // Transformation matrix of the shape
     bool m_IsInitialized = false;
 };

@@ -1,18 +1,19 @@
 #include "core/Input.h"
+#include "core/Config.h"
 #include <iostream>
 // Define and initialize our static member variables.
-// Using a large-enough fixed size array. 1024 covers all standard keys.
-bool Input::s_Keys[1024];
-bool Input::s_KeysLastFrame[1024];
-bool Input::s_KeysRaw[1024];
+// Using a large-enough fixed size array. Config::MAX_KEYS covers all standard keys.
+bool Input::s_Keys[Config::MAX_KEYS];
+bool Input::s_KeysLastFrame[Config::MAX_KEYS];
+bool Input::s_KeysRaw[Config::MAX_KEYS];
 
 float Input::s_XOffset = 0.0f;
 float Input::s_YOffset = 0.0f;
 float Input::s_Sensitivity = 0.1f;
-double Input::s_LastX = 800.0 / 2.0; // Initialize to screen center
-double Input::s_LastY = 600.0 / 2.0;
-double Input::s_CurrentX = 800.0 / 2.0; // Initialize to screen center
-double Input::s_CurrentY = 600.0 / 2.0;
+double Input::s_LastX = Config::WINDOW_WIDTH / 2.0; // Initialize to screen center
+double Input::s_LastY = Config::WINDOW_HEIGHT / 2.0;
+double Input::s_CurrentX = Config::WINDOW_WIDTH / 2.0; // Initialize to screen center
+double Input::s_CurrentY = Config::WINDOW_HEIGHT / 2.0;
 bool Input::s_FirstMouse = true;
 
 void Input::Initialize(GLFWwindow *window)

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <stdexcept>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -6,6 +7,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 // Core
+#include "core/Config.h"
 #include "core/Input.h"
 #include "core/TextureLoader.h"
 
@@ -17,7 +19,7 @@
 
 void error_callback(int error, const char *description)
 {
-    fprintf(stderr, "GLFW Error: %s\n", description);
+    std::cerr << "GLFW Error: " << description << std::endl;
 }
 
 int main()
@@ -40,7 +42,7 @@ int main()
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
-    GLFWwindow *window = glfwCreateWindow(800, 600, "Awesome Engine", NULL, NULL);
+    GLFWwindow *window = glfwCreateWindow(Config::WINDOW_WIDTH, Config::WINDOW_HEIGHT, "Awesome Engine", NULL, NULL);
     if (window == NULL)
     {
         std::cerr << "Failed to create GLFW window" << std::endl;
@@ -59,83 +61,101 @@ int main()
 
     Input::Initialize(window);
 
-    Shader shader{"shaders/simple.vert", "shaders/simple.frag"};
-    TextureLoader textureLoader{std::vector<std::string>{"textures/container.png", "textures/awesome_face.png"}};
-
-    glEnable(GL_DEPTH_TEST);
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
-    float deltaTime = 0.0f;
-    float lastFrame = 0.0f;
-
-    Camera camera{};
-    glm::vec3 cameraPosition = glm::vec3(0, 0, 3.0f);
-    float cameraSpeed;
-
-    std::unique_ptr<Cube> cube = std::make_unique<Cube>();
-    cube->Initialize();
-
-    // Main loop
-    while (!glfwWindowShouldClose(window))
+    try
     {
-        // Clear the screen (black)
-        glClearColor(0.2f, 0.25f, 0.27f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        Shader shader{"shaders/simple.vert", "shaders/simple.frag"};
+        TextureLoader textureLoader{std::vector<std::string>{"textures/container.png", "textures/awesome_face.png"}};
 
-        float currentFrame = glfwGetTime();
-        deltaTime = currentFrame - lastFrame;
-        lastFrame = currentFrame;
-        cameraSpeed = 2.5f * deltaTime;
+        glEnable(GL_DEPTH_TEST);
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-        Input::Update();
+        float deltaTime = 0.0f;
+        float lastFrame = 0.0f;
 
-        glm::vec2 offset = Input::GetMouseOffset();
+        Camera camera{};
+        glm::vec3 cameraPosition = glm::vec3(0, 0, 3.0f);
+        float cameraSpeed;
 
-        camera.UpdateFront(offset.x, offset.y);
-
-        if (Input::IsKeyDown(GLFW_KEY_ESCAPE))
+        std::unique_ptr<Cube> cube = std::make_unique<Cube>();
+        if (!cube->Initialize())
         {
-            glfwSetWindowShouldClose(window, true);
+            std::cerr << "Error: Failed to initialize cube" << std::endl;
+            glfwTerminate();
+            return -1;
         }
 
-        if (Input::IsKeyHeld(GLFW_KEY_W))
+        // Calculate projection matrix once (doesn't change unless window is resized)
+        glm::mat4 projection = glm::perspective(
+            glm::radians(Config::FOV),
+            static_cast<float>(Config::WINDOW_WIDTH) / static_cast<float>(Config::WINDOW_HEIGHT),
+            Config::NEAR_PLANE,
+            Config::FAR_PLANE
+        );
+
+        // Main loop
+        while (!glfwWindowShouldClose(window))
         {
-            cameraPosition = camera.GetPosition() + camera.GetFront() * cameraSpeed;
+            // Clear the screen (black)
+            glClearColor(0.2f, 0.25f, 0.27f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            float currentFrame = glfwGetTime();
+            deltaTime = currentFrame - lastFrame;
+            lastFrame = currentFrame;
+            cameraSpeed = Config::DEFAULT_CAMERA_SPEED * deltaTime;
+
+            Input::Update();
+
+            glm::vec2 offset = Input::GetMouseOffset();
+
+            camera.UpdateFront(offset.x, offset.y);
+
+            if (Input::IsKeyDown(GLFW_KEY_ESCAPE))
+            {
+                glfwSetWindowShouldClose(window, true);
+            }
+
+            if (Input::IsKeyHeld(GLFW_KEY_W))
+            {
+                cameraPosition = camera.GetPosition() + camera.GetFront() * cameraSpeed;
+            }
+            if (Input::IsKeyHeld(GLFW_KEY_S))
+            {
+                cameraPosition = camera.GetPosition() - camera.GetFront() * cameraSpeed;
+            }
+            if (Input::IsKeyHeld(GLFW_KEY_A))
+            {
+                cameraPosition = camera.GetPosition() - camera.GetRight() * cameraSpeed;
+            }
+            if (Input::IsKeyHeld(GLFW_KEY_D))
+            {
+                cameraPosition = camera.GetPosition() + camera.GetRight() * cameraSpeed;
+            }
+            camera.UpdatePosition(cameraPosition);
+
+            // Uncomment to render in wireframe mode
+            // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+            shader.UseProgram();
+            textureLoader.Bind();
+            shader.SetUniformInt("texture1", 0);
+            shader.SetUniformInt("texture2", 1);
+            shader.SetUniformMatrix4FloatPtr("projection", glm::value_ptr(projection));
+
+            shader.SetUniformMatrix4FloatPtr("view", glm::value_ptr(camera.GetCameraView()));
+
+            cube->Render(&shader);
+
+            // Swap buffers and poll events
+            glfwSwapBuffers(window);
+            glfwPollEvents();
         }
-        if (Input::IsKeyHeld(GLFW_KEY_S))
-        {
-            cameraPosition = camera.GetPosition() - camera.GetFront() * cameraSpeed;
-        }
-        if (Input::IsKeyHeld(GLFW_KEY_A))
-        {
-            cameraPosition = camera.GetPosition() - camera.GetRight() * cameraSpeed;
-        }
-        if (Input::IsKeyHeld(GLFW_KEY_D))
-        {
-            cameraPosition = camera.GetPosition() + camera.GetRight() * cameraSpeed;
-        }
-        camera.UpdatePosition(cameraPosition);
-
-        // Uncomment to render in wireframe mode
-        // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-        glm::mat4 projection = glm::mat4(1.0f);
-        // apply perspective projection
-        projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
-
-        shader.UseProgram();
-        textureLoader.Bind();
-        shader.SetUniformInt("texture1", 0);
-        shader.SetUniformInt("texture2", 1);
-        shader.SetUniformMatrix4FloatPtr("projection", glm::value_ptr(projection));
-
-        shader.SetUniformMatrix4FloatPtr("view", glm::value_ptr(camera.GetCameraView()));
-
-        cube->Render(&shader);
-
-        // Swap buffers and poll events
-        glfwSwapBuffers(window);
-        glfwPollEvents();
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Error: " << e.what() << std::endl;
+        glfwTerminate();
+        return -1;
     }
 
     glfwTerminate();

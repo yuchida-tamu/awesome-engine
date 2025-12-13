@@ -4,9 +4,10 @@
 #include <string>
 #include <fstream>
 #include <sstream>
-#include <string>
 #include <vector>
+#include <unordered_map>
 #include <glm/glm.hpp>
+#include "core/Config.h"
 
 class Shader
 {
@@ -28,15 +29,19 @@ public:
     void SetUniformMatrix4FloatPtr(const std::string &uniformName, const float *ptr);
 
 private:
-    std::vector<unsigned int> m_shaderIds;
-    unsigned int m_programId = 0;
+    std::vector<GLuint> m_shaderIds;
+    GLuint m_programId = 0;
+
+    // Uniform location cache
+    std::unordered_map<std::string, GLint> m_uniformCache;
 
     // Logging
     int m_success = true;
-    char m_infoLog[512];
+    char m_infoLog[Config::SHADER_LOG_SIZE];
     std::string LoadFileAsString(const std::string &filepath);
 
-    void AddShader(const std::string &filepath, unsigned int shaderType);
+    void AddShader(const std::string &filepath, GLenum shaderType);
     void LinkProgram();
     void Clear();
+    GLint GetUniformLocation(const std::string &name);
 };

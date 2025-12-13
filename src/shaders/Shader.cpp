@@ -1,5 +1,7 @@
 #include "Shader.h"
+#include "core/Config.h"
 #include <cstring>
+#include <stdexcept>
 
 Shader::Shader(const std::string &vertexShaderPath, const std::string &fragmentShaderPath)
 {
@@ -8,15 +10,20 @@ Shader::Shader(const std::string &vertexShaderPath, const std::string &fragmentS
     LinkProgram();
 }
 
-void Shader::AddShader(const std::string &filepath, unsigned int shaderType)
+void Shader::AddShader(const std::string &filepath, GLenum shaderType)
 {
     std::string shaderString = LoadFileAsString(filepath);
     if (shaderString.empty())
     {
-        return;
+        throw std::runtime_error("Failed to load shader file: " + filepath);
     }
 
-    unsigned int shader = glCreateShader(shaderType);
+    GLuint shader = glCreateShader(shaderType);
+    if (shader == 0)
+    {
+        throw std::runtime_error("Failed to create shader object for: " + filepath);
+    }
+
     const char *sourcePointer = shaderString.c_str();
     glShaderSource(shader, 1, &sourcePointer, NULL);
     glCompileShader(shader);
@@ -25,11 +32,10 @@ void Shader::AddShader(const std::string &filepath, unsigned int shaderType)
 
     if (!m_success)
     {
-        glGetShaderInfoLog(shader, 512, NULL, m_infoLog);
-        std::cerr << "Error: Vertex Shader compilation failed\n"
-                  << m_infoLog << std::endl;
-
-        return;
+        glGetShaderInfoLog(shader, Config::SHADER_LOG_SIZE, NULL, m_infoLog);
+        glDeleteShader(shader);
+        std::string errorMsg = "Shader compilation failed for " + filepath + ":\n" + m_infoLog;
+        throw std::runtime_error(errorMsg);
     }
 
     m_shaderIds.push_back(shader);
@@ -38,6 +44,11 @@ void Shader::AddShader(const std::string &filepath, unsigned int shaderType)
 void Shader::LinkProgram()
 {
     m_programId = glCreateProgram();
+    if (m_programId == 0)
+    {
+        throw std::runtime_error("Failed to create shader program");
+    }
+
     for (unsigned int shaderId : m_shaderIds)
     {
         glAttachShader(m_programId, shaderId);
@@ -47,9 +58,16 @@ void Shader::LinkProgram()
     glGetProgramiv(m_programId, GL_LINK_STATUS, &m_success);
     if (!m_success)
     {
-        glGetProgramInfoLog(m_programId, 512, NULL, m_infoLog);
-        std::cerr << "Error: Shader Program linking failed\n"
-                  << m_infoLog << std::endl;
+        glGetProgramInfoLog(m_programId, Config::SHADER_LOG_SIZE, NULL, m_infoLog);
+        std::string errorMsg = "Shader Program linking failed:\n" + std::string(m_infoLog);
+        // Clean up before throwing
+        Clear();
+        if (m_programId != 0)
+        {
+            glDeleteProgram(m_programId);
+            m_programId = 0;
+        }
+        throw std::runtime_error(errorMsg);
     }
 
     // Clean up
@@ -67,14 +85,31 @@ void Shader::UseProgram()
     glUseProgram(m_programId);
 }
 
+GLint Shader::GetUniformLocation(const std::string &name)
+{
+    // Check cache first
+    auto it = m_uniformCache.find(name);
+    if (it != m_uniformCache.end())
+    {
+        return it->second;
+    }
+
+    // Not in cache, query OpenGL and store result
+    GLint location = glGetUniformLocation(m_programId, name.c_str());
+    m_uniformCache[name] = location;
+    return location;
+}
+
 void Shader::SetUniformInt(const std::string &name, int value)
 {
-    glUniform1i(glGetUniformLocation(m_programId, name.c_str()), value);
+    GLint location = GetUniformLocation(name);
+    glUniform1i(location, value);
 }
 
 void Shader::SetUniformMatrix4FloatPtr(const std::string &name, const float *ptr)
 {
-    glUniformMatrix4fv(glGetUniformLocation(m_programId, name.c_str()), 1, GL_FALSE, ptr);
+    GLint location = GetUniformLocation(name);
+    glUniformMatrix4fv(location, 1, GL_FALSE, ptr);
 }
 
 std::string Shader::LoadFileAsString(const std::string &filepath)
@@ -82,8 +117,7 @@ std::string Shader::LoadFileAsString(const std::string &filepath)
     std::ifstream fileStream(filepath);
     if (!fileStream.is_open())
     {
-        std::cerr << "Error: Could not open shader file at path: " << filepath << std::endl;
-        return "";
+        throw std::runtime_error("Could not open shader file at path: " + filepath);
     }
     std::stringstream buffer;
     buffer << fileStream.rdbuf();
@@ -92,7 +126,7 @@ std::string Shader::LoadFileAsString(const std::string &filepath)
 
 void Shader::Clear()
 {
-    for (unsigned int shaderId : m_shaderIds)
+    for (GLuint shaderId : m_shaderIds)
     {
         glDeleteShader(shaderId);
     }
@@ -108,11 +142,14 @@ Shader::~Shader()
         glDeleteProgram(m_programId);
         m_programId = 0;
     }
+    // Clear uniform cache
+    m_uniformCache.clear();
 }
 
 Shader::Shader(Shader &&other) noexcept
     : m_shaderIds(std::move(other.m_shaderIds)),
       m_programId(other.m_programId),
+      m_uniformCache(std::move(other.m_uniformCache)),
       m_success(other.m_success)
 {
     // Copy the info log string
@@ -121,6 +158,7 @@ Shader::Shader(Shader &&other) noexcept
     // Clear the moved-from object to prevent double-deletion
     other.m_shaderIds.clear();
     other.m_programId = 0;
+    other.m_uniformCache.clear();
     other.m_success = true;
 }
 
@@ -138,12 +176,14 @@ Shader &Shader::operator=(Shader &&other) noexcept
         // Move resources from other
         m_shaderIds = std::move(other.m_shaderIds);
         m_programId = other.m_programId;
+        m_uniformCache = std::move(other.m_uniformCache);
         m_success = other.m_success;
         std::memcpy(m_infoLog, other.m_infoLog, sizeof(m_infoLog));
 
         // Clear the moved-from object
         other.m_shaderIds.clear();
         other.m_programId = 0;
+        other.m_uniformCache.clear();
         other.m_success = true;
     }
     return *this;
