@@ -5,8 +5,10 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "stb_image.h"
+// Core
 #include "core/Input.h"
+#include "core/TextureLoader.h"
+
 #include "shaders/Shader.h"
 #include "cameras/Camera.h"
 
@@ -58,49 +60,7 @@ int main()
     Input::Initialize(window);
 
     Shader shader{"shaders/simple.vert", "shaders/simple.frag"};
-
-    stbi_set_flip_vertically_on_load(true);
-    unsigned int texture1, texture2;
-    glGenTextures(1, &texture1);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture1);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    int width, height, nrChannels;
-    unsigned char *textureData1 = stbi_load("textures/container.png", &width, &height, &nrChannels, 0);
-    if (textureData1)
-    {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData1);
-        glGenerateMipmap(GL_TEXTURE_2D);
-    }
-    else
-    {
-        std::cerr << "Error: Failed to load texture image" << "container.png" << std::endl;
-    }
-    stbi_image_free(textureData1);
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    glGenTextures(1, &texture2);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, texture2);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    unsigned char *textureData2 = stbi_load("textures/awesome_face.png", &width, &height, &nrChannels, 0);
-    if (textureData2)
-    {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, textureData2);
-        glGenerateMipmap(GL_TEXTURE_2D);
-    }
-    else
-    {
-        std::cerr << "Error: Failed to load texture image" << "awesome_face.png" << std::endl;
-    }
-    stbi_image_free(textureData2);
-    glBindTexture(GL_TEXTURE_2D, 0);
+    TextureLoader textureLoader{std::vector<std::string>{"textures/container.png", "textures/awesome_face.png"}};
 
     glEnable(GL_DEPTH_TEST);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -164,13 +124,10 @@ int main()
         projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
 
         shader.UseProgram();
+        textureLoader.Bind();
         shader.SetUniformInt("texture1", 0);
         shader.SetUniformInt("texture2", 1);
         shader.SetUniformMatrix4FloatPtr("projection", glm::value_ptr(projection));
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture1);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, texture2);
 
         shader.SetUniformMatrix4FloatPtr("view", glm::value_ptr(camera.GetCameraView()));
 
