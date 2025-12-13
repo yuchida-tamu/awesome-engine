@@ -106,6 +106,12 @@ void Shader::SetUniformInt(const std::string &name, int value)
     glUniform1i(location, value);
 }
 
+void Shader::SetUniformVec3(const std::string &name, const float *ptr)
+{
+    GLint location = GetUniformLocation(name);
+    glUniform3fv(location, 1, ptr);
+}
+
 void Shader::SetUniformMatrix4FloatPtr(const std::string &name, const float *ptr)
 {
     GLint location = GetUniformLocation(name);
