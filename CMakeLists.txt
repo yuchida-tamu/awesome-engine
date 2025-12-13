@@ -23,7 +23,7 @@ add_executable(awesome-engine
     src/shaders/Shader.cpp
     vendor/loader/src/stb_image.cpp
     src/cameras/Camera.cpp
-    src/shapes/Cube.cpp
+    src/meshes/Cube.cpp
     src/core/TextureLoader.cpp
 )
 

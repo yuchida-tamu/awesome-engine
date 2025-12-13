@@ -144,3 +144,4 @@ void Cube::Cleanup()
     // Reset state flags
     m_IsInitialized = false;
 }
+

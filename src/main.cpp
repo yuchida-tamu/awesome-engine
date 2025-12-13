@@ -14,8 +14,8 @@
 #include "shaders/Shader.h"
 #include "cameras/Camera.h"
 
-#include "shapes/Shape.h"
-#include "shapes/Cube.h"
+#include "meshes/Mesh.h"
+#include "meshes/Cube.h"
 
 void error_callback(int error, const char *description)
 {
