@@ -63,8 +63,6 @@ int main()
 
     try
     {
-        Shader shader{"shaders/simple.vert", "shaders/simple.frag"};
-        TextureLoader textureLoader{std::vector<std::string>{"textures/container.png", "textures/awesome_face.png"}};
 
         glEnable(GL_DEPTH_TEST);
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -76,13 +74,30 @@ int main()
         glm::vec3 cameraPosition = glm::vec3(0, 0, 3.0f);
         float cameraSpeed;
 
-        std::unique_ptr<Cube> cube = std::make_unique<Cube>();
-        if (!cube->Initialize())
+        std::unique_ptr<Cube> mainCube = std::make_unique<Cube>();
+        if (!mainCube->Initialize())
         {
             std::cerr << "Error: Failed to initialize cube" << std::endl;
             glfwTerminate();
             return -1;
         }
+        Shader shader{"shaders/simple.vert", "shaders/surface.frag"};
+        TextureLoader textureLoader{std::vector<std::string>{"textures/container.png", "textures/awesome_face.png"}};
+        glm::vec3 objectColor, lightColor;
+        objectColor = glm::vec3(1.0f, 0.5f, 0.31f);
+        lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
+        const float *objectColorPtr = glm::value_ptr(objectColor);
+        const float *lightColorPtr = glm::value_ptr(lightColor);
+
+        std::unique_ptr<Cube> lightCube = std::make_unique<Cube>();
+        if (!lightCube->Initialize())
+        {
+            std::cerr << "Error: Failed to initialize cube" << std::endl;
+            glfwTerminate();
+            return -1;
+        }
+        lightCube->Translate(1.5f, 0.7f, -1.5f);
+        Shader flatColorShader{"shaders/simple.vert", "shaders/lighting.frag"};
 
         // Calculate projection matrix once (doesn't change unless window is resized)
         glm::mat4 projection = glm::perspective(
@@ -139,11 +154,18 @@ int main()
             textureLoader.Bind();
             shader.SetUniformInt("texture1", 0);
             shader.SetUniformInt("texture2", 1);
+            shader.SetUniformVec3("objectColor", objectColorPtr);
+            shader.SetUniformVec3("lightColor", lightColorPtr);
+            shader.SetUniformVec3("lightPos", glm::value_ptr(lightCube->GetPosition()));
             shader.SetUniformMatrix4FloatPtr("projection", glm::value_ptr(projection));
-
             shader.SetUniformMatrix4FloatPtr("view", glm::value_ptr(camera.GetCameraView()));
+            shader.SetUniformVec3("viewPos", glm::value_ptr(camera.GetPosition()));
+            mainCube->Render(&shader);
 
-            cube->Render(&shader);
+            flatColorShader.UseProgram();
+            flatColorShader.SetUniformMatrix4FloatPtr("projection", glm::value_ptr(projection));
+            flatColorShader.SetUniformMatrix4FloatPtr("view", glm::value_ptr(camera.GetCameraView()));
+            lightCube->Render(&flatColorShader);
 
             // Swap buffers and poll events
             glfwSwapBuffers(window);
