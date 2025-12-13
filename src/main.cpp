@@ -89,8 +89,7 @@ int main()
             glm::radians(Config::FOV),
             static_cast<float>(Config::WINDOW_WIDTH) / static_cast<float>(Config::WINDOW_HEIGHT),
             Config::NEAR_PLANE,
-            Config::FAR_PLANE
-        );
+            Config::FAR_PLANE);
 
         // Main loop
         while (!glfwWindowShouldClose(window))
