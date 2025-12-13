@@ -75,7 +75,7 @@ void TextureLoader::Load2D(unsigned int *texture, std::string &filepath)
     }
     else
     {
-        std::cerr << "Error: Failed to load texture image" << "container.png" << std::endl;
+        std::cerr << "Error: Failed to load texture image: " << filepath << std::endl;
     }
     stbi_image_free(textureData);
     glBindTexture(GL_TEXTURE_2D, 0);
