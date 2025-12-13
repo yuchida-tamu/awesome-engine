@@ -57,10 +57,7 @@ int main()
 
     Input::Initialize(window);
 
-    Shader shader{};
-    shader.AddShader("shaders/simple.vert", GL_VERTEX_SHADER);
-    shader.AddShader("shaders/simple.frag", GL_FRAGMENT_SHADER);
-    shader.LinkProgram();
+    Shader shader{"shaders/simple.vert", "shaders/simple.frag"};
 
     stbi_set_flip_vertically_on_load(true);
     unsigned int texture1, texture2;

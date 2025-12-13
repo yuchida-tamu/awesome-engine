@@ -1,7 +1,10 @@
 #include "Shader.h"
 
-Shader::Shader() : m_programId(0)
+Shader::Shader(const std::string &vertexShaderPath, const std::string &fragmentShaderPath)
 {
+    AddShader(vertexShaderPath, GL_VERTEX_SHADER);
+    AddShader(fragmentShaderPath, GL_FRAGMENT_SHADER);
+    LinkProgram();
 }
 
 void Shader::AddShader(const std::string &filepath, unsigned int shaderType)
