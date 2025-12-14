@@ -17,6 +17,25 @@
 #include "meshes/Mesh.h"
 #include "meshes/Cube.h"
 
+struct Material
+{
+    glm::vec3 color;
+    glm::vec3 ambient;
+    glm::vec3 diffuse;
+    glm::vec3 specular;
+
+    float shininess;
+};
+
+struct Light
+{
+    glm::vec3 ambient;
+    glm::vec3 diffuse;
+    glm::vec3 specular;
+
+    glm::vec3 position;
+};
+
 void error_callback(int error, const char *description)
 {
     std::cerr << "GLFW Error: " << description << std::endl;
@@ -81,15 +100,20 @@ int main()
             glfwTerminate();
             return -1;
         }
-        Shader shader{"shaders/simple.vert", "shaders/surface.frag"};
+        Shader shader{"shaders/simple.vert", "shaders/material.frag"};
         TextureLoader textureLoader{std::vector<std::string>{"textures/container.png", "textures/awesome_face.png"}};
-        glm::vec3 objectColor, lightColor;
-        objectColor = glm::vec3(1.0f, 0.5f, 0.31f);
-        lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
-        const float *objectColorPtr = glm::value_ptr(objectColor);
-        const float *lightColorPtr = glm::value_ptr(lightColor);
 
-        std::unique_ptr<Cube> lightCube = std::make_unique<Cube>();
+        // material - typical Phong material properties
+        Material material{
+            glm::vec3(0.2f, 0.7f, 0.2f), // base color
+            glm::vec3(0.2f, 0.2f, 0.2f), // ambient (usually low intensity)
+            glm::vec3(0.8f, 0.8f, 0.8f), // diffuse (main color)
+            glm::vec3(1.0f, 1.0f, 1.0f), // specular (highlight color)
+            32.0f                        // shininess (higher = smaller, brighter highlight)
+        };
+
+        std::unique_ptr<Cube>
+            lightCube = std::make_unique<Cube>();
         if (!lightCube->Initialize())
         {
             std::cerr << "Error: Failed to initialize cube" << std::endl;
@@ -98,6 +122,15 @@ int main()
         }
         lightCube->Translate(1.5f, 0.7f, -1.5f);
         Shader flatColorShader{"shaders/simple.vert", "shaders/lighting.frag"};
+
+        // light
+        Light light{
+            glm::vec3(0.2f, 0.2f, 0.2f), // ambient (usually low intensity)
+            glm::vec3(0.8f, 0.8f, 0.8f), // diffuse (main color)
+            glm::vec3(1.0f, 1.0f, 1.0f), // specular (highlight color)
+
+            lightCube->GetPosition(),
+        };
 
         // Calculate projection matrix once (doesn't change unless window is resized)
         glm::mat4 projection = glm::perspective(
@@ -154,9 +187,17 @@ int main()
             textureLoader.Bind();
             shader.SetUniformInt("texture1", 0);
             shader.SetUniformInt("texture2", 1);
-            shader.SetUniformVec3("objectColor", objectColorPtr);
-            shader.SetUniformVec3("lightColor", lightColorPtr);
-            shader.SetUniformVec3("lightPos", glm::value_ptr(lightCube->GetPosition()));
+            shader.SetUniformVec3("material.color", glm::value_ptr(material.color));
+            shader.SetUnifromFloat("material.shininess", material.shininess);
+            shader.SetUniformVec3("material.ambient", glm::value_ptr(material.ambient));
+            shader.SetUniformVec3("material.diffuse", glm::value_ptr(material.diffuse));
+            shader.SetUniformVec3("material.specular", glm::value_ptr(material.specular));
+
+            shader.SetUniformVec3("light.ambient", glm::value_ptr(light.ambient));
+            shader.SetUniformVec3("light.diffuse", glm::value_ptr(light.diffuse));
+            shader.SetUniformVec3("light.specular", glm::value_ptr(light.specular));
+            shader.SetUniformVec3("light.position", glm::value_ptr(light.position));
+
             shader.SetUniformMatrix4FloatPtr("projection", glm::value_ptr(projection));
             shader.SetUniformMatrix4FloatPtr("view", glm::value_ptr(camera.GetCameraView()));
             shader.SetUniformVec3("viewPos", glm::value_ptr(camera.GetPosition()));

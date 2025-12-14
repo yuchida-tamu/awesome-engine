@@ -26,6 +26,7 @@ public:
     void UseProgram();
 
     void SetUniformInt(const std::string &uniformName, int value);
+    void SetUnifromFloat(const std::string &uniformName, float value);
     void SetUniformVec3(const std::string &uniformName, const float *ptr);
     void SetUniformMatrix4FloatPtr(const std::string &uniformName, const float *ptr);
 
