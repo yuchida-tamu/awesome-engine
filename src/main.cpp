@@ -19,7 +19,6 @@
 
 struct Material
 {
-    glm::vec3 color;
     glm::vec3 ambient;
     glm::vec3 diffuse;
     glm::vec3 specular;
@@ -105,8 +104,7 @@ int main()
 
         // material - typical Phong material properties
         Material material{
-            glm::vec3(0.2f, 0.7f, 0.2f), // base color
-            glm::vec3(0.2f, 0.2f, 0.2f), // ambient (usually low intensity)
+            glm::vec3(0.2f, 0.7f, 0.2f), // ambient (usually low intensity)
             glm::vec3(0.8f, 0.8f, 0.8f), // diffuse (main color)
             glm::vec3(1.0f, 1.0f, 1.0f), // specular (highlight color)
             32.0f                        // shininess (higher = smaller, brighter highlight)
@@ -187,7 +185,6 @@ int main()
             textureLoader.Bind();
             shader.SetUniformInt("texture1", 0);
             shader.SetUniformInt("texture2", 1);
-            shader.SetUniformVec3("material.color", glm::value_ptr(material.color));
             shader.SetUnifromFloat("material.shininess", material.shininess);
             shader.SetUniformVec3("material.ambient", glm::value_ptr(material.ambient));
             shader.SetUniformVec3("material.diffuse", glm::value_ptr(material.diffuse));
