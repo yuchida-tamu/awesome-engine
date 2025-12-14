@@ -19,9 +19,8 @@
 
 struct Material
 {
-    glm::vec3 ambient;
-    glm::vec3 diffuse;
-    glm::vec3 specular;
+    unsigned int diffuse;
+    unsigned int specular;
 
     float shininess;
 };
@@ -100,14 +99,13 @@ int main()
             return -1;
         }
         Shader shader{"shaders/simple.vert", "shaders/material.frag"};
-        TextureLoader textureLoader{std::vector<std::string>{"textures/container.png", "textures/awesome_face.png"}};
+        TextureLoader textureLoader{std::vector<std::string>{"textures/box.png", "textures/box_specular.png"}};
 
         // material - typical Phong material properties
         Material material{
-            glm::vec3(0.2f, 0.7f, 0.2f), // ambient (usually low intensity)
-            glm::vec3(0.8f, 0.8f, 0.8f), // diffuse (main color)
-            glm::vec3(1.0f, 1.0f, 1.0f), // specular (highlight color)
-            32.0f                        // shininess (higher = smaller, brighter highlight)
+            0,    // diffuse (main color)
+            1,    // specular (highlight color)
+            32.0f // shininess (higher = smaller, brighter highlight)
         };
 
         std::unique_ptr<Cube>
@@ -183,12 +181,9 @@ int main()
 
             shader.UseProgram();
             textureLoader.Bind();
-            shader.SetUniformInt("texture1", 0);
-            shader.SetUniformInt("texture2", 1);
+            shader.SetUniformInt("material.diffuse", material.diffuse);
+            shader.SetUniformInt("material.specular", material.specular);
             shader.SetUnifromFloat("material.shininess", material.shininess);
-            shader.SetUniformVec3("material.ambient", glm::value_ptr(material.ambient));
-            shader.SetUniformVec3("material.diffuse", glm::value_ptr(material.diffuse));
-            shader.SetUniformVec3("material.specular", glm::value_ptr(material.specular));
 
             shader.SetUniformVec3("light.ambient", glm::value_ptr(light.ambient));
             shader.SetUniformVec3("light.diffuse", glm::value_ptr(light.diffuse));
