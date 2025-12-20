@@ -15,6 +15,14 @@ find_package(OpenGL REQUIRED)
 # Find GLFW using its own config files (provided by Homebrew)
 find_package(glfw3 REQUIRED)
 
+# Find Assimp using CMake config files (provided by Homebrew)
+find_package(assimp QUIET)
+if(assimp_FOUND)
+    message(STATUS "Found Assimp: ${assimp_VERSION}")
+else()
+    message(WARNING "Assimp not found via find_package. You may need to install it: brew install assimp")
+endif()
+
 # Add our executable target with all its source files
 add_executable(awesome-engine
     src/main.cpp
@@ -36,10 +44,28 @@ target_include_directories(awesome-engine PUBLIC
     ${CMAKE_SOURCE_DIR}/vendor/glm
 )
 
+# Add Assimp include directories if found
+if(assimp_FOUND)
+    target_include_directories(awesome-engine PUBLIC ${assimp_INCLUDE_DIRS})
+endif()
+
 # Link the libraries.
 # The order is important here. We link our executable to GLFW.
 # GLFW then needs to link to the system's OpenGL library.
 target_link_libraries(awesome-engine PRIVATE glfw OpenGL::GL)
+
+# Link Assimp if available
+if(assimp_FOUND)
+    target_link_libraries(awesome-engine PRIVATE assimp::assimp)
+    
+    # On macOS, set RPATH so the executable can find the library at runtime
+    if(APPLE)
+        set_target_properties(awesome-engine PROPERTIES
+            INSTALL_RPATH "@executable_path"
+            BUILD_WITH_INSTALL_RPATH TRUE
+        )
+    endif()
+endif()
 
 
 # Define the output directory for the shaders
@@ -78,6 +104,19 @@ foreach(TEXTURE_FILE ${TEXTURE_FILES})
         ${TEXTURE_OUTPUT_DIR}
     )
 endforeach()
+
+# Copy Assimp library to bin directory for runtime (if using manual library)
+# Note: If using Homebrew's Assimp, the RPATH should handle finding it automatically
+# But if you need to copy it, uncomment and adjust the path below:
+# if(assimp_FOUND AND EXISTS ${assimp_LIBRARIES})
+#     add_custom_command(
+#         TARGET awesome-engine POST_BUILD
+#         COMMAND ${CMAKE_COMMAND} -E copy
+#         ${assimp_LIBRARIES}
+#         ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+#         COMMENT "Copying Assimp library to bin directory"
+#     )
+# endif()
 
 # ===================================================================
 # Unit Testing Setup
