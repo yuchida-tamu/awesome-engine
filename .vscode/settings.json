@@ -53,7 +53,9 @@
     "unordered_map": "cpp",
     "unordered_set": "cpp",
     "variant": "cpp",
-    "algorithm": "cpp"
+    "algorithm": "cpp",
+    "charconv": "cpp",
+    "forward_list": "cpp"
   },
   "cSpell.words": ["OPENGL"]
 }

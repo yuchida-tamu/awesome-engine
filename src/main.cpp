@@ -14,8 +14,8 @@
 #include "shaders/Shader.h"
 #include "cameras/Camera.h"
 
-#include "meshes/Mesh.h"
-#include "meshes/Cube.h"
+#include "meshes/Model.h"
+#include "stb_image.h"
 
 struct Material
 {
@@ -112,6 +112,9 @@ int main()
 
     Input::Initialize(window);
 
+    // tell stb_image.h to flip loaded texture's on the y-axis (before loading model).
+    stbi_set_flip_vertically_on_load(true);
+
     try
     {
 
@@ -122,67 +125,16 @@ int main()
         float lastFrame = 0.0f;
 
         Camera camera{};
-        glm::vec3 cameraPosition = glm::vec3(0, 0, 3.0f);
+
+        // Set initial camera position (back away from origin to see the model)
+        glm::vec3 cameraPosition = glm::vec3(0.0f, 0.0f, 3.0f);
+        camera.UpdatePosition(cameraPosition);
+
         float cameraSpeed;
 
-        std::unique_ptr<Cube> mainCube = std::make_unique<Cube>();
-        if (!mainCube->Initialize())
-        {
-            std::cerr << "Error: Failed to initialize cube" << std::endl;
-            glfwTerminate();
-            return -1;
-        }
-        Shader shader{"shaders/simple.vert", "shaders/material.frag"};
-        TextureLoader textureLoader{std::vector<std::string>{"textures/box.png", "textures/box_specular.png"}};
+        Model backpackModel{"models/backpack/backpack.obj"};
 
-        // material - typical Phong material properties
-        Material material{
-            0,    // diffuse (main color)
-            1,    // specular (highlight color)
-            32.0f // shininess (higher = smaller, brighter highlight)
-        };
-
-        std::unique_ptr<Cube>
-            lightCube = std::make_unique<Cube>();
-        if (!lightCube->Initialize())
-        {
-            std::cerr << "Error: Failed to initialize cube" << std::endl;
-            glfwTerminate();
-            return -1;
-        }
-        lightCube->Translate(-5.0f, 1.0f, -4.5f);
-        Shader flatColorShader{"shaders/simple.vert", "shaders/lighting.frag"};
-
-        DirectionalLight directionalLight{
-            glm::vec3(0.2f, 0.2f, 0.2f), // ambient (usually low intensity)
-            glm::vec3(0.8f, 0.8f, 0.8f), // diffuse (main color)
-            glm::vec3(1.0f, 1.0f, 1.0f), // specular (highlight color)
-
-            glm::vec3(-0.2f, -1.0f, -0.3f)};
-
-        PointLight pointLight{
-            lightCube->GetPosition(), // position
-
-            glm::vec3(0.2f, 0.2f, 0.2f), // ambient (usually low intensity)
-            glm::vec3(0.8f, 0.8f, 0.8f), // diffuse (main color)
-            glm::vec3(1.0f, 1.0f, 1.0f), // specular (highlight color)
-
-            1.0f,   // constant
-            0.09f,  // linear
-            0.032f, // quadratic
-
-        };
-
-        SpotLight spotLight{
-            camera.GetPosition(),
-            camera.GetFront(),
-            glm::cos(glm::radians(12.5f)), // cutoff (inner cone - full brightness)
-            glm::cos(glm::radians(17.5f)), // outerCutoff (outer cone - smooth falloff to zero)
-
-            glm::vec3(0.2f, 0.2f, 0.2f), // ambient (usually low intensity)
-            glm::vec3(0.8f, 0.8f, 0.8f), // diffuse (main color)
-            glm::vec3(1.0f, 1.0f, 1.0f), // specular (highlight color)
-        };
+        Shader shader{"shaders/simple_model.vert", "shaders/simple_model.frag"};
 
         // Calculate projection matrix once (doesn't change unless window is resized)
         glm::mat4 projection = glm::perspective(
@@ -190,18 +142,6 @@ int main()
             static_cast<float>(Config::WINDOW_WIDTH) / static_cast<float>(Config::WINDOW_HEIGHT),
             Config::NEAR_PLANE,
             Config::FAR_PLANE);
-
-        glm::vec3 cubePositions[] = {
-            glm::vec3(0.0f, 0.0f, 0.0f),
-            glm::vec3(2.0f, 5.0f, -15.0f),
-            glm::vec3(-1.5f, -2.2f, -2.5f),
-            glm::vec3(-3.8f, -2.0f, -12.3f),
-            glm::vec3(2.4f, -0.4f, -3.5f),
-            glm::vec3(-1.7f, 3.0f, -7.5f),
-            glm::vec3(1.3f, -2.0f, -2.5f),
-            glm::vec3(1.5f, 2.0f, -2.5f),
-            glm::vec3(1.5f, 0.2f, -1.5f),
-            glm::vec3(-1.3f, 1.0f, -1.5f)};
 
         // Main loop
         while (!glfwWindowShouldClose(window))
@@ -244,56 +184,20 @@ int main()
             }
             camera.UpdatePosition(cameraPosition);
 
-            // Uncomment to render in wireframe mode
             // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
             shader.UseProgram();
-            textureLoader.Bind();
-            shader.SetUniformInt("material.diffuse", material.diffuse);
-            shader.SetUniformInt("material.specular", material.specular);
-            shader.SetUnifromFloat("material.shininess", material.shininess);
 
-            shader.SetUniformVec3("directionalLight.ambient", glm::value_ptr(directionalLight.ambient));
-            shader.SetUniformVec3("directionalLight.diffuse", glm::value_ptr(directionalLight.diffuse));
-            shader.SetUniformVec3("directionalLight.specular", glm::value_ptr(directionalLight.specular));
-            shader.SetUniformVec3("directionalLight.direction", glm::value_ptr(directionalLight.direction));
+            glm::mat4 view = camera.GetCameraView();
+            shader.SetUniformMatrix4FloatPtr("projection", glm::value_ptr(projection));
+            shader.SetUniformMatrix4FloatPtr("view", glm::value_ptr(view));
 
-            shader.SetUniformVec3("pointLight.position", glm::value_ptr(pointLight.position));
-            shader.SetUniformVec3("pointLight.ambient", glm::value_ptr(pointLight.ambient));
-            shader.SetUniformVec3("pointLight.diffuse", glm::value_ptr(pointLight.diffuse));
-            shader.SetUniformVec3("pointLight.specular", glm::value_ptr(pointLight.specular));
-            shader.SetUnifromFloat("pointLight.constant", pointLight.constant);
-            shader.SetUnifromFloat("pointLight.linear", pointLight.linear);
-            shader.SetUnifromFloat("pointLight.quadratic", pointLight.quadratic);
+            glm::mat4 model = glm::mat4(1.0f);
+            model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+            model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
+            shader.SetUniformMatrix4FloatPtr("model", glm::value_ptr(model));
 
-            // Update spot light to follow camera
-            spotLight.position = camera.GetPosition();
-            spotLight.direction = camera.GetFront();
-
-            shader.SetUniformVec3("spotLight.position", glm::value_ptr(spotLight.position));
-            shader.SetUniformVec3("spotLight.direction", glm::value_ptr(spotLight.direction));
-            shader.SetUnifromFloat("spotLight.cutoff", spotLight.cutoff);
-            shader.SetUnifromFloat("spotLight.outerCutoff", spotLight.outerCutoff);
-            shader.SetUniformVec3("spotLight.ambient", glm::value_ptr(spotLight.ambient));
-            shader.SetUniformVec3("spotLight.diffuse", glm::value_ptr(spotLight.diffuse));
-            shader.SetUniformVec3("spotLight.specular", glm::value_ptr(spotLight.specular));
-
-            for (unsigned int i = 0; i < 10; i++)
-            {
-                mainCube->ResetPosition();
-                mainCube->Translate(cubePositions[i].x, cubePositions[i].y, cubePositions[i].z);
-                float angle = 20.0f * i;
-                mainCube->Rotate(angle, 1.0f, 0.3f, 0.5f);
-                shader.SetUniformMatrix4FloatPtr("projection", glm::value_ptr(projection));
-                shader.SetUniformMatrix4FloatPtr("view", glm::value_ptr(camera.GetCameraView()));
-                shader.SetUniformVec3("viewPos", glm::value_ptr(camera.GetPosition()));
-                mainCube->Render(&shader);
-            }
-
-            flatColorShader.UseProgram();
-            flatColorShader.SetUniformMatrix4FloatPtr("projection", glm::value_ptr(projection));
-            flatColorShader.SetUniformMatrix4FloatPtr("view", glm::value_ptr(camera.GetCameraView()));
-            lightCube->Render(&flatColorShader);
+            backpackModel.Draw(shader);
 
             // Swap buffers and poll events
             glfwSwapBuffers(window);

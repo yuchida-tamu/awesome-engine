@@ -31,9 +31,10 @@ add_executable(awesome-engine
     src/shaders/Shader.cpp
     vendor/loader/src/stb_image.cpp
     src/cameras/Camera.cpp
-    src/meshes/Cube.cpp
     src/core/TextureLoader.cpp
-)
+    src/meshes/Model.cpp
+    src/meshes/Mesh.cpp
+    )
 
 # Tell our target where to find its public header files
 # This is especially important for IntelliSense to work correctly
@@ -57,14 +58,6 @@ target_link_libraries(awesome-engine PRIVATE glfw OpenGL::GL)
 # Link Assimp if available
 if(assimp_FOUND)
     target_link_libraries(awesome-engine PRIVATE assimp::assimp)
-    
-    # On macOS, set RPATH so the executable can find the library at runtime
-    if(APPLE)
-        set_target_properties(awesome-engine PROPERTIES
-            INSTALL_RPATH "@executable_path"
-            BUILD_WITH_INSTALL_RPATH TRUE
-        )
-    endif()
 endif()
 
 
@@ -105,18 +98,73 @@ foreach(TEXTURE_FILE ${TEXTURE_FILES})
     )
 endforeach()
 
-# Copy Assimp library to bin directory for runtime (if using manual library)
-# Note: If using Homebrew's Assimp, the RPATH should handle finding it automatically
-# But if you need to copy it, uncomment and adjust the path below:
-# if(assimp_FOUND AND EXISTS ${assimp_LIBRARIES})
-#     add_custom_command(
-#         TARGET awesome-engine POST_BUILD
-#         COMMAND ${CMAKE_COMMAND} -E copy
-#         ${assimp_LIBRARIES}
-#         ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
-#         COMMENT "Copying Assimp library to bin directory"
-#     )
-# endif()
+# Define the output directory for the models
+set(MODEL_OUTPUT_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/models)
+
+# Create the output directory
+file(MAKE_DIRECTORY ${MODEL_OUTPUT_DIR})
+
+# Copy all model files recursively to bin directory (preserves subdirectories)
+# This copies the entire models folder structure
+add_custom_command(
+    TARGET awesome-engine POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_SOURCE_DIR}/assets/models
+    ${MODEL_OUTPUT_DIR}
+    COMMENT "Copying model files to bin directory"
+)
+
+# On macOS, copy Assimp library to bin directory and set RPATH
+if(APPLE AND assimp_FOUND)
+    # Get Homebrew prefix (usually /opt/homebrew or /usr/local)
+    execute_process(
+        COMMAND brew --prefix
+        OUTPUT_VARIABLE HOMEBREW_PREFIX
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    
+    # Get the actual library path (resolve symlink)
+    execute_process(
+        COMMAND python3 -c "import os; print(os.path.realpath('${HOMEBREW_PREFIX}/lib/libassimp.5.dylib'))"
+        OUTPUT_VARIABLE ASSIMP_LIB_PATH
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+    )
+    
+    # Fallback to the symlink path if Python failed
+    if(NOT ASSIMP_LIB_PATH)
+        set(ASSIMP_LIB_PATH ${HOMEBREW_PREFIX}/lib/libassimp.5.dylib)
+    endif()
+    
+    # Copy Assimp library to bin directory (copy_if_different follows symlinks)
+    add_custom_command(
+        TARGET awesome-engine POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${ASSIMP_LIB_PATH}
+        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/libassimp.5.dylib
+        COMMENT "Copying Assimp library to bin directory"
+    )
+    
+    # Re-sign the copied library with adhoc signature (required for macOS)
+    add_custom_command(
+        TARGET awesome-engine POST_BUILD
+        COMMAND codesign --force --sign - ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/libassimp.5.dylib
+        COMMENT "Re-signing Assimp library"
+    )
+    
+    # Set RPATH to @executable_path so it finds the copied library
+    set_target_properties(awesome-engine PROPERTIES
+        INSTALL_RPATH "@executable_path"
+        BUILD_WITH_INSTALL_RPATH TRUE
+    )
+    
+    # Use install_name_tool to change the library path in the binary
+    add_custom_command(
+        TARGET awesome-engine POST_BUILD
+        COMMAND install_name_tool -change "@rpath/libassimp.5.dylib" "@executable_path/libassimp.5.dylib" $<TARGET_FILE:awesome-engine>
+        COMMENT "Updating library path in binary"
+    )
+endif()
 
 # ===================================================================
 # Unit Testing Setup
