@@ -64,7 +64,9 @@ void main()
     vec3 norm = normalize(normal);
     vec3 viewDir = normalize(viewPos - fragPos);
     vec3 materialDiffuse = vec3(texture(material.diffuse, texCoord));
-    vec3 materialSpecular = vec3(texture(material.specular, texCoord));
+    // Specular textures are usually grayscale (single channel GL_RED)
+    // Sample the red channel and use it as a scalar multiplier, not as a vec3
+    float materialSpecular = texture(material.specular, texCoord).r;
     
     vec3 result = vec3(0.0);
     
@@ -78,7 +80,7 @@ void main()
     
     vec3 dirAmbient = directionalLight.ambient * materialDiffuse;
     vec3 dirDiffuse = directionalLight.diffuse * dirDiff * materialDiffuse;
-    vec3 dirSpecular = directionalLight.specular * dirSpec * materialSpecular;
+    vec3 dirSpecular = directionalLight.specular * dirSpec * materialSpecular; // materialSpecular is now a float
     
     result += dirAmbient + dirDiffuse + dirSpecular;
     
