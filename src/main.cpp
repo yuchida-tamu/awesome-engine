@@ -81,7 +81,7 @@ int main()
 
         float cameraSpeed;
 
-        Model backpackModel{"models/floor/floor.glb"};
+        Model floorModel{"models/floor/floor.glb"};
 
         Shader shader{"shaders/simple_model.vert", "shaders/simple_model.frag"};
 
@@ -146,7 +146,7 @@ int main()
             model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
             shader.SetUniformMatrix4FloatPtr("model", glm::value_ptr(model));
 
-            backpackModel.Draw(shader);
+            floorModel.Draw(shader);
 
             // Swap buffers and poll events
             glfwSwapBuffers(window);
