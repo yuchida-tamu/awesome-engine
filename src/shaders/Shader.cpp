@@ -103,7 +103,14 @@ GLint Shader::GetUniformLocation(const std::string &name)
 void Shader::SetUniformInt(const std::string &name, int value)
 {
     GLint location = GetUniformLocation(name);
-    glUniform1i(location, value);
+    if (location != -1)
+    {
+        glUniform1i(location, value);
+    }
+    else
+    {
+        std::cerr << "Warning: Uniform '" << name << "' not found or not used in shader." << std::endl;
+    }
 }
 
 void Shader::SetUnifromFloat(const std::string &name, float value)

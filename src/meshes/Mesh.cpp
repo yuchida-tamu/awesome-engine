@@ -70,6 +70,8 @@ void Mesh::Draw(Shader &shader)
 
     unsigned int diffuseNr = 1;
     unsigned int specularNr = 1;
+    bool hasDiffuseTexture = false;
+
     for (unsigned int i = 0; i < m_textures.size(); i++)
     {
         // Skip invalid texture IDs (0 means texture failed to load)
@@ -78,24 +80,57 @@ void Mesh::Draw(Shader &shader)
             continue;
         }
 
-        glActiveTexture(GL_TEXTURE0 + i); // activate proper texture unit before binding
         // retrieve texture number (the N in diffuse_textureN)
         std::string number;
         std::string name = m_textures[i].type;
+        std::string uniformName;
+
         if (name == "texture_diffuse")
+        {
             number = std::to_string(diffuseNr++);
+            uniformName = name + number; // "texture_diffuse1"
+            hasDiffuseTexture = true;
+        }
         else if (name == "texture_specular")
+        {
             number = std::to_string(specularNr++);
+            uniformName = name + number; // "texture_specular1"
+        }
         else
         {
             std::cerr << "[DEBUG] Error Unknown texture type is specified: " << name << std::endl;
             continue; // Skip unknown texture types
         }
 
-        shader.SetUniformInt(("material." + name + number).c_str(), i);
+        // Activate texture unit and bind texture
+        glActiveTexture(GL_TEXTURE0 + i);
         glBindTexture(GL_TEXTURE_2D, m_textures[i].id);
+
+        // Set uniform - shader expects "texture_diffuse1", not "material.texture_diffuse1"
+        shader.SetUniformInt(uniformName.c_str(), i);
     }
-    glActiveTexture(GL_TEXTURE0);
+
+    // If no diffuse texture was found, bind a default white texture
+    if (!hasDiffuseTexture)
+    {
+        static unsigned int defaultTexture = 0;
+        if (defaultTexture == 0)
+        {
+            glGenTextures(1, &defaultTexture);
+            glBindTexture(GL_TEXTURE_2D, defaultTexture);
+            unsigned char whitePixel[] = {255, 255, 255, 255};
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, whitePixel);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        }
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, defaultTexture);
+        shader.SetUniformInt("texture_diffuse1", 0);
+    }
+    else
+    {
+        glActiveTexture(GL_TEXTURE0);
+    }
 
     // draw mesh
     // Binding VAO automatically binds the EBO that was bound when VAO was created

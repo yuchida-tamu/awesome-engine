@@ -30,6 +30,7 @@ void Model::loadModel(std::string path)
         std::cout << "ERROR::ASSIMP::" << import.GetErrorString() << std::endl;
         return;
     }
+    m_scene = scene; // Store scene pointer for embedded texture access
     m_directory = path.substr(0, path.find_last_of('/'));
     processNode(scene->mRootNode, scene);
 }
@@ -132,9 +133,22 @@ std::vector<Mesh::Texture> Model::loadMaterialTextures(aiMaterial *material, aiT
         if (!skip)
         {
             Mesh::Texture texture;
-            texture.id = loadTextureFromFile(str.C_Str(), m_directory, false);
             texture.type = typeName;
             texture.path = str.C_Str();
+
+            // Check if texture is embedded (GLB files often have embedded textures)
+            // Embedded textures have paths starting with '*'
+            if (str.C_Str()[0] == '*')
+            {
+                // Embedded texture - load from Assimp's embedded texture data
+                texture.id = loadEmbeddedTexture(str.C_Str(), material, type, i);
+            }
+            else
+            {
+                // External texture file - load from disk
+                texture.id = loadTextureFromFile(str.C_Str(), m_directory, false);
+            }
+
             textures.push_back(texture);
             m_loadedTextures.push_back(texture);
         }
@@ -178,4 +192,105 @@ unsigned int Model::loadTextureFromFile(const char *path, const std::string &dir
     }
     stbi_image_free(data);
     return textureID;
+}
+
+unsigned int Model::loadEmbeddedTexture(const char *path, aiMaterial *material, aiTextureType type, unsigned int index)
+{
+    // Embedded textures in GLB files have paths like "*0", "*1", etc.
+    // The number indicates the index in the scene's embedded textures array
+
+    // Parse the index from path like "*0" -> index 0
+    unsigned int textureIndex = 0;
+    if (path[0] == '*' && path[1] >= '0' && path[1] <= '9')
+    {
+        textureIndex = path[1] - '0';
+    }
+    else
+    {
+        std::cerr << "Invalid embedded texture path format: " << path << std::endl;
+        return 0;
+    }
+
+    // Get embedded texture from scene's embedded textures array
+    if (m_scene && textureIndex < m_scene->mNumTextures)
+    {
+        aiTexture *tex = m_scene->mTextures[textureIndex];
+
+        if (tex && tex->mHeight == 0)
+        {
+            // Compressed texture data (mHeight == 0 means compressed format like PNG/JPG)
+            // mWidth stores the data length for compressed textures
+            unsigned int textureID;
+            glGenTextures(1, &textureID);
+
+            int width, height, nrComponents;
+            unsigned char *data = stbi_load_from_memory(
+                reinterpret_cast<unsigned char *>(tex->pcData),
+                tex->mWidth, // mWidth stores the data length for compressed textures
+                &width,
+                &height,
+                &nrComponents,
+                0);
+
+            if (data)
+            {
+                GLenum format;
+                if (nrComponents == 1)
+                    format = GL_RED;
+                else if (nrComponents == 3)
+                    format = GL_RGB;
+                else if (nrComponents == 4)
+                    format = GL_RGBA;
+                else
+                {
+                    std::cerr << "Unsupported embedded texture format with " << nrComponents << " components" << std::endl;
+                    stbi_image_free(data);
+                    glDeleteTextures(1, &textureID);
+                    return 0;
+                }
+
+                glBindTexture(GL_TEXTURE_2D, textureID);
+                glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+                glGenerateMipmap(GL_TEXTURE_2D);
+
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+                stbi_image_free(data);
+                std::cout << "[DEBUG] Loaded embedded compressed texture: " << path << " (" << width << "x" << height << ")" << std::endl;
+                return textureID;
+            }
+            else
+            {
+                std::cerr << "Failed to decode embedded texture data: " << path << std::endl;
+                glDeleteTextures(1, &textureID);
+                return 0;
+            }
+        }
+        else if (tex && tex->mHeight > 0)
+        {
+            // Uncompressed texture data (mHeight > 0 means uncompressed RGBA)
+            unsigned int textureID;
+            glGenTextures(1, &textureID);
+
+            glBindTexture(GL_TEXTURE_2D, textureID);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex->mWidth, tex->mHeight, 0,
+                         GL_RGBA, GL_UNSIGNED_BYTE, tex->pcData);
+            glGenerateMipmap(GL_TEXTURE_2D);
+
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+            std::cout << "[DEBUG] Loaded embedded uncompressed texture: " << path << " ("
+                      << tex->mWidth << "x" << tex->mHeight << ")" << std::endl;
+            return textureID;
+        }
+    }
+
+    std::cerr << "Failed to load embedded texture: " << path << std::endl;
+    return 0;
 }

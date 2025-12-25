@@ -17,57 +17,6 @@
 #include "meshes/Model.h"
 #include "stb_image.h"
 
-struct Material
-{
-    unsigned int diffuse;
-    unsigned int specular;
-
-    float shininess;
-};
-
-struct Light
-{
-    glm::vec3 ambient;
-    glm::vec3 diffuse;
-    glm::vec3 specular;
-
-    glm::vec3 position;
-};
-
-struct DirectionalLight
-{
-    glm::vec3 ambient;
-    glm::vec3 diffuse;
-    glm::vec3 specular;
-
-    glm::vec3 direction;
-};
-
-struct PointLight
-{
-    glm::vec3 position;
-
-    glm::vec3 ambient;
-    glm::vec3 diffuse;
-    glm::vec3 specular;
-
-    float constant;
-    float linear;
-    float quadratic;
-};
-
-struct SpotLight
-{
-    glm::vec3 position;
-    glm::vec3 direction;
-    float cutoff;
-    float outerCutoff;
-
-    glm::vec3 ambient;
-    glm::vec3 diffuse;
-    glm::vec3 specular;
-};
-
 void error_callback(int error, const char *description)
 {
     std::cerr << "GLFW Error: " << description << std::endl;
@@ -132,7 +81,7 @@ int main()
 
         float cameraSpeed;
 
-        Model backpackModel{"models/backpack/backpack.obj"};
+        Model backpackModel{"models/floor/floor.glb"};
 
         Shader shader{"shaders/simple_model.vert", "shaders/simple_model.frag"};
 
