@@ -68,6 +68,7 @@ int main()
     {
 
         glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LESS);
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
         float deltaTime = 0.0f;
@@ -85,11 +86,11 @@ int main()
         Model block1{"models/block/block.glb"};
 
         glm::vec3 blockPositions[2] = {
-            glm::vec3(2.5f, 1.0f, -3.5f),
-            glm::vec3(6.0f, 1.0f, -8.0f),
+            glm::vec3(1.5f, 1.0f, -0.5f),
+            glm::vec3(8.0f, 1.0f, -15.0f),
         };
 
-        Shader shader{"shaders/simple_model.vert", "shaders/simple_model.frag"};
+        Shader shader{"shaders/simple_model.vert", "shaders/fog.frag"};
 
         // Calculate projection matrix once (doesn't change unless window is resized)
         glm::mat4 projection = glm::perspective(
