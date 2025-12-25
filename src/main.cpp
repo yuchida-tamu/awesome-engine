@@ -76,12 +76,18 @@ int main()
         Camera camera{};
 
         // Set initial camera position (back away from origin to see the model)
-        glm::vec3 cameraPosition = glm::vec3(0.0f, 0.0f, 3.0f);
+        glm::vec3 cameraPosition = glm::vec3(0.0f, 2.0f, 5.0f);
         camera.UpdatePosition(cameraPosition);
 
         float cameraSpeed;
 
         Model floorModel{"models/floor/floor.glb"};
+        Model block1{"models/block/block.glb"};
+
+        glm::vec3 blockPositions[2] = {
+            glm::vec3(2.5f, 1.0f, -3.5f),
+            glm::vec3(6.0f, 1.0f, -8.0f),
+        };
 
         Shader shader{"shaders/simple_model.vert", "shaders/simple_model.frag"};
 
@@ -143,10 +149,20 @@ int main()
 
             glm::mat4 model = glm::mat4(1.0f);
             model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+            model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
             model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
             shader.SetUniformMatrix4FloatPtr("model", glm::value_ptr(model));
 
             floorModel.Draw(shader);
+
+            for (const glm::vec3 pos : blockPositions)
+            {
+                glm::mat4 blockModel = glm::mat4(1.0f);
+                blockModel = glm::translate(blockModel, pos);
+                blockModel = glm::rotate(blockModel, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+                shader.SetUniformMatrix4FloatPtr("model", glm::value_ptr(blockModel));
+                block1.Draw(shader);
+            }
 
             // Swap buffers and poll events
             glfwSwapBuffers(window);
