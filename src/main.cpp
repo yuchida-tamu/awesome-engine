@@ -66,9 +66,6 @@ int main()
 
     try
     {
-
-        glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_LESS);
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
         float deltaTime = 0.0f;
@@ -92,6 +89,8 @@ int main()
 
         Shader shader{"shaders/simple_model.vert", "shaders/fog.frag"};
 
+        Shader borderShader{"shaders/simple_model.vert", "shaders/border.frag"};
+
         // Calculate projection matrix once (doesn't change unless window is resized)
         glm::mat4 projection = glm::perspective(
             glm::radians(Config::FOV),
@@ -102,9 +101,15 @@ int main()
         // Main loop
         while (!glfwWindowShouldClose(window))
         {
+            glEnable(GL_STENCIL_TEST);
+            glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
+            glEnable(GL_DEPTH_TEST);
+            glDepthFunc(GL_LESS);
+
             // Clear the screen (black)
             glClearColor(0.2f, 0.25f, 0.27f, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
             float currentFrame = glfwGetTime();
             deltaTime = currentFrame - lastFrame;
@@ -143,7 +148,6 @@ int main()
             // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
             shader.UseProgram();
-
             glm::mat4 view = camera.GetCameraView();
             shader.SetUniformMatrix4FloatPtr("projection", glm::value_ptr(projection));
             shader.SetUniformMatrix4FloatPtr("view", glm::value_ptr(view));
@@ -154,8 +158,11 @@ int main()
             model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
             shader.SetUniformMatrix4FloatPtr("model", glm::value_ptr(model));
 
+            glStencilMask(0x00);
             floorModel.Draw(shader);
 
+            glStencilFunc(GL_ALWAYS, 1, 0xFF);
+            glStencilMask(0xFF);
             for (const glm::vec3 pos : blockPositions)
             {
                 glm::mat4 blockModel = glm::mat4(1.0f);
@@ -164,6 +171,27 @@ int main()
                 shader.SetUniformMatrix4FloatPtr("model", glm::value_ptr(blockModel));
                 block1.Draw(shader);
             }
+
+            // Draw borders for the boxes
+            glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+            glStencilMask(0x00);
+            glDisable(GL_DEPTH_TEST); // Disabling depth test to prevent these scaled up boxes to get overwritten by other objects like floor
+            borderShader.UseProgram();
+            borderShader.SetUniformMatrix4FloatPtr("projection", glm::value_ptr(projection));
+            borderShader.SetUniformMatrix4FloatPtr("view", glm::value_ptr(view));
+            for (const glm::vec3 pos : blockPositions)
+            {
+                glm::mat4 border = glm::mat4(1.0f);
+                border = glm::translate(border, pos);
+                border = glm::rotate(border, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+                border = glm::scale(border, glm::vec3(1.01f, 1.01f, 1.01f));
+                shader.SetUniformMatrix4FloatPtr("model", glm::value_ptr(border));
+                block1.Draw(shader);
+            }
+
+            glStencilMask(0xFF);
+            glStencilFunc(GL_ALWAYS, 1, 0xFF);
+            glEnable(GL_DEPTH_TEST);
 
             // Swap buffers and poll events
             glfwSwapBuffers(window);
