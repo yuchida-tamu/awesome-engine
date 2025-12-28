@@ -34,7 +34,8 @@ add_executable(awesome-engine
     src/core/TextureLoader.cpp
     src/meshes/Model.cpp
     src/meshes/Mesh.cpp
-    )
+    src/meshes/Cube.cpp
+)
 
 # Tell our target where to find its public header files
 # This is especially important for IntelliSense to work correctly
