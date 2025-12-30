@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-#include "shaders/Shader.h"
+#include "rendering/Shader.h"
 
 class Mesh
 {

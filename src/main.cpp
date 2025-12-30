@@ -11,7 +11,7 @@
 #include "core/Input.h"
 #include "core/TextureLoader.h"
 
-#include "shaders/Shader.h"
+#include "rendering/Shader.h"
 #include "cameras/Camera.h"
 
 #include "meshes/Model.h"

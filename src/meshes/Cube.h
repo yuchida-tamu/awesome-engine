@@ -2,7 +2,7 @@
 
 #include "Mesh.h"
 #include "core/TextureLoader.h"
-#include "shaders/Shader.h"
+#include "rendering/Shader.h"
 
 class Cube
 {

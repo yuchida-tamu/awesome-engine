@@ -8,7 +8,7 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
-#include "shaders/Shader.h"
+#include "rendering/Shader.h"
 #include "meshes/Mesh.h"
 
 #include "stb_image.h"

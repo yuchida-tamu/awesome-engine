@@ -28,7 +28,7 @@ add_executable(awesome-engine
     src/main.cpp
     src/core/Input.cpp
     vendor/glad/src/glad.c
-    src/shaders/Shader.cpp
+    src/rendering/Shader.cpp
     vendor/loader/src/stb_image.cpp
     src/cameras/Camera.cpp
     src/core/TextureLoader.cpp
