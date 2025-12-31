@@ -12,6 +12,8 @@
 #include "core/TextureLoader.h"
 
 #include "rendering/Shader.h"
+#include "rendering/PostProcessing.h"
+#include "rendering/PostProcessBlurEffectStrategy.h"
 #include "cameras/Camera.h"
 
 #include "meshes/Model.h"
@@ -97,7 +99,6 @@ int main()
 
         Shader blendingShader{"shaders/simple_model.vert", "shaders/blending.frag"};
         Shader borderShader{"shaders/simple_model.vert", "shaders/border.frag"};
-        Shader screenShader("shaders/simple.vert", "shaders/simple.frag");
 
         Cube cube("textures/container.png");
 
@@ -108,72 +109,8 @@ int main()
             Config::NEAR_PLANE,
             Config::FAR_PLANE);
 
-        // Create Frame Buffer
-        unsigned int FBO;
-        glGenFramebuffers(1, &FBO);
-        glBindFramebuffer(GL_FRAMEBUFFER, FBO);
-
-        unsigned int textureBuffer;
-        glGenTextures(1, &textureBuffer);
-        glBindTexture(GL_TEXTURE_2D, textureBuffer);
-
-        // We are setting NULL as the texture's data because it is just allocating memory here at this point.
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, Config::WINDOW_WIDTH, Config::WINDOW_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glBindTexture(GL_TEXTURE_2D, 0);
-
-        // Attached the allocated texture memory to the framebuffer, which is one of the requirements
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureBuffer, 0);
-
-        // Create Render buffer
-        unsigned int RBO;
-        glGenRenderbuffers(1, &RBO);
-        glBindRenderbuffer(GL_RENDERBUFFER, RBO);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, Config::WINDOW_WIDTH, Config::WINDOW_HEIGHT);
-        glBindRenderbuffer(GL_RENDERBUFFER, 0);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, RBO);
-
-        // Check the status of the currently bound framebuffer. Framebuffer needs to meet its requirements to be used
-        // - We have to attach at least one buffer (color, depth or stencil buffer).
-        // - There should be at least one color attachment.
-        // - All attachments should be complete as well(reserved memory).
-        // - Each buffer should have the same number of samples.
-        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-        {
-            std::cerr << "ERROR::FRAMEBUFFER:: Framebuffer is not complete" << std::endl;
-        }
-
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-        float screenVertices[] = {
-            // Triangle 1
-            1.0f, 1.0f, 0.0f, 1.0f, 1.0f,   // Top-right
-            -1.0f, 1.0f, 0.0f, 0.0f, 1.0f,  // Top-left
-            -1.0f, -1.0f, 0.0f, 0.0f, 0.0f, // Bottom-left
-
-            // Triangle 2
-            -1.0f, -1.0f, 0.0f, 0.0f, 0.0f, // Bottom-left
-            1.0f, -1.0f, 0.0f, 1.0f, 0.0f,  // Bottom-right
-            1.0f, 1.0f, 0.0f, 1.0f, 1.0f,   // Top-right
-        };
-
-        unsigned int VAO, VBO;
-        glGenVertexArrays(1, &VAO);
-        glBindVertexArray(VAO);
-        glGenBuffers(1, &VBO);
-        glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(screenVertices), screenVertices, GL_STATIC_DRAW);
-
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
-        glEnableVertexAttribArray(0);
-
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)(3 * sizeof(float)));
-        glEnableVertexAttribArray(1);
-
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindVertexArray(0);
-
+        PostProcessing postprocess{};
+        postprocess.SetStrategy(std::make_unique<PostProcessBlurEffectStrategy>());
         // Main loop
         while (!glfwWindowShouldClose(window))
         {
@@ -211,12 +148,8 @@ int main()
             }
             camera.UpdatePosition(cameraPosition);
 
-            glBindFramebuffer(GL_FRAMEBUFFER, FBO);
-            // Clear the screen (black)
-            glEnable(GL_CULL_FACE);
-            glEnable(GL_DEPTH_TEST);
-            glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+            // Render scene to framebuffer
+            postprocess.Begin();
             // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
             shader.UseProgram();
@@ -238,15 +171,8 @@ int main()
             shader.SetUniformMatrix4FloatPtr("model", glm::value_ptr(cubeModel));
             cube.Draw(shader);
 
-            glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default
-            glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT);
-
-            screenShader.UseProgram();
-            glBindVertexArray(VAO);
-            glDisable(GL_DEPTH_TEST);
-            glBindTexture(GL_TEXTURE_2D, textureBuffer);
-            glDrawArrays(GL_TRIANGLES, 0, 6);
+            // Apply post-processing effects
+            postprocess.End();
 
             // Swap buffers and poll events
             glfwSwapBuffers(window);

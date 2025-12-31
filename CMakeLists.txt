@@ -35,6 +35,8 @@ add_executable(awesome-engine
     src/meshes/Model.cpp
     src/meshes/Mesh.cpp
     src/meshes/Cube.cpp
+    src/rendering/PostProcessing.cpp
+    src/rendering/PostProcessBlurEffectStrategy.cpp
 )
 
 # Tell our target where to find its public header files
