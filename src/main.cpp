@@ -272,18 +272,6 @@ int main()
             postprocess.Begin();
             // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-            glDepthFunc(GL_LEQUAL);
-            glDepthMask(GL_FALSE);
-            skyboxShader.UseProgram();
-            skyboxShader.SetUniformMatrix4FloatPtr("projection", glm::value_ptr(projection));
-            skyboxShader.SetUniformMatrix4FloatPtr("view", glm::value_ptr(glm::mat4(glm::mat3(view))));
-            glBindVertexArray(skyboxVAO);
-            glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
-            glDrawArrays(GL_TRIANGLES, 0, 36);
-            glBindVertexArray(0);
-            glDepthMask(GL_TRUE);
-            glDepthFunc(GL_LESS);
-
             shader.UseProgram();
             shader.SetUniformMatrix4FloatPtr("projection", glm::value_ptr(projection));
             // remove the translation section of transformation matrices by taking the upper-left 3x3 matrix of the 4x4 matrix.
@@ -302,6 +290,19 @@ int main()
             cubeModel = glm::translate(cubeModel, glm::vec3(3.0f, 0.5f, -3.0f));
             shader.SetUniformMatrix4FloatPtr("model", glm::value_ptr(cubeModel));
             cube.Draw(shader);
+
+            // Draw skybox at last for performance
+            glDepthFunc(GL_LEQUAL);
+            glDepthMask(GL_FALSE);
+            skyboxShader.UseProgram();
+            skyboxShader.SetUniformMatrix4FloatPtr("projection", glm::value_ptr(projection));
+            skyboxShader.SetUniformMatrix4FloatPtr("view", glm::value_ptr(glm::mat4(glm::mat3(view))));
+            glBindVertexArray(skyboxVAO);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+            glBindVertexArray(0);
+            glDepthMask(GL_TRUE);
+            glDepthFunc(GL_LESS);
 
             // Apply post-processing effects
             postprocess.End();
