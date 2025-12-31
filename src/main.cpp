@@ -14,6 +14,8 @@
 #include "rendering/Shader.h"
 #include "rendering/PostProcessing.h"
 #include "rendering/PostProcessBlurEffectStrategy.h"
+#include "rendering/PostProcessInvertEffectStrategy.h"
+#include "rendering/PostProcessEdgeEffectStrategy.h"
 #include "cameras/Camera.h"
 
 #include "meshes/Model.h"
@@ -110,7 +112,6 @@ int main()
             Config::FAR_PLANE);
 
         PostProcessing postprocess{};
-        postprocess.SetStrategy(std::make_unique<PostProcessBlurEffectStrategy>());
         // Main loop
         while (!glfwWindowShouldClose(window))
         {
@@ -146,6 +147,27 @@ int main()
             {
                 cameraPosition = camera.GetPosition() + camera.GetRight() * cameraSpeed;
             }
+
+            if (Input::IsKeyHeld(GLFW_KEY_0))
+            {
+                postprocess.ClearStrategy();
+            }
+
+            if (Input::IsKeyHeld(GLFW_KEY_1))
+            {
+                postprocess.SetStrategy(std::make_unique<PostProcessBlurEffectStrategy>());
+            }
+
+            if (Input::IsKeyHeld(GLFW_KEY_2))
+            {
+                postprocess.SetStrategy(std::make_unique<PostProcessInvertEffectStrategy>());
+            }
+
+            if (Input::IsKeyHeld(GLFW_KEY_3))
+            {
+                postprocess.SetStrategy(std::make_unique<PostProcessEdgeEffectStrategy>());
+            }
+
             camera.UpdatePosition(cameraPosition);
 
             // Render scene to framebuffer

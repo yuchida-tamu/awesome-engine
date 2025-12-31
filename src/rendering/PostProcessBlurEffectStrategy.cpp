@@ -1,7 +1,7 @@
 #include "rendering/PostProcessBlurEffectStrategy.h"
 #include <iostream>
 
-PostProcessBlurEffectStrategy::PostProcessBlurEffectStrategy() : m_shader(Shader{"shaders/postprocess_blur.vert", "shaders/postprocess_blur.frag"})
+PostProcessBlurEffectStrategy::PostProcessBlurEffectStrategy() : m_shader(Shader{"shaders/postprocess_common.vert", "shaders/postprocess_blur.frag"})
 {
 }
 PostProcessBlurEffectStrategy::~PostProcessBlurEffectStrategy()

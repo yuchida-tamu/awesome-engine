@@ -130,3 +130,8 @@ void PostProcessing::SetStrategy(std::unique_ptr<IPostProcessEffectStrategy> str
 {
     m_strategy = std::move(strategy);
 }
+
+void PostProcessing::ClearStrategy()
+{
+    m_strategy = nullptr;
+}

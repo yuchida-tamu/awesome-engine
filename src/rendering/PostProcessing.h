@@ -16,6 +16,7 @@ public:
     ~PostProcessing();
 
     void SetStrategy(std::unique_ptr<IPostProcessEffectStrategy> strategy);
+    void ClearStrategy();
     void Begin();
     void End();
 
