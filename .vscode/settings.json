@@ -57,5 +57,5 @@
     "charconv": "cpp",
     "forward_list": "cpp"
   },
-  "cSpell.words": ["OPENGL"]
+  "cSpell.words": ["OPENGL", "skybox", "skymap"]
 }

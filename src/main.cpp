@@ -5,6 +5,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <cstddef>
 
 // Core
 #include "core/Config.h"
@@ -22,6 +23,83 @@
 #include "meshes/Mesh.h"
 #include "stb_image.h"
 #include "meshes/Cube.h"
+
+float skyboxVertices[] = {
+    // positions
+    -1.0f, 1.0f, -1.0f,
+    -1.0f, -1.0f, -1.0f,
+    1.0f, -1.0f, -1.0f,
+    1.0f, -1.0f, -1.0f,
+    1.0f, 1.0f, -1.0f,
+    -1.0f, 1.0f, -1.0f,
+
+    -1.0f, -1.0f, 1.0f,
+    -1.0f, -1.0f, -1.0f,
+    -1.0f, 1.0f, -1.0f,
+    -1.0f, 1.0f, -1.0f,
+    -1.0f, 1.0f, 1.0f,
+    -1.0f, -1.0f, 1.0f,
+
+    1.0f, -1.0f, -1.0f,
+    1.0f, -1.0f, 1.0f,
+    1.0f, 1.0f, 1.0f,
+    1.0f, 1.0f, 1.0f,
+    1.0f, 1.0f, -1.0f,
+    1.0f, -1.0f, -1.0f,
+
+    -1.0f, -1.0f, 1.0f,
+    -1.0f, 1.0f, 1.0f,
+    1.0f, 1.0f, 1.0f,
+    1.0f, 1.0f, 1.0f,
+    1.0f, -1.0f, 1.0f,
+    -1.0f, -1.0f, 1.0f,
+
+    -1.0f, 1.0f, -1.0f,
+    1.0f, 1.0f, -1.0f,
+    1.0f, 1.0f, 1.0f,
+    1.0f, 1.0f, 1.0f,
+    -1.0f, 1.0f, 1.0f,
+    -1.0f, 1.0f, -1.0f,
+
+    -1.0f, -1.0f, -1.0f,
+    -1.0f, -1.0f, 1.0f,
+    1.0f, -1.0f, -1.0f,
+    1.0f, -1.0f, -1.0f,
+    -1.0f, -1.0f, 1.0f,
+    1.0f, -1.0f, 1.0f};
+
+unsigned int loadCubemap(std::vector<std::string> faces)
+{
+    unsigned int textureID;
+    stbi_set_flip_vertically_on_load(false);
+
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+
+    int width, height, nrChannels;
+    for (unsigned int i = 0; i < faces.size(); i++)
+    {
+        unsigned char *data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+        if (data)
+        {
+            // Targets for GL_TEXTURE_CUBE_MAP, which is int, is linearly incremented, so we can increment a value of GL_TEXTURE_CUBE_MAP_POSITIVE_X
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+            stbi_image_free(data);
+        }
+        else
+        {
+            std::cerr << "ERROR: Cubemap texture failed to load at path: " << faces[i] << std::endl;
+        }
+    }
+
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    return textureID;
+}
 
 void error_callback(int error, const char *description)
 {
@@ -98,11 +176,29 @@ int main()
         };
 
         Shader shader{"shaders/simple_model.vert", "shaders/fog.frag"};
-
-        Shader blendingShader{"shaders/simple_model.vert", "shaders/blending.frag"};
-        Shader borderShader{"shaders/simple_model.vert", "shaders/border.frag"};
-
         Cube cube("textures/container.png");
+
+        Shader skyboxShader{"shaders/skybox.vert", "shaders/skybox.frag"};
+
+        std::vector<std::string> faces{
+            "textures/skybox/right.jpg",
+            "textures/skybox/left.jpg",
+            "textures/skybox/top.jpg",
+            "textures/skybox/bottom.jpg",
+            "textures/skybox/front.jpg",
+            "textures/skybox/back.jpg",
+        };
+
+        unsigned int cubemapTexture = loadCubemap(faces);
+
+        unsigned int skyboxVAO, skyboxVBO;
+        glGenVertexArrays(1, &skyboxVAO);
+        glGenBuffers(1, &skyboxVBO);
+        glBindVertexArray(skyboxVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
 
         // Calculate projection matrix once (doesn't change unless window is resized)
         glm::mat4 projection = glm::perspective(
@@ -170,21 +266,35 @@ int main()
 
             camera.UpdatePosition(cameraPosition);
 
+            glm::mat4 view = camera.GetCameraView();
+
             // Render scene to framebuffer
             postprocess.Begin();
             // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
+            glDepthFunc(GL_LEQUAL);
+            glDepthMask(GL_FALSE);
+            skyboxShader.UseProgram();
+            skyboxShader.SetUniformMatrix4FloatPtr("projection", glm::value_ptr(projection));
+            skyboxShader.SetUniformMatrix4FloatPtr("view", glm::value_ptr(glm::mat4(glm::mat3(view))));
+            glBindVertexArray(skyboxVAO);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+            glBindVertexArray(0);
+            glDepthMask(GL_TRUE);
+            glDepthFunc(GL_LESS);
+
             shader.UseProgram();
-            glm::mat4 view = camera.GetCameraView();
             shader.SetUniformMatrix4FloatPtr("projection", glm::value_ptr(projection));
+            // remove the translation section of transformation matrices by taking the upper-left 3x3 matrix of the 4x4 matrix.
             shader.SetUniformMatrix4FloatPtr("view", glm::value_ptr(view));
 
             glm::mat4 model = glm::mat4(1.0f);
             model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
             model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
             model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
-            shader.SetUniformMatrix4FloatPtr("model", glm::value_ptr(model));
 
+            shader.SetUniformMatrix4FloatPtr("model", glm::value_ptr(model));
             // glStencilMask(0x00);
             floorModel.Draw(shader);
 
