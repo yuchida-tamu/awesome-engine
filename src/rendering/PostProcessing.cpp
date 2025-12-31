@@ -93,7 +93,16 @@ PostProcessing::~PostProcessing()
 
 void PostProcessing::Begin()
 {
-    glBindFramebuffer(GL_FRAMEBUFFER, m_FBO);
+    if (!m_strategy)
+    {
+        std::cout << "[DEBUG] No PostProcess Effect is set" << std::endl;
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+    else
+    {
+        glBindFramebuffer(GL_FRAMEBUFFER, m_FBO);
+    }
     // Clear the screen (black)
     glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
@@ -107,13 +116,11 @@ void PostProcessing::End()
     if (!m_strategy)
     {
         std::cout << "[DEBUG] No PostProcess Effect is set" << std::endl;
-    }
-    else
-    {
-        // use default frame buffer
-        m_strategy->Apply(0);
+        return;
     }
 
+    // use default frame buffer
+    m_strategy->Apply(0);
     glBindVertexArray(m_VAO);
     glBindTexture(GL_TEXTURE_2D, m_texture);
     glDrawArrays(GL_TRIANGLES, 0, 6);
