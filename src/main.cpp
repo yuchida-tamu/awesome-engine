@@ -179,6 +179,7 @@ int main()
         Shader skyboxShader{"shaders/skybox.vert", "shaders/skybox.frag"};
         Shader backpackShader{"shaders/simple_model.vert", "shaders/simple_model.frag"};
         Shader gizmoShader("shaders/gizmo_normal.vert", "shaders/gizmo_normal.geo", "shaders/gizmo_normal.frag");
+        Shader gizmoWorldCoordinateShader("shaders/gizmo_world_coordinate.vert.glsl", "shaders/gizmo_world_coordinate.geo.glsl", "shaders/gizmo_world_coordinate.frag.glsl");
 
         Model backpack("models/backpack/backpack.obj");
         Cube cube("textures/container.png");
@@ -202,6 +203,20 @@ int main()
         glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+        glBindVertexArray(0);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+        unsigned int gizmoVAO, gizmoVBO;
+        float gizmoVertex[] = {0.0, 0.0, 0.0};
+        glGenVertexArrays(1, &gizmoVAO);
+        glGenBuffers(1, &gizmoVBO);
+        glBindVertexArray(gizmoVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, gizmoVBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(gizmoVertex), gizmoVertex, GL_STATIC_DRAW);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+        glBindVertexArray(0);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
 
         // Calculate projection matrix once (doesn't change unless window is resized)
         glm::mat4 projection = glm::perspective(
@@ -303,11 +318,19 @@ int main()
             backpackShader.SetUniformMatrix4FloatPtr("model", glm::value_ptr(backpackModel));
             backpack.Draw(backpackShader);
 
-            gizmoShader.UseProgram();
-            gizmoShader.SetUniformMatrix4FloatPtr("projection", glm::value_ptr(projection));
-            gizmoShader.SetUniformMatrix4FloatPtr("view", glm::value_ptr(view));
-            gizmoShader.SetUniformMatrix4FloatPtr("model", glm::value_ptr(backpackModel));
-            backpack.Draw(gizmoShader);
+            // gizmoShader.UseProgram();
+            // gizmoShader.SetUniformMatrix4FloatPtr("projection", glm::value_ptr(projection));
+            // gizmoShader.SetUniformMatrix4FloatPtr("view", glm::value_ptr(view));
+            // gizmoShader.SetUniformMatrix4FloatPtr("model", glm::value_ptr(backpackModel));
+            // backpack.Draw(gizmoShader);
+
+            gizmoWorldCoordinateShader.UseProgram();
+            gizmoWorldCoordinateShader.SetUniformMatrix4FloatPtr("projection", glm::value_ptr(projection));
+            gizmoWorldCoordinateShader.SetUniformMatrix4FloatPtr("view", glm::value_ptr(view));
+            glm::mat4 gizmoCenterModel = glm::mat4(1.0f);
+            gizmoWorldCoordinateShader.SetUniformMatrix4FloatPtr("model", glm::value_ptr(gizmoCenterModel));
+            glBindVertexArray(gizmoVAO);
+            glDrawArrays(GL_POINTS, 0, 1);
 
             // Draw skybox at last for performance
             glDepthFunc(GL_LEQUAL);
