@@ -176,9 +176,12 @@ int main()
         };
 
         Shader shader{"shaders/simple_model.vert", "shaders/fog.frag"};
-        Cube cube("textures/container.png");
-
         Shader skyboxShader{"shaders/skybox.vert", "shaders/skybox.frag"};
+        Shader backpackShader{"shaders/simple_model.vert", "shaders/simple_model.frag"};
+        Shader gizmoShader("shaders/gizmo_normal.vert", "shaders/gizmo_normal.geo", "shaders/gizmo_normal.frag");
+
+        Model backpack("models/backpack/backpack.obj");
+        Cube cube("textures/container.png");
 
         std::vector<std::string> faces{
             "textures/skybox/right.jpg",
@@ -290,6 +293,21 @@ int main()
             cubeModel = glm::translate(cubeModel, glm::vec3(3.0f, 0.5f, -3.0f));
             shader.SetUniformMatrix4FloatPtr("model", glm::value_ptr(cubeModel));
             cube.Draw(shader);
+
+            backpackShader.UseProgram();
+            backpackShader.SetUniformMatrix4FloatPtr("projection", glm::value_ptr(projection));
+            backpackShader.SetUniformMatrix4FloatPtr("view", glm::value_ptr(view));
+            glm::mat4 backpackModel = glm::mat4(1.0f);
+            backpackModel = glm::translate(backpackModel, glm::vec3(1.0f, 2.5f, -1.0f));
+            backpackModel = glm::scale(backpackModel, glm::vec3(1.0f, 1.0f, 1.0f));
+            backpackShader.SetUniformMatrix4FloatPtr("model", glm::value_ptr(backpackModel));
+            backpack.Draw(backpackShader);
+
+            gizmoShader.UseProgram();
+            gizmoShader.SetUniformMatrix4FloatPtr("projection", glm::value_ptr(projection));
+            gizmoShader.SetUniformMatrix4FloatPtr("view", glm::value_ptr(view));
+            gizmoShader.SetUniformMatrix4FloatPtr("model", glm::value_ptr(backpackModel));
+            backpack.Draw(gizmoShader);
 
             // Draw skybox at last for performance
             glDepthFunc(GL_LEQUAL);

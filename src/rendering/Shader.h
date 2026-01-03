@@ -13,6 +13,7 @@ class Shader
 {
 public:
     Shader(const std::string &vertexShaderPath, const std::string &fragmentShaderPath);
+    Shader(const std::string &vertexShaderPath, const std::string &geometryShaderPath, const std::string &fragmentShaderPath);
     ~Shader();
 
     // Rule of 5: Delete copy operations (OpenGL handles can't be safely copied)

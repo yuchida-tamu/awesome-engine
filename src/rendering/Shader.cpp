@@ -10,6 +10,14 @@ Shader::Shader(const std::string &vertexShaderPath, const std::string &fragmentS
     LinkProgram();
 }
 
+Shader::Shader(const std::string &vertexShaderPath, const std::string &geometryShaderPath, const std::string &fragmentShaderPath)
+{
+    AddShader(vertexShaderPath, GL_VERTEX_SHADER);
+    AddShader(geometryShaderPath, GL_GEOMETRY_SHADER);
+    AddShader(fragmentShaderPath, GL_FRAGMENT_SHADER);
+    LinkProgram();
+}
+
 void Shader::AddShader(const std::string &filepath, GLenum shaderType)
 {
     std::string shaderString = LoadFileAsString(filepath);
