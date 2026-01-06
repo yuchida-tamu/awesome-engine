@@ -6,6 +6,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
+#include <memory>
 
 // Core
 #include "core/Config.h"
@@ -17,11 +18,13 @@
 #include "rendering/PostProcessEdgeEffectStrategy.h"
 #include "rendering/PostProcessInvertEffectStrategy.h"
 #include "rendering/PostProcessing.h"
+#include "rendering/RenderContext.h"
 #include "rendering/Shader.h"
 #include "rendering/Skybox.h"
 
 #include "meshes/Cube.h"
 #include "meshes/Model.h"
+#include "scene/Entity.h"
 #include "stb_image.h"
 
 void error_callback(int error, const char *description) {
@@ -94,6 +97,8 @@ int main() {
         glm::vec3(8.0f, 1.0f, -15.0f),
     };
 
+    RenderContext renderContext;
+
     Shader shader{"shaders/simple_model.vert", "shaders/fog.frag"};
     Shader skyboxShader{"shaders/skybox.vert", "shaders/skybox.frag"};
     Shader backpackShader{"shaders/simple_model.vert",
@@ -113,8 +118,9 @@ int main() {
         "textures/skybox/top.jpg",   "textures/skybox/bottom.jpg",
         "textures/skybox/front.jpg", "textures/skybox/back.jpg",
     };
-    Skybox skybox;
-    skybox.SetTextures(faces);
+    auto skybox = std::make_unique<Skybox>();
+    skybox->SetTextures(faces);
+    Entity skyboxEntity(std::move(skybox));
 
     unsigned int gizmoVAO, gizmoVBO;
     float gizmoVertex[] = {0.0, 0.0, 0.0};
@@ -191,7 +197,8 @@ int main() {
       camera.UpdatePosition(cameraPosition);
 
       glm::mat4 view = camera.GetCameraView();
-
+      renderContext.SetProjection(projection);
+      renderContext.SetView(glm::mat4(glm::mat3(view)));  // Remove translation for skybox
       // Render scene to framebuffer
       postprocess.Begin();
       // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -200,7 +207,7 @@ int main() {
       shader.SetUniformMatrix4FloatPtr("projection",
                                        glm::value_ptr(projection));
       // remove the translation section of transformation matrices by taking the
-      // upper-left 3x3 matrix of the 4x4 matrix.
+      // upper-left 3x3 matrix the 4x4 matrix.
       shader.SetUniformMatrix4FloatPtr("view", glm::value_ptr(view));
 
       glm::mat4 model = glm::mat4(1.0f);
@@ -248,13 +255,7 @@ int main() {
       glBindVertexArray(gizmoVAO);
       glDrawArrays(GL_POINTS, 0, 1);
 
-      skyboxShader.UseProgram();
-      // Draw skybox at last for performance
-      skyboxShader.SetUniformMatrix4FloatPtr("projection",
-                                             glm::value_ptr(projection));
-      skyboxShader.SetUniformMatrix4FloatPtr(
-          "view", glm::value_ptr(glm::mat4(glm::mat3(view))));
-      skybox.Draw(skyboxShader);
+      skyboxEntity.Draw(skyboxShader, renderContext);
       // Apply post-processing effects
       postprocess.End();
 

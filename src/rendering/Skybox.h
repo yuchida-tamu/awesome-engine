@@ -1,15 +1,11 @@
 #pragma once
 
+#include "core/Drawable.h"
 #include "rendering/Shader.h"
 #include "stb_image.h"
 #include <glad/glad.h>
 #include <string>
 #include <vector>
-
-class Drawable {
-public:
-  virtual void Draw(Shader &shader) = 0;
-};
 
 class Skybox : public Drawable {
 public:
