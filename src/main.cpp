@@ -18,62 +18,11 @@
 #include "rendering/PostProcessInvertEffectStrategy.h"
 #include "rendering/PostProcessing.h"
 #include "rendering/Shader.h"
+#include "rendering/Skybox.h"
 
 #include "meshes/Cube.h"
 #include "meshes/Model.h"
 #include "stb_image.h"
-
-float skyboxVertices[] = {
-    // positions
-    -1.0f, 1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  -1.0f, -1.0f,
-    1.0f,  -1.0f, -1.0f, 1.0f,  1.0f,  -1.0f, -1.0f, 1.0f,  -1.0f,
-
-    -1.0f, -1.0f, 1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  -1.0f,
-    -1.0f, 1.0f,  -1.0f, -1.0f, 1.0f,  1.0f,  -1.0f, -1.0f, 1.0f,
-
-    1.0f,  -1.0f, -1.0f, 1.0f,  -1.0f, 1.0f,  1.0f,  1.0f,  1.0f,
-    1.0f,  1.0f,  1.0f,  1.0f,  1.0f,  -1.0f, 1.0f,  -1.0f, -1.0f,
-
-    -1.0f, -1.0f, 1.0f,  -1.0f, 1.0f,  1.0f,  1.0f,  1.0f,  1.0f,
-    1.0f,  1.0f,  1.0f,  1.0f,  -1.0f, 1.0f,  -1.0f, -1.0f, 1.0f,
-
-    -1.0f, 1.0f,  -1.0f, 1.0f,  1.0f,  -1.0f, 1.0f,  1.0f,  1.0f,
-    1.0f,  1.0f,  1.0f,  -1.0f, 1.0f,  1.0f,  -1.0f, 1.0f,  -1.0f,
-
-    -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  1.0f,  -1.0f, -1.0f,
-    1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  1.0f,  -1.0f, 1.0f};
-
-unsigned int loadCubemap(std::vector<std::string> faces) {
-  unsigned int textureID;
-  stbi_set_flip_vertically_on_load(false);
-
-  glGenTextures(1, &textureID);
-  glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
-
-  int width, height, nrChannels;
-  for (unsigned int i = 0; i < faces.size(); i++) {
-    unsigned char *data =
-        stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
-    if (data) {
-      // Targets for GL_TEXTURE_CUBE_MAP, which is int, is linearly incremented,
-      // so we can increment a value of GL_TEXTURE_CUBE_MAP_POSITIVE_X
-      glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height,
-                   0, GL_RGB, GL_UNSIGNED_BYTE, data);
-      stbi_image_free(data);
-    } else {
-      std::cerr << "ERROR: Cubemap texture failed to load at path: " << faces[i]
-                << std::endl;
-    }
-  }
-
-  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-
-  return textureID;
-}
 
 void error_callback(int error, const char *description) {
   std::cerr << "GLFW Error: " << description << std::endl;
@@ -164,21 +113,8 @@ int main() {
         "textures/skybox/top.jpg",   "textures/skybox/bottom.jpg",
         "textures/skybox/front.jpg", "textures/skybox/back.jpg",
     };
-
-    unsigned int cubemapTexture = loadCubemap(faces);
-
-    unsigned int skyboxVAO, skyboxVBO;
-    glGenVertexArrays(1, &skyboxVAO);
-    glGenBuffers(1, &skyboxVBO);
-    glBindVertexArray(skyboxVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices,
-                 GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float),
-                          (void *)0);
-    glBindVertexArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    Skybox skybox;
+    skybox.SetTextures(faces);
 
     unsigned int gizmoVAO, gizmoVBO;
     float gizmoVertex[] = {0.0, 0.0, 0.0};
@@ -312,21 +248,13 @@ int main() {
       glBindVertexArray(gizmoVAO);
       glDrawArrays(GL_POINTS, 0, 1);
 
-      // Draw skybox at last for performance
-      glDepthFunc(GL_LEQUAL);
-      glDepthMask(GL_FALSE);
       skyboxShader.UseProgram();
+      // Draw skybox at last for performance
       skyboxShader.SetUniformMatrix4FloatPtr("projection",
                                              glm::value_ptr(projection));
       skyboxShader.SetUniformMatrix4FloatPtr(
           "view", glm::value_ptr(glm::mat4(glm::mat3(view))));
-      glBindVertexArray(skyboxVAO);
-      glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
-      glDrawArrays(GL_TRIANGLES, 0, 36);
-      glBindVertexArray(0);
-      glDepthMask(GL_TRUE);
-      glDepthFunc(GL_LESS);
-
+      skybox.Draw(skyboxShader);
       // Apply post-processing effects
       postprocess.End();
 

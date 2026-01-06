@@ -26,11 +26,10 @@ endif()
 # Add our executable target with all its source files
 add_executable(awesome-engine
     src/main.cpp
-    src/core/Input.cpp
     vendor/glad/src/glad.c
-    src/rendering/Shader.cpp
     vendor/loader/src/stb_image.cpp
     src/cameras/Camera.cpp
+    src/core/Input.cpp
     src/core/TextureLoader.cpp
     src/meshes/Model.cpp
     src/meshes/Mesh.cpp
@@ -39,6 +38,8 @@ add_executable(awesome-engine
     src/rendering/PostProcessBlurEffectStrategy.cpp
     src/rendering/PostProcessInvertEffectStrategy.cpp
     src/rendering/PostProcessEdgeEffectStrategy.cpp
+    src/rendering/Skybox.cpp
+    src/rendering/Shader.cpp
 )
 
 # Tell our target where to find its public header files
