@@ -6,6 +6,7 @@
 #include "core/Drawable.h"
 #include "rendering/RenderContext.h"
 #include "rendering/Shader.h"
+#include "scene/Transform.h"
 
 class Entity {
 public:
@@ -19,7 +20,11 @@ public:
   Entity &operator=(Entity &&) = default;
 
   void Draw(Shader &shader, RenderContext &context);
+  void Translate(glm::vec3 translate);
+  void Scale(glm::vec3 scale);
+  void Rotate(float degrees, glm::vec3 direction);
 
 private:
   std::unique_ptr<Drawable> m_drawable = nullptr;
+  Transform m_transform{};
 };

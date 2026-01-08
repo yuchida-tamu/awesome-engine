@@ -89,20 +89,24 @@ int main() {
 
     float cameraSpeed;
 
-    Model floorModel{"models/floor/floor.glb"};
-    Model block1{"models/block/block.glb"};
-
-    glm::vec3 blockPositions[2] = {
-        glm::vec3(1.5f, 1.0f, -0.5f),
-        glm::vec3(8.0f, 1.0f, -15.0f),
-    };
-
     RenderContext renderContext;
 
     Shader shader{"shaders/simple_model.vert", "shaders/fog.frag"};
-    Shader skyboxShader{"shaders/skybox.vert", "shaders/skybox.frag"};
+    Entity floor(std::move(std::make_unique<Model>("models/floor/floor.glb")));
+    floor.Translate(glm::vec3(0.0f, 0.0f, 0.0f));
+    floor.Rotate(-90.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+    floor.Scale(glm::vec3(1.0f, 1.0f, 1.0f));
+
+    Entity cube(std::move(std::make_unique<Cube>("textures/container.png")));
+    cube.Translate(glm::vec3(2.0f, 0.5f, -5.0f));
+
     Shader backpackShader{"shaders/simple_model.vert",
                           "shaders/simple_model.frag"};
+    Entity backpack(
+        std::move(std::make_unique<Model>("models/backpack/backpack.obj")));
+    backpack.Translate(glm::vec3(4.0f, 1.0f, -4.0f));
+    backpack.Scale(glm::vec3(0.5f, 0.5f, 0.5f));
+
     Shader gizmoShader("shaders/gizmo_normal.vert", "shaders/gizmo_normal.geo",
                        "shaders/gizmo_normal.frag");
     Shader gizmoWorldCoordinateShader(
@@ -110,9 +114,7 @@ int main() {
         "shaders/gizmo_world_coordinate.geo.glsl",
         "shaders/gizmo_world_coordinate.frag.glsl");
 
-    Model backpack("models/backpack/backpack.obj");
-    Cube cube("textures/container.png");
-
+    Shader skyboxShader{"shaders/skybox.vert", "shaders/skybox.frag"};
     std::vector<std::string> faces{
         "textures/skybox/right.jpg", "textures/skybox/left.jpg",
         "textures/skybox/top.jpg",   "textures/skybox/bottom.jpg",
@@ -121,7 +123,7 @@ int main() {
     auto skybox = std::make_unique<Skybox>();
     skybox->SetTextures(faces);
     Entity skyboxEntity(std::move(skybox));
-
+    // TODO:Create a world center gizmo  class
     unsigned int gizmoVAO, gizmoVBO;
     float gizmoVertex[] = {0.0, 0.0, 0.0};
     glGenVertexArrays(1, &gizmoVAO);
@@ -198,44 +200,17 @@ int main() {
 
       glm::mat4 view = camera.GetCameraView();
       renderContext.SetProjection(projection);
-      renderContext.SetView(glm::mat4(glm::mat3(view)));  // Remove translation for skybox
-      // Render scene to framebuffer
+
       postprocess.Begin();
       // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+      renderContext.SetView(view);
 
-      shader.UseProgram();
-      shader.SetUniformMatrix4FloatPtr("projection",
-                                       glm::value_ptr(projection));
-      // remove the translation section of transformation matrices by taking the
-      // upper-left 3x3 matrix the 4x4 matrix.
-      shader.SetUniformMatrix4FloatPtr("view", glm::value_ptr(view));
-
-      glm::mat4 model = glm::mat4(1.0f);
-      model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-      model =
-          glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-      model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
-
-      shader.SetUniformMatrix4FloatPtr("model", glm::value_ptr(model));
       // glStencilMask(0x00);
-      floorModel.Draw(shader);
+      floor.Draw(shader, renderContext);
 
-      glm::mat4 cubeModel = glm::mat4(1.0f);
-      cubeModel = glm::translate(cubeModel, glm::vec3(3.0f, 0.5f, -3.0f));
-      shader.SetUniformMatrix4FloatPtr("model", glm::value_ptr(cubeModel));
-      cube.Draw(shader);
+      cube.Draw(shader, renderContext);
 
-      backpackShader.UseProgram();
-      backpackShader.SetUniformMatrix4FloatPtr("projection",
-                                               glm::value_ptr(projection));
-      backpackShader.SetUniformMatrix4FloatPtr("view", glm::value_ptr(view));
-      glm::mat4 backpackModel = glm::mat4(1.0f);
-      backpackModel =
-          glm::translate(backpackModel, glm::vec3(1.0f, 2.5f, -1.0f));
-      backpackModel = glm::scale(backpackModel, glm::vec3(1.0f, 1.0f, 1.0f));
-      backpackShader.SetUniformMatrix4FloatPtr("model",
-                                               glm::value_ptr(backpackModel));
-      backpack.Draw(backpackShader);
+      backpack.Draw(backpackShader, renderContext);
 
       // gizmoShader.UseProgram();
       // gizmoShader.SetUniformMatrix4FloatPtr("projection",
@@ -255,6 +230,8 @@ int main() {
       glBindVertexArray(gizmoVAO);
       glDrawArrays(GL_POINTS, 0, 1);
 
+      renderContext.SetView(
+          glm::mat4(glm::mat3(view))); // Remove translation for skybox
       skyboxEntity.Draw(skyboxShader, renderContext);
       // Apply post-processing effects
       postprocess.End();
