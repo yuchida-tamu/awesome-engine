@@ -68,7 +68,50 @@ Skybox::Skybox() : m_VAO(0), m_VBO(0), m_textuerID(0) {
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-Skybox::~Skybox() {}
+Skybox::~Skybox() {
+  if (m_VAO != 0) {
+    glDeleteVertexArrays(1, &m_VAO);
+  }
+  if (m_VBO != 0) {
+    glDeleteBuffers(1, &m_VBO);
+  }
+  if (m_textuerID != 0) {
+    glDeleteTextures(1, &m_textuerID);
+  }
+}
+
+Skybox::Skybox(Skybox &&other) noexcept
+    : m_VAO(other.m_VAO), m_VBO(other.m_VBO), m_textuerID(other.m_textuerID) {
+  other.m_VAO = 0;
+  other.m_VBO = 0;
+  other.m_textuerID = 0;
+}
+
+Skybox &Skybox::operator=(Skybox &&other) noexcept {
+  if (this != &other) {
+    // Clean up existing resources
+    if (m_VAO != 0) {
+      glDeleteVertexArrays(1, &m_VAO);
+    }
+    if (m_VBO != 0) {
+      glDeleteBuffers(1, &m_VBO);
+    }
+    if (m_textuerID != 0) {
+      glDeleteTextures(1, &m_textuerID);
+    }
+
+    // Transfer ownership
+    m_VAO = other.m_VAO;
+    m_VBO = other.m_VBO;
+    m_textuerID = other.m_textuerID;
+
+    // Reset source
+    other.m_VAO = 0;
+    other.m_VBO = 0;
+    other.m_textuerID = 0;
+  }
+  return *this;
+}
 
 void Skybox::SetTextures(std::vector<std::string> paths) {
   m_textuerID = loadCubemap(paths);
