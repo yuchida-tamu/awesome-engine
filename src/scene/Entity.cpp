@@ -1,11 +1,10 @@
 #include "scene/Entity.h"
 #include "rendering/RenderContext.h"
+#include "rendering/Skybox.h"
 
 Entity::Entity(std::unique_ptr<Drawable> drawable) {
   m_drawable = std::move(drawable);
 }
-
-Entity::~Entity() { m_drawable = nullptr; }
 
 void Entity::Draw(Shader &shader, RenderContext &context) {
   shader.UseProgram();

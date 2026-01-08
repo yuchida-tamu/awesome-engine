@@ -11,7 +11,13 @@ class Entity {
 public:
   Entity() = default;
   Entity(std::unique_ptr<Drawable> drawable);
-  ~Entity();
+  ~Entity() = default;
+
+  Entity(const Entity &) = delete;
+  Entity &operator=(const Entity &) = delete;
+  Entity(Entity &&) = default;
+  Entity &operator=(Entity &&) = default;
+
   void Draw(Shader &shader, RenderContext &context);
 
 private:
