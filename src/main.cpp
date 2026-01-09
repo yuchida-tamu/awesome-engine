@@ -159,6 +159,7 @@ int main() {
       glm::vec2 offset = Input::GetMouseOffset();
 
       camera.UpdateFront(offset.x, offset.y);
+      camera.UpdatePosition(cameraPosition);
 
       if (Input::IsKeyDown(GLFW_KEY_ESCAPE)) {
         glfwSetWindowShouldClose(window, true);
@@ -196,28 +197,18 @@ int main() {
             std::make_unique<PostProcessEdgeEffectStrategy>());
       }
 
-      camera.UpdatePosition(cameraPosition);
-
       glm::mat4 view = camera.GetCameraView();
       renderContext.SetProjection(projection);
 
       postprocess.Begin();
-      // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
       renderContext.SetView(view);
 
-      // glStencilMask(0x00);
       floor.Draw(shader, renderContext);
 
       cube.Draw(shader, renderContext);
 
       backpack.Draw(backpackShader, renderContext);
-
-      // gizmoShader.UseProgram();
-      // gizmoShader.SetUniformMatrix4FloatPtr("projection",
-      // glm::value_ptr(projection));
-      // gizmoShader.SetUniformMatrix4FloatPtr("view", glm::value_ptr(view));
-      // gizmoShader.SetUniformMatrix4FloatPtr("model",
-      // glm::value_ptr(backpackModel)); backpack.Draw(gizmoShader);
 
       gizmoWorldCoordinateShader.UseProgram();
       gizmoWorldCoordinateShader.SetUniformMatrix4FloatPtr(
@@ -233,7 +224,7 @@ int main() {
       renderContext.SetView(
           glm::mat4(glm::mat3(view))); // Remove translation for skybox
       skyboxEntity.Draw(skyboxShader, renderContext);
-      // Apply post-processing effects
+
       postprocess.End();
 
       // Swap buffers and poll events
