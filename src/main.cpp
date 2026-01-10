@@ -25,6 +25,7 @@
 #include "meshes/Cube.h"
 #include "meshes/Model.h"
 #include "scene/Entity.h"
+#include "scene/WorldSpaceGizmo.h"
 #include "stb_image.h"
 
 void error_callback(int error, const char *description) {
@@ -109,10 +110,6 @@ int main() {
 
     Shader gizmoShader("shaders/gizmo_normal.vert", "shaders/gizmo_normal.geo",
                        "shaders/gizmo_normal.frag");
-    Shader gizmoWorldCoordinateShader(
-        "shaders/gizmo_world_coordinate.vert.glsl",
-        "shaders/gizmo_world_coordinate.geo.glsl",
-        "shaders/gizmo_world_coordinate.frag.glsl");
 
     Shader skyboxShader{"shaders/skybox.vert", "shaders/skybox.frag"};
     std::vector<std::string> faces{
@@ -123,20 +120,8 @@ int main() {
     auto skybox = std::make_unique<Skybox>();
     skybox->SetTextures(faces);
     Entity skyboxEntity(std::move(skybox));
-    // TODO:Create a world center gizmo  class
-    unsigned int gizmoVAO, gizmoVBO;
-    float gizmoVertex[] = {0.0, 0.0, 0.0};
-    glGenVertexArrays(1, &gizmoVAO);
-    glGenBuffers(1, &gizmoVBO);
-    glBindVertexArray(gizmoVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, gizmoVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(gizmoVertex), gizmoVertex,
-                 GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float),
-                          (void *)0);
-    glBindVertexArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    WorldSpaceGizmo worldSpaceGizmo{};
 
     // Calculate projection matrix once (doesn't change unless window is
     // resized)
@@ -210,16 +195,7 @@ int main() {
 
       backpack.Draw(backpackShader, renderContext);
 
-      gizmoWorldCoordinateShader.UseProgram();
-      gizmoWorldCoordinateShader.SetUniformMatrix4FloatPtr(
-          "projection", glm::value_ptr(projection));
-      gizmoWorldCoordinateShader.SetUniformMatrix4FloatPtr(
-          "view", glm::value_ptr(view));
-      glm::mat4 gizmoCenterModel = glm::mat4(1.0f);
-      gizmoWorldCoordinateShader.SetUniformMatrix4FloatPtr(
-          "model", glm::value_ptr(gizmoCenterModel));
-      glBindVertexArray(gizmoVAO);
-      glDrawArrays(GL_POINTS, 0, 1);
+      worldSpaceGizmo.On(renderContext);
 
       renderContext.SetView(
           glm::mat4(glm::mat3(view))); // Remove translation for skybox

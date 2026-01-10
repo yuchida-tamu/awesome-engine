@@ -41,6 +41,7 @@ add_executable(awesome-engine
     src/rendering/Skybox.cpp
     src/rendering/Shader.cpp
     src/scene/Entity.cpp
+    src/scene/WorldSpaceGizmo.cpp
 )
 
 # Tell our target where to find its public header files
