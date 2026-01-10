@@ -7,6 +7,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
 #include <memory>
+#include <string>
 
 // Core
 #include "core/Config.h"
@@ -108,9 +109,6 @@ int main() {
     backpack.Translate(glm::vec3(4.0f, 1.0f, -4.0f));
     backpack.Scale(glm::vec3(0.5f, 0.5f, 0.5f));
 
-    Shader gizmoShader("shaders/gizmo_normal.vert", "shaders/gizmo_normal.geo",
-                       "shaders/gizmo_normal.frag");
-
     Shader skyboxShader{"shaders/skybox.vert", "shaders/skybox.frag"};
     std::vector<std::string> faces{
         "textures/skybox/right.jpg", "textures/skybox/left.jpg",
@@ -122,6 +120,70 @@ int main() {
     Entity skyboxEntity(std::move(skybox));
 
     WorldSpaceGizmo worldSpaceGizmo{};
+
+    Shader batchShader("shaders/batch_rendering.vert.glsl",
+                       "shaders/batch_rendering.frag.glsl");
+    float quadVertices[] = {
+        // positions     // colors
+        -0.05f, 0.05f, 1.0f,   0.0f,   0.0f, 0.05f, -0.05f, 0.0f,
+        1.0f,   0.0f,  -0.05f, -0.05f, 0.0f, 0.0f,  1.0f,
+
+        -0.05f, 0.05f, 1.0f,   0.0f,   0.0f, 0.05f, -0.05f, 0.0f,
+        1.0f,   0.0f,  0.05f,  0.05f,  0.0f, 1.0f,  1.0f};
+
+    // create a dataset of quad positions
+    glm::vec2 translations[100];
+    int index = 0;
+    float offset = 0.1f;
+    for (int y = -10; y < 10; y += 2) {
+      for (int x = -10; x < 10; x += 2) {
+        glm::vec2 translation;
+        translation.x = (float)x / 10.0f + offset;
+        translation.y = (float)y / 10.0f + offset;
+        translations[index++] = translation;
+      }
+    }
+
+    unsigned int instanceVBO;
+    glGenBuffers(1, &instanceVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * 100, &translations[0],
+                 GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    unsigned int quadVAO, quadVBO;
+    glGenVertexArrays(1, &quadVAO);
+    glGenBuffers(1, &quadVBO);
+    glBindVertexArray(quadVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices,
+                 GL_STATIC_DRAW);
+
+    // poisition attribute location = 0
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
+                          (void *)0);
+
+    // color attribute location = 1
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
+                          (void *)(2 * sizeof(float)));
+
+    // set instance dataset
+    glEnableVertexAttribArray(2);
+    glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float),
+                          (void *)0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glVertexAttribDivisor(
+        2, 1); // tell OpenGl this is an instanced vertex attribute
+
+    batchShader.UseProgram();
+    for (unsigned int i = 0; i < 100; i++) {
+      batchShader.SetUniformVec2("offsets[" + std::to_string(i) + "]",
+                                 glm::value_ptr(translations[i]));
+    }
 
     // Calculate projection matrix once (doesn't change unless window is
     // resized)
@@ -187,19 +249,24 @@ int main() {
 
       postprocess.Begin();
 
-      renderContext.SetView(view);
+      // renderContext.SetView(view);
 
-      floor.Draw(shader, renderContext);
+      // floor.Draw(shader, renderContext);
 
-      cube.Draw(shader, renderContext);
+      // cube.Draw(shader, renderContext);
 
-      backpack.Draw(backpackShader, renderContext);
+      // backpack.Draw(backpackShader, renderContext);
 
-      worldSpaceGizmo.On(renderContext);
+      // worldSpaceGizmo.On(renderContext);
 
-      renderContext.SetView(
-          glm::mat4(glm::mat3(view))); // Remove translation for skybox
-      skyboxEntity.Draw(skyboxShader, renderContext);
+      // renderContext.SetView(
+      //   glm::mat4(glm::mat3(view))); // Remove translation for skybox
+      // skyboxEntity.Draw(skyboxShader, renderContext);
+      glDisable(GL_CULL_FACE);
+      batchShader.UseProgram();
+      glBindVertexArray(quadVAO);
+      glDrawArraysInstanced(GL_TRIANGLES, 0, 6, 100);
+      glEnable(GL_CULL_FACE);
 
       postprocess.End();
 
