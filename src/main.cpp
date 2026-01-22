@@ -20,12 +20,13 @@
 #include "rendering/PostProcessInvertEffectStrategy.h"
 #include "rendering/PostProcessing.h"
 #include "rendering/RenderContext.h"
-#include "rendering/Shader.h"
-#include "rendering/Skybox.h"
 
 #include "meshes/Cube.h"
-#include "meshes/Model.h"
-#include "scene/Entity.h"
+#include "rendering/Shader.h"
+#include "scene/GameObject.h"
+#include "scene/RenderComponent.h"
+#include "scene/Scene.h"
+#include "scene/TransformComponent.h"
 #include "scene/WorldSpaceGizmo.h"
 #include "stb_image.h"
 
@@ -78,6 +79,8 @@ int main() {
   try {
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glEnable(GL_MULTISAMPLE);
+    glEnable(GL_DEPTH_TEST);
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
     float deltaTime = 0.0f;
     float lastFrame = 0.0f;
@@ -90,19 +93,20 @@ int main() {
 
     float cameraSpeed;
 
-    RenderContext renderContext;
+    Scene scene{};
+    scene.AddCamera(camera);
 
-    WorldSpaceGizmo worldSpaceGizmo{};
+    auto cube = std::make_unique<GameObject>();
+    auto *transform = cube->AddComponent<TransformComponent>();
+    transform->SetPosition(glm::vec3(0.0f, 1.0f, 0.0f));
 
-    // Calculate projection matrix once (doesn't change unless window is
-    // resized)
-    glm::mat4 projection =
-        glm::perspective(glm::radians(Config::FOV),
-                         static_cast<float>(Config::WINDOW_WIDTH) /
-                             static_cast<float>(Config::WINDOW_HEIGHT),
-                         Config::NEAR_PLANE, Config::FAR_PLANE);
+    Shader cubeShader =
+        Shader("shaders/cube.vert.glsl", "shaders/cube.frag.glsl");
+    cube->AddComponent<RenderComponent>(std::make_unique<Cube>(), &cubeShader);
 
-    PostProcessing postprocess{};
+    scene.AddGameObject(std ::move(cube));
+    //    WorldSpaceGizmo worldSpaceGizmo{};
+
     // Main loop
     while (!glfwWindowShouldClose(window)) {
       float currentFrame = glfwGetTime();
@@ -134,34 +138,14 @@ int main() {
         cameraPosition = camera.GetPosition() + camera.GetRight() * cameraSpeed;
       }
 
-      if (Input::IsKeyHeld(GLFW_KEY_0)) {
-        postprocess.ClearStrategy();
-      }
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-      if (Input::IsKeyHeld(GLFW_KEY_1)) {
-        postprocess.SetStrategy(
-            std::make_unique<PostProcessBlurEffectStrategy>());
-      }
+      scene.Update(deltaTime);
 
-      if (Input::IsKeyHeld(GLFW_KEY_2)) {
-        postprocess.SetStrategy(
-            std::make_unique<PostProcessInvertEffectStrategy>());
-      }
+      // postprocess.Begin();
 
-      if (Input::IsKeyHeld(GLFW_KEY_3)) {
-        postprocess.SetStrategy(
-            std::make_unique<PostProcessEdgeEffectStrategy>());
-      }
-
-      glm::mat4 view = camera.GetCameraView();
-      renderContext.SetProjection(projection);
-      renderContext.SetView(view);
-
-      postprocess.Begin();
-
-      worldSpaceGizmo.On(renderContext);
-
-      postprocess.End();
+      //      worldSpaceGizmo.On(renderContext);
+      // postprocess.End();
 
       // Swap buffers and poll events
       glfwSwapBuffers(window);

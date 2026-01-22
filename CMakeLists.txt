@@ -40,8 +40,10 @@ add_executable(awesome-engine
     src/rendering/PostProcessEdgeEffectStrategy.cpp
     src/rendering/Skybox.cpp
     src/rendering/Shader.cpp
-    src/scene/Entity.cpp
     src/scene/WorldSpaceGizmo.cpp
+    src/scene/Scene.cpp
+    src/scene/GameObject
+    src/scene/RenderComponent
 )
 
 # Tell our target where to find its public header files
