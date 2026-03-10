@@ -59,48 +59,41 @@ The following libraries are included in the `vendor/` directory:
 
 ## Building the Project
 
-### Step 1: Clone the Repository
+### Quick Start (using Makefile)
 
 ```bash
 git clone <repository-url>
 cd awesome-engine
+make run        # Clean rebuild and run
 ```
 
-### Step 2: Create Build Directory
+### Makefile Targets
+
+| Target       | Description                        |
+|--------------|------------------------------------|
+| `make build` | Build only (no run)                |
+| `make run`   | Clean rebuild and run              |
+| `make rebuild` | Rebuild without cleaning and run |
+| `make clean` | Remove `bin/` directory            |
+
+### Manual Build
 
 ```bash
-mkdir build
-cd build
-```
-
-### Step 3: Configure with CMake
-
-```bash
+mkdir -p build && cd build
 cmake ..
-```
-
-This will:
-
-- Detect your compiler and system libraries
-- Find GLFW, Assimp, and OpenGL
-- Generate build files (Makefiles on Unix/macOS)
-
-### Step 4: Build the Project
-
-```bash
 make
 ```
 
 The compiled executable will be placed in the `bin/` directory as `awesome-engine`.
 
-**Note**: Assets (shaders and textures) are automatically copied to `bin/` during the build process.
+**Note**: Assets (shaders, textures, and models) are automatically copied to `bin/` during the build process.
 
 ## Running the Application
 
-After building, run the application from the project root:
+After building, run the application from the `bin/` directory:
 
 ```bash
-./bin/awesome-engine
+cd bin && ./awesome-engine
 ```
 
 ### Controls
@@ -171,37 +164,24 @@ The test executable supports several output modes:
 
 ```
 awesome-engine/
-├── assets/              # Game assets (shaders, textures)
-│   ├── shaders/        # GLSL shader files
-│   │   ├── simple.vert        # Vertex shader
-│   │   ├── simple.frag        # Basic fragment shader
-│   │   ├── material.frag      # Phong lighting fragment shader
-│   │   └── lighting.frag      # Light source shader
-│   └── textures/       # Image files
+├── assets/              # Game assets
+│   ├── shaders/        # GLSL shader files (.vert, .frag, .geo)
+│   ├── textures/       # Image files
+│   └── models/         # 3D model files
 ├── bin/                 # Build output (executables and copied assets)
 ├── build/               # CMake build files (generated)
 ├── src/                 # Source code
-│   ├── cameras/        # Camera system
-│   │   └── Camera.h/cpp
-│   ├── core/           # Core systems
-│   │   ├── Config.h           # Configuration constants
-│   │   ├── Input.h/cpp        # Input handling
-│   │   └── TextureLoader.h/cpp # Texture management
-│   ├── meshes/         # Mesh system
-│   │   ├── Mesh.h             # Abstract mesh base class
-│   │   └── Cube.h/cpp          # Cube mesh implementation
-│   ├── shaders/        # Shader management
-│   │   └── Shader.h/cpp
-│   └── main.cpp        # Application entry point
-├── tests/               # Unit tests
-│   ├── CameraTests.cpp
-│   └── InputTests.cpp
-├── vendor/              # Third-party libraries
-│   ├── doctest/        # Testing framework
-│   ├── glad/           # OpenGL loader
-│   ├── glm/            # Math library
-│   └── loader/         # stb_image
+│   ├── cameras/        # First-person Camera with mouse look
+│   ├── core/           # Config, Input handling, TextureLoader
+│   ├── meshes/         # Abstract Mesh base, Cube, Model (Assimp)
+│   ├── rendering/      # Shader, PostProcessing (Strategy pattern), Skybox
+│   ├── scene/          # Scene, GameObject, RenderComponent (ECS)
+│   ├── utils/          # Utility helpers
+│   └── main.cpp        # Application entry point and render loop
+├── tests/               # Unit tests (doctest)
+├── vendor/              # Third-party libraries (GLAD, GLM, stb_image, doctest)
 ├── CMakeLists.txt       # Build configuration
+├── Makefile             # Convenience build/run targets
 └── README.md           # This file
 ```
 
@@ -258,13 +238,21 @@ cmake ..
 make
 ```
 
-### IDE Integration
+### IDE / LSP Integration
 
-This project generates a `compile_commands.json` file in the `build` directory, which enables:
+CMake is configured with `CMAKE_EXPORT_COMPILE_COMMANDS ON`, which generates a `compile_commands.json` in the `build/` directory. A symlink at the project root points to it so clangd can find it automatically.
 
+This enables:
+
+- **Clangd** language server support (autocomplete, go-to-definition, diagnostics)
 - **IntelliSense** support in VS Code (with C++ extension)
 - **CMake Tools** integration for VS Code
-- **Clangd** language server support
+
+If LSP stops working after an Xcode or macOS update, do a clean rebuild to regenerate `compile_commands.json` with the new SDK paths:
+
+```bash
+cd build && rm -rf * && cmake .. && make
+```
 
 ## Troubleshooting
 
@@ -299,6 +287,14 @@ If you encounter "Failed to create GLFW window":
 - Ensure your graphics drivers support OpenGL 4.1
 - On macOS, OpenGL 4.1 is the maximum supported version
 - Verify your system meets the minimum requirements
+
+### OpenGL/SDK Path Errors After Xcode Update
+
+If you see errors like `Imported target "OpenGL::GL" includes non-existent path` referencing an old SDK (e.g., `MacOSX15.5.sdk`), the CMake cache is stale. Do a clean rebuild:
+
+```bash
+cd build && rm -rf * && cmake .. && make
+```
 
 ### Test Compilation Errors
 

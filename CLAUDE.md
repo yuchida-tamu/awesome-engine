@@ -5,7 +5,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Build Commands
 
 ```bash
-# Build (from project root)
+# Build, clean rebuild, and run (from project root using Makefile)
+make build          # Build only
+make run            # Clean rebuild and run
+make rebuild        # Rebuild without cleaning and run
+make clean          # Remove bin/ directory
+
+# Manual build (from project root)
 cd build && cmake .. && make
 
 # Rebuild after code changes
@@ -23,6 +29,10 @@ cd bin && ./awesome-engine
 # Run tests with CTest (verbose)
 cd build && ctest -V
 ```
+
+## LSP Setup
+
+CMake is configured with `CMAKE_EXPORT_COMPILE_COMMANDS ON` to generate `compile_commands.json` in `build/`. A symlink at the project root points to it for clangd. If LSP breaks after an Xcode/SDK update, do a clean rebuild: `cd build && rm -rf * && cmake .. && make`.
 
 ## Dependencies
 

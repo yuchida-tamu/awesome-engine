@@ -1,0 +1,5 @@
+{
+  "enabledPlugins": {
+    "claude-office-visualizer@yuchida-agent-skills": true
+  }
+}
