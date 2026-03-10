@@ -25,7 +25,7 @@ public:
   void AddGameObject(std::unique_ptr<GameObject> gameObject);
   // Remove GameObject to Scene
   // Add Camera to Scene
-  void AddCamera(Camera &camera);
+  void AddCamera(Camera *camera);
   // Add Lighting to Scene
   // AddLight(Light light)
   void Update(float deltaTime);
@@ -34,7 +34,7 @@ private:
   std::vector<std::unique_ptr<GameObject>> m_gameObjects = {};
   // NOTE: It could store multiple cameras so that in future it can add features
   // like switching between cameras.
-  std::vector<Camera> m_cameras = {};
+  std::vector<Camera*> m_cameras = {};
 
   glm::mat4 m_projection =
       glm::perspective(glm::radians(Config::FOV),

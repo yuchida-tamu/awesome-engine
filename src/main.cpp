@@ -94,7 +94,7 @@ int main() {
     float cameraSpeed;
 
     Scene scene{};
-    scene.AddCamera(camera);
+    scene.AddCamera(&camera);
 
     auto cube = std::make_unique<GameObject>();
     auto *transform = cube->AddComponent<TransformComponent>();
