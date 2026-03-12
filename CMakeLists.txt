@@ -47,6 +47,7 @@ add_executable(awesome-engine
     src/scene/Scene.cpp
     src/scene/GameObject
     src/scene/RenderComponent
+    src/scene/CameraController
 )
 
 # Tell our target where to find its public header files

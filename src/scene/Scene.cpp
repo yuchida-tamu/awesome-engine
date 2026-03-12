@@ -1,8 +1,10 @@
 #include "scene/Scene.h"
 #include "cameras/Camera.h"
+#include "core/EventBus.h"
 #include "rendering/RenderContext.h"
 #include <memory>
 
+Scene::Scene(EventBus &eventBus) : m_eventBus(eventBus) {}
 void Scene::AddCamera(Camera *camera) { m_cameras.push_back(camera); }
 
 void Scene::AddGameObject(std::unique_ptr<GameObject> gameObject) {

@@ -11,6 +11,7 @@
 
 // Core
 #include "core/Config.h"
+#include "core/EventBus.h"
 #include "core/Input.h"
 #include "core/TextureLoader.h"
 
@@ -23,6 +24,7 @@
 
 #include "meshes/Cube.h"
 #include "rendering/Shader.h"
+#include "scene/CameraController.h"
 #include "scene/GameObject.h"
 #include "scene/RenderComponent.h"
 #include "scene/Scene.h"
@@ -70,7 +72,8 @@ int main() {
     return -1;
   }
 
-  Input::Initialize(window);
+  EventBus eventBus;
+  Input::Initialize(window, eventBus);
 
   // tell stb_image.h to flip loaded texture's on the y-axis (before loading
   // model).
@@ -93,7 +96,11 @@ int main() {
 
     float cameraSpeed;
 
-    Scene scene{};
+    Scene scene{eventBus};
+
+    auto cameraObj = std::make_unique<GameObject>();
+    cameraObj->AddComponent<CameraController>(camera, eventBus);
+    scene.AddGameObject(std::move(cameraObj));
     scene.AddCamera(&camera);
 
     auto cube = std::make_unique<GameObject>();
@@ -116,36 +123,13 @@ int main() {
 
       Input::Update();
 
-      glm::vec2 offset = Input::GetMouseOffset();
-
-      camera.UpdateFront(offset.x, offset.y);
-      camera.UpdatePosition(cameraPosition);
-
       if (Input::IsKeyDown(GLFW_KEY_ESCAPE)) {
         glfwSetWindowShouldClose(window, true);
-      }
-
-      if (Input::IsKeyHeld(GLFW_KEY_W)) {
-        cameraPosition = camera.GetPosition() + camera.GetFront() * cameraSpeed;
-      }
-      if (Input::IsKeyHeld(GLFW_KEY_S)) {
-        cameraPosition = camera.GetPosition() - camera.GetFront() * cameraSpeed;
-      }
-      if (Input::IsKeyHeld(GLFW_KEY_A)) {
-        cameraPosition = camera.GetPosition() - camera.GetRight() * cameraSpeed;
-      }
-      if (Input::IsKeyHeld(GLFW_KEY_D)) {
-        cameraPosition = camera.GetPosition() + camera.GetRight() * cameraSpeed;
       }
 
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
       scene.Update(deltaTime);
-
-      // postprocess.Begin();
-
-      //      worldSpaceGizmo.On(renderContext);
-      // postprocess.End();
 
       // Swap buffers and poll events
       glfwSwapBuffers(window);
