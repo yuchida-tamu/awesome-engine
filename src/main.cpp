@@ -119,7 +119,6 @@ int main() {
       float currentFrame = glfwGetTime();
       deltaTime = currentFrame - lastFrame;
       lastFrame = currentFrame;
-      cameraSpeed = Config::DEFAULT_CAMERA_SPEED * deltaTime;
 
       Input::Update();
 

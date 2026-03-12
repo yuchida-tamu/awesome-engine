@@ -25,9 +25,6 @@ void Scene::Update(float deltaTime) {
   context.SetProjection(m_projection);
   context.SetView(camera->GetCameraView());
 
-  // NOTE: hmmm, I have to update Input somehow, so that it updates camera
-  // positions and other controls to make a scene interactive and reactive.
-
   for (auto &gameObject : m_gameObjects) {
     if (!gameObject->IsActive())
       return;
