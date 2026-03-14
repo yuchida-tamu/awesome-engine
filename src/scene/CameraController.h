@@ -4,12 +4,13 @@
 #include "core/Config.h"
 #include "core/EventBus.h"
 #include "core/InputEvents.h"
+#include "core/InputListener.h"
 #include "scene/Component.h"
 
-class CameraController : public Component {
+class CameraController : public Component, public InputListener {
 public:
   CameraController(Camera &camera, EventBus &eventBus);
-  ~CameraController();
+  ~CameraController() override;
 
   void Update(float deltaTime) override;
 
@@ -18,7 +19,6 @@ private:
   void OnMouseMove(const MouseMoveEvent &event);
 
   Camera &m_camera;
-  EventBus &m_eventBus;
   SubscriptionID m_keySub;
   SubscriptionID m_mouseSub;
 

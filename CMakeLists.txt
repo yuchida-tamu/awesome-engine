@@ -18,6 +18,9 @@ find_package(OpenGL REQUIRED)
 # Find GLFW using its own config files (provided by Homebrew)
 find_package(glfw3 REQUIRED)
 
+# Find FreeType for text rendering
+find_package(Freetype REQUIRED)
+
 # Find Assimp using CMake config files (provided by Homebrew)
 find_package(assimp QUIET)
 if(assimp_FOUND)
@@ -48,6 +51,8 @@ add_executable(awesome-engine
     src/scene/GameObject
     src/scene/RenderComponent
     src/scene/CameraController
+    src/ui/UIManager.cpp
+    src/ui/TextElement.cpp
 )
 
 # Tell our target where to find its public header files
@@ -67,7 +72,7 @@ endif()
 # Link the libraries.
 # The order is important here. We link our executable to GLFW.
 # GLFW then needs to link to the system's OpenGL library.
-target_link_libraries(awesome-engine PRIVATE glfw OpenGL::GL)
+target_link_libraries(awesome-engine PRIVATE glfw OpenGL::GL Freetype::Freetype)
 
 # Link Assimp if available
 if(assimp_FOUND)
@@ -202,11 +207,16 @@ if(BUILD_TESTING)
         tests/GameObjectTests.cpp
         tests/SceneTests.cpp
         tests/RenderContextTests.cpp
+        tests/UIElementTests.cpp
+        tests/UIManagerTests.cpp
+        tests/TextElementTests.cpp
         src/core/Input.cpp
         src/cameras/Camera.cpp
         src/scene/CameraController.cpp
         src/scene/GameObject.cpp
         src/scene/Scene.cpp
+        src/ui/UIManager.cpp
+        src/ui/TextElement.cpp
         vendor/glad/src/glad.c
     )
 

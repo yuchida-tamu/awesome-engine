@@ -6,7 +6,7 @@
 #include <GLFW/glfw3.h>
 
 CameraController::CameraController(Camera &camera, EventBus &eventBus)
-    : m_camera(camera), m_eventBus(eventBus) {
+    : InputListener(eventBus), m_camera(camera) {
   m_keySub =
       m_eventBus.Subscribe<KeyEvent>([this](const KeyEvent &e) { OnKey(e); });
   m_mouseSub = m_eventBus.Subscribe<MouseMoveEvent>(
