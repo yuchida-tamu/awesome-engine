@@ -10,6 +10,9 @@ make build          # Build only
 make run            # Clean rebuild and run
 make rebuild        # Rebuild without cleaning and run
 make clean          # Remove bin/ directory
+make test           # Build and run tests
+make test-verbose   # Build and run tests with all assertions + timing
+make test-list      # Build and list all test cases
 
 # Manual build (from project root)
 cd build && cmake .. && make

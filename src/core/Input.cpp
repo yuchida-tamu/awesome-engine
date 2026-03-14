@@ -2,6 +2,7 @@
 #include "core/Config.h"
 #include "core/EventBus.h"
 #include "core/InputEvents.h"
+#include "core/Assert.h"
 #include <cstring>
 #include <iostream>
 // Define and initialize our static member variables.
@@ -35,6 +36,9 @@ void Input::Initialize(GLFWwindow *window, EventBus &eventBus) {
 }
 
 void Input::Update() {
+  ENGINE_ASSERT(s_EventBus,
+                "Input::Update() called before Input::Initialize(). "
+                "Call Input::Initialize(window, eventBus) first.");
   // Copy the current frame's state to the last frame's state
   memcpy(s_KeysLastFrame, s_Keys, sizeof(s_Keys));
   // Copy the raw state from the callback to the current frame's state

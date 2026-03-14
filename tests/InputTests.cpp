@@ -3,9 +3,13 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest.h"
 #include <cstring> // For memset
+#include <stdexcept> // For std::logic_error (used by ENGINE_ASSERT in test builds)
 
 // We need to include the class we want to test.
 #include "core/Input.h"
+#include "core/EventBus.h"
+
+static EventBus s_TestEventBus;
 
 // Helper function to reset Input state between tests
 // This ensures test isolation
@@ -24,6 +28,7 @@ void ResetInputState()
     Input::s_CurrentY = 300.0;
     Input::s_XOffset = 0.0f;
     Input::s_YOffset = 0.0f;
+    Input::s_EventBus = &s_TestEventBus;
 }
 
 // ===================================================================
@@ -326,6 +331,14 @@ TEST_CASE("Edge case - Invalid key codes")
     // Negative key code
     CHECK(Input::IsKeyHeld(-1) == false);
     CHECK(Input::IsKeyDown(-1) == false);
+}
+
+TEST_CASE("Update - Aborts with message when EventBus is not initialized")
+{
+    ResetInputState();
+    Input::s_EventBus = nullptr;
+
+    CHECK_THROWS_AS(Input::Update(), std::logic_error);
 }
 
 TEST_CASE("Edge case - Mouse movement at screen boundaries")
