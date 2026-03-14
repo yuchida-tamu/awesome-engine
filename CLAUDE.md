@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Project Overview
+
+A 3D OpenGL engine built in C++17 as a learning project. Uses GLFW for windowing, GLAD for OpenGL loading, GLM for math, and Assimp for 3D model importing. Built with CMake.
+
 ## Build Commands
 
 ```bash
