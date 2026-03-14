@@ -30,7 +30,8 @@ public:
   template <typename EventT> void Publish(const EventT &event) {
     auto it = m_subscribers.find(std::type_index(typeid(EventT)));
     if (it != m_subscribers.end()) {
-      for (auto &sub : it->second) {
+      auto subs = it->second; // copy to avoid iterator invalidation
+      for (auto &sub : subs) {
         sub.callback(&event);
       }
     }

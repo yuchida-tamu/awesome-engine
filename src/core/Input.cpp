@@ -77,12 +77,20 @@ void Input::Update() {
 /**
  * Returns true only on the single frame the key is first pressed.
  */
-bool Input::IsKeyDown(int key) { return s_Keys[key] && !s_KeysLastFrame[key]; }
+bool Input::IsKeyDown(int key) {
+  if (key < 0 || key >= Config::MAX_KEYS)
+    return false;
+  return s_Keys[key] && !s_KeysLastFrame[key];
+}
 
 /**
  * Returns true every single frame that the key is held down.
  */
-bool Input::IsKeyHeld(int key) { return s_Keys[key]; }
+bool Input::IsKeyHeld(int key) {
+  if (key < 0 || key >= Config::MAX_KEYS)
+    return false;
+  return s_Keys[key];
+}
 
 glm::vec2 Input::GetMouseOffset() { return glm::vec2(s_XOffset, s_YOffset); }
 
@@ -91,6 +99,8 @@ glm::vec2 Input::GetMouseOffset() { return glm::vec2(s_XOffset, s_YOffset); }
 // conditions.
 void Input::KeyCallBack(GLFWwindow *window, int key, int scancode, int action,
                         int mods) {
+  if (key < 0 || key >= Config::MAX_KEYS)
+    return;
   if (action == GLFW_PRESS) {
     s_KeysRaw[key] = true;
   } else if (action == GLFW_RELEASE) {

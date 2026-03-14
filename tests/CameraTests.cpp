@@ -1,39 +1,10 @@
 // Note: DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN is defined in InputTests.cpp
 // We don't define it here since we're combining multiple test files
 #include "doctest.h"
-#include <cmath>
-#include <glm/glm.hpp>
+#include "TestHelpers.h"
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "cameras/Camera.h"
-
-// Helper function to compare floating point values with tolerance
-bool FloatEquals(float a, float b, float epsilon = 0.0001f)
-{
-    return std::abs(a - b) < epsilon;
-}
-
-// Helper function to compare vec3 with tolerance
-bool Vec3Equals(const glm::vec3 &a, const glm::vec3 &b, float epsilon = 0.0001f)
-{
-    return FloatEquals(a.x, b.x, epsilon) &&
-           FloatEquals(a.y, b.y, epsilon) &&
-           FloatEquals(a.z, b.z, epsilon);
-}
-
-// Helper function to compare mat4 matrices with tolerance
-bool Mat4Equals(const glm::mat4 &a, const glm::mat4 &b, float epsilon = 0.0001f)
-{
-    for (int i = 0; i < 4; ++i)
-    {
-        for (int j = 0; j < 4; ++j)
-        {
-            if (!FloatEquals(a[i][j], b[i][j], epsilon))
-                return false;
-        }
-    }
-    return true;
-}
 
 // ===================================================================
 // CONSTRUCTOR TESTS
@@ -50,18 +21,18 @@ TEST_CASE("Camera - Constructor initializes with correct default values")
     CHECK(position.z == 0.0f);
 
     // Check initial pitch and yaw
-    CHECK(FloatEquals(camera.m_pitch, 0.0f));
-    CHECK(FloatEquals(camera.m_yaw, -90.0f)); // Default yaw is -90 degrees
+    CHECK(FloatApproxEquals(camera.m_pitch, 0.0f));
+    CHECK(FloatApproxEquals(camera.m_yaw, -90.0f)); // Default yaw is -90 degrees
 
     // Check initial front direction (should point along negative Z axis)
     glm::vec3 front = camera.GetFront();
-    CHECK(FloatEquals(front.x, 0.0f));
-    CHECK(FloatEquals(front.y, 0.0f));
-    CHECK(FloatEquals(front.z, -1.0f));
+    CHECK(FloatApproxEquals(front.x, 0.0f));
+    CHECK(FloatApproxEquals(front.y, 0.0f));
+    CHECK(FloatApproxEquals(front.z, -1.0f));
 
     // Check initial up vector
     glm::vec3 up = camera.GetUp();
-    CHECK(Vec3Equals(up, glm::vec3(0.0f, 1.0f, 0.0f)));
+    CHECK(Vec3ApproxEquals(up, glm::vec3(0.0f, 1.0f, 0.0f)));
 }
 
 // ===================================================================
@@ -77,8 +48,8 @@ TEST_CASE("UpdateFront - Updates yaw correctly with horizontal mouse movement")
     // Move mouse to the right (positive xOffset)
     camera.UpdateFront(10.0f, 0.0f);
 
-    CHECK(FloatEquals(camera.m_yaw, initialYaw + 10.0f));
-    CHECK(FloatEquals(camera.m_pitch, 0.0f)); // Pitch should remain unchanged
+    CHECK(FloatApproxEquals(camera.m_yaw, initialYaw + 10.0f));
+    CHECK(FloatApproxEquals(camera.m_pitch, 0.0f)); // Pitch should remain unchanged
 }
 
 TEST_CASE("UpdateFront - Updates pitch correctly with vertical mouse movement")
@@ -90,8 +61,8 @@ TEST_CASE("UpdateFront - Updates pitch correctly with vertical mouse movement")
     // Move mouse up (positive yOffset)
     camera.UpdateFront(0.0f, 5.0f);
 
-    CHECK(FloatEquals(camera.m_pitch, initialPitch + 5.0f));
-    CHECK(FloatEquals(camera.m_yaw, -90.0f)); // Yaw should remain unchanged
+    CHECK(FloatApproxEquals(camera.m_pitch, initialPitch + 5.0f));
+    CHECK(FloatApproxEquals(camera.m_yaw, -90.0f)); // Yaw should remain unchanged
 }
 
 TEST_CASE("UpdateFront - Clamps pitch to maximum range")
@@ -101,7 +72,7 @@ TEST_CASE("UpdateFront - Clamps pitch to maximum range")
     // Try to exceed maximum pitch
     camera.UpdateFront(0.0f, 100.0f);
 
-    CHECK(FloatEquals(camera.m_pitch, camera.m_maxRange));
+    CHECK(FloatApproxEquals(camera.m_pitch, camera.m_maxRange));
 }
 
 TEST_CASE("UpdateFront - Clamps pitch to minimum range")
@@ -111,7 +82,7 @@ TEST_CASE("UpdateFront - Clamps pitch to minimum range")
     // Try to exceed minimum pitch
     camera.UpdateFront(0.0f, -100.0f);
 
-    CHECK(FloatEquals(camera.m_pitch, camera.m_minRange));
+    CHECK(FloatApproxEquals(camera.m_pitch, camera.m_minRange));
 }
 
 TEST_CASE("UpdateFront - Clamps pitch when already at maximum")
@@ -120,11 +91,11 @@ TEST_CASE("UpdateFront - Clamps pitch when already at maximum")
 
     // Set pitch to maximum
     camera.UpdateFront(0.0f, 89.0f);
-    CHECK(FloatEquals(camera.m_pitch, 89.0f));
+    CHECK(FloatApproxEquals(camera.m_pitch, 89.0f));
 
     // Try to increase further
     camera.UpdateFront(0.0f, 10.0f);
-    CHECK(FloatEquals(camera.m_pitch, 89.0f)); // Should remain clamped
+    CHECK(FloatApproxEquals(camera.m_pitch, 89.0f)); // Should remain clamped
 }
 
 TEST_CASE("UpdateFront - Clamps pitch when already at minimum")
@@ -133,11 +104,11 @@ TEST_CASE("UpdateFront - Clamps pitch when already at minimum")
 
     // Set pitch to minimum
     camera.UpdateFront(0.0f, -89.0f);
-    CHECK(FloatEquals(camera.m_pitch, -89.0f));
+    CHECK(FloatApproxEquals(camera.m_pitch, -89.0f));
 
     // Try to decrease further
     camera.UpdateFront(0.0f, -10.0f);
-    CHECK(FloatEquals(camera.m_pitch, -89.0f)); // Should remain clamped
+    CHECK(FloatApproxEquals(camera.m_pitch, -89.0f)); // Should remain clamped
 }
 
 TEST_CASE("UpdateFront - Updates front direction vector correctly")
@@ -150,9 +121,9 @@ TEST_CASE("UpdateFront - Updates front direction vector correctly")
     glm::vec3 front = camera.GetFront();
     // After rotating 90 degrees from -90 degrees, yaw should be 0
     // Front should point along positive X axis
-    CHECK(FloatEquals(front.x, 1.0f));
-    CHECK(FloatEquals(front.y, 0.0f));
-    CHECK(FloatEquals(front.z, 0.0f));
+    CHECK(FloatApproxEquals(front.x, 1.0f));
+    CHECK(FloatApproxEquals(front.y, 0.0f));
+    CHECK(FloatApproxEquals(front.z, 0.0f));
 }
 
 TEST_CASE("UpdateFront - Front vector is normalized")
@@ -166,7 +137,7 @@ TEST_CASE("UpdateFront - Front vector is normalized")
     float length = glm::length(front);
 
     // Normalized vector should have length of 1.0
-    CHECK(FloatEquals(length, 1.0f));
+    CHECK(FloatApproxEquals(length, 1.0f));
 }
 
 TEST_CASE("UpdateFront - Handles simultaneous horizontal and vertical movement")
@@ -179,8 +150,8 @@ TEST_CASE("UpdateFront - Handles simultaneous horizontal and vertical movement")
     // Move diagonally
     camera.UpdateFront(15.0f, 20.0f);
 
-    CHECK(FloatEquals(camera.m_yaw, initialYaw + 15.0f));
-    CHECK(FloatEquals(camera.m_pitch, initialPitch + 20.0f));
+    CHECK(FloatApproxEquals(camera.m_yaw, initialYaw + 15.0f));
+    CHECK(FloatApproxEquals(camera.m_pitch, initialPitch + 20.0f));
 }
 
 TEST_CASE("UpdateFront - Handles negative offsets")
@@ -193,8 +164,8 @@ TEST_CASE("UpdateFront - Handles negative offsets")
     // Move in negative directions
     camera.UpdateFront(-10.0f, -5.0f);
 
-    CHECK(FloatEquals(camera.m_yaw, initialYaw - 10.0f));
-    CHECK(FloatEquals(camera.m_pitch, initialPitch - 5.0f));
+    CHECK(FloatApproxEquals(camera.m_yaw, initialYaw - 10.0f));
+    CHECK(FloatApproxEquals(camera.m_pitch, initialPitch - 5.0f));
 }
 
 // ===================================================================
@@ -209,7 +180,7 @@ TEST_CASE("UpdatePosition - Sets position correctly")
     camera.UpdatePosition(newPosition);
 
     glm::vec3 position = camera.GetPosition();
-    CHECK(Vec3Equals(position, newPosition));
+    CHECK(Vec3ApproxEquals(position, newPosition));
 }
 
 TEST_CASE("UpdatePosition - Can set position multiple times")
@@ -217,10 +188,10 @@ TEST_CASE("UpdatePosition - Can set position multiple times")
     Camera camera{};
 
     camera.UpdatePosition(glm::vec3(1.0f, 2.0f, 3.0f));
-    CHECK(Vec3Equals(camera.GetPosition(), glm::vec3(1.0f, 2.0f, 3.0f)));
+    CHECK(Vec3ApproxEquals(camera.GetPosition(), glm::vec3(1.0f, 2.0f, 3.0f)));
 
     camera.UpdatePosition(glm::vec3(10.0f, 20.0f, 30.0f));
-    CHECK(Vec3Equals(camera.GetPosition(), glm::vec3(10.0f, 20.0f, 30.0f)));
+    CHECK(Vec3ApproxEquals(camera.GetPosition(), glm::vec3(10.0f, 20.0f, 30.0f)));
 }
 
 TEST_CASE("UpdatePosition - Handles zero position")
@@ -229,7 +200,7 @@ TEST_CASE("UpdatePosition - Handles zero position")
 
     camera.UpdatePosition(glm::vec3(0.0f, 0.0f, 0.0f));
     glm::vec3 position = camera.GetPosition();
-    CHECK(Vec3Equals(position, glm::vec3(0.0f, 0.0f, 0.0f)));
+    CHECK(Vec3ApproxEquals(position, glm::vec3(0.0f, 0.0f, 0.0f)));
 }
 
 TEST_CASE("UpdatePosition - Handles negative coordinates")
@@ -239,7 +210,7 @@ TEST_CASE("UpdatePosition - Handles negative coordinates")
     glm::vec3 negativePos(-5.0f, -10.0f, -15.0f);
     camera.UpdatePosition(negativePos);
 
-    CHECK(Vec3Equals(camera.GetPosition(), negativePos));
+    CHECK(Vec3ApproxEquals(camera.GetPosition(), negativePos));
 }
 
 // ===================================================================
@@ -256,7 +227,7 @@ TEST_CASE("GetFront - Returns normalized direction vector")
     glm::vec3 front = camera.GetFront();
     float length = glm::length(front);
 
-    CHECK(FloatEquals(length, 1.0f));
+    CHECK(FloatApproxEquals(length, 1.0f));
 }
 
 TEST_CASE("GetFront - Direction changes after UpdateFront")
@@ -271,7 +242,7 @@ TEST_CASE("GetFront - Direction changes after UpdateFront")
     glm::vec3 newFront = camera.GetFront();
 
     // Front should have changed
-    CHECK(!Vec3Equals(initialFront, newFront));
+    CHECK(!Vec3ApproxEquals(initialFront, newFront));
 }
 
 // ===================================================================
@@ -283,15 +254,15 @@ TEST_CASE("GetUp - Returns constant up vector")
     Camera camera{};
 
     glm::vec3 up1 = camera.GetUp();
-    CHECK(Vec3Equals(up1, glm::vec3(0.0f, 1.0f, 0.0f)));
+    CHECK(Vec3ApproxEquals(up1, glm::vec3(0.0f, 1.0f, 0.0f)));
 
     // Rotate camera
     camera.UpdateFront(45.0f, 30.0f);
 
     glm::vec3 up2 = camera.GetUp();
     // Up vector should remain constant
-    CHECK(Vec3Equals(up2, glm::vec3(0.0f, 1.0f, 0.0f)));
-    CHECK(Vec3Equals(up1, up2));
+    CHECK(Vec3ApproxEquals(up2, glm::vec3(0.0f, 1.0f, 0.0f)));
+    CHECK(Vec3ApproxEquals(up1, up2));
 }
 
 // ===================================================================
@@ -305,7 +276,7 @@ TEST_CASE("GetRight - Returns normalized right vector")
     glm::vec3 right = camera.GetRight();
     float length = glm::length(right);
 
-    CHECK(FloatEquals(length, 1.0f));
+    CHECK(FloatApproxEquals(length, 1.0f));
 }
 
 TEST_CASE("GetRight - Right vector is perpendicular to front and up")
@@ -318,11 +289,11 @@ TEST_CASE("GetRight - Right vector is perpendicular to front and up")
 
     // Right should be perpendicular to front (dot product = 0)
     float dotFront = glm::dot(right, front);
-    CHECK(FloatEquals(dotFront, 0.0f));
+    CHECK(FloatApproxEquals(dotFront, 0.0f));
 
     // Right should be perpendicular to up (dot product = 0)
     float dotUp = glm::dot(right, up);
-    CHECK(FloatEquals(dotUp, 0.0f));
+    CHECK(FloatApproxEquals(dotUp, 0.0f));
 }
 
 TEST_CASE("GetRight - Right vector changes when camera rotates")
@@ -337,7 +308,7 @@ TEST_CASE("GetRight - Right vector changes when camera rotates")
     glm::vec3 right2 = camera.GetRight();
 
     // Right vector should have changed
-    CHECK(!Vec3Equals(right1, right2));
+    CHECK(!Vec3ApproxEquals(right1, right2));
 }
 
 TEST_CASE("GetRight - Right vector follows right-hand rule")
@@ -351,7 +322,7 @@ TEST_CASE("GetRight - Right vector follows right-hand rule")
     // Right should equal cross(front, up) normalized
     glm::vec3 expectedRight = glm::normalize(glm::cross(front, up));
 
-    CHECK(Vec3Equals(right, expectedRight));
+    CHECK(Vec3ApproxEquals(right, expectedRight));
 }
 
 // ===================================================================
@@ -398,7 +369,7 @@ TEST_CASE("GetCameraView - View matrix changes with position")
     glm::mat4 view2 = camera.GetCameraView();
 
     // View matrices should be different
-    CHECK(!Mat4Equals(view1, view2));
+    CHECK(!Mat4ApproxEquals(view1, view2));
 }
 
 TEST_CASE("GetCameraView - View matrix changes with rotation")
@@ -411,7 +382,7 @@ TEST_CASE("GetCameraView - View matrix changes with rotation")
     glm::mat4 view2 = camera.GetCameraView();
 
     // View matrices should be different
-    CHECK(!Mat4Equals(view1, view2));
+    CHECK(!Mat4ApproxEquals(view1, view2));
 }
 
 TEST_CASE("GetCameraView - Uses correct look-at parameters")
@@ -423,15 +394,13 @@ TEST_CASE("GetCameraView - Uses correct look-at parameters")
 
     glm::mat4 view = camera.GetCameraView();
 
-    // View matrix should look from position towards (position + front)
-    // We can verify by checking that the view matrix transforms correctly
-    // This is a simplified check - in a real scenario, you might extract
-    // the camera position and direction from the view matrix
+    // Compare against expected glm::lookAt result
+    glm::vec3 pos = camera.GetPosition();
+    glm::vec3 front = camera.GetFront();
+    glm::vec3 up = camera.GetUp();
+    glm::mat4 expected = glm::lookAt(pos, pos + front, up);
 
-    // For now, we just verify it's a valid transformation matrix
-    // (determinant should be non-zero for a valid view matrix)
-    float determinant = glm::determinant(view);
-    CHECK(determinant != 0.0f);
+    CHECK(Mat4ApproxEquals(view, expected));
 }
 
 // ===================================================================
@@ -444,14 +413,14 @@ TEST_CASE("Integration - Camera movement and rotation work together")
 
     // Set position
     camera.UpdatePosition(glm::vec3(10.0f, 5.0f, -3.0f));
-    CHECK(Vec3Equals(camera.GetPosition(), glm::vec3(10.0f, 5.0f, -3.0f)));
+    CHECK(Vec3ApproxEquals(camera.GetPosition(), glm::vec3(10.0f, 5.0f, -3.0f)));
 
     // Rotate camera
     camera.UpdateFront(45.0f, 30.0f);
 
     // Verify front direction changed
     glm::vec3 front = camera.GetFront();
-    CHECK(FloatEquals(glm::length(front), 1.0f)); // Should be normalized
+    CHECK(FloatApproxEquals(glm::length(front), 1.0f)); // Should be normalized
 
     // Verify view matrix is valid
     glm::mat4 view = camera.GetCameraView();
@@ -472,8 +441,8 @@ TEST_CASE("Integration - Multiple rotations accumulate correctly")
     float pitch2 = camera.m_pitch;
 
     // Yaw and pitch should accumulate
-    CHECK(FloatEquals(yaw2 - yaw1, 10.0f));
-    CHECK(FloatEquals(pitch2 - pitch1, 5.0f));
+    CHECK(FloatApproxEquals(yaw2 - yaw1, 10.0f));
+    CHECK(FloatApproxEquals(pitch2 - pitch1, 5.0f));
 }
 
 // ===================================================================
@@ -489,8 +458,8 @@ TEST_CASE("Edge case - Very small offsets")
 
     camera.UpdateFront(0.001f, 0.001f);
 
-    CHECK(FloatEquals(camera.m_yaw, initialYaw + 0.001f));
-    CHECK(FloatEquals(camera.m_pitch, initialPitch + 0.001f));
+    CHECK(FloatApproxEquals(camera.m_yaw, initialYaw + 0.001f));
+    CHECK(FloatApproxEquals(camera.m_pitch, initialPitch + 0.001f));
 }
 
 TEST_CASE("Edge case - Very large offsets")
@@ -505,7 +474,7 @@ TEST_CASE("Edge case - Very large offsets")
 
     // Very large pitch offset (should be clamped)
     camera.UpdateFront(0.0f, 1000.0f);
-    CHECK(FloatEquals(camera.m_pitch, camera.m_maxRange));
+    CHECK(FloatApproxEquals(camera.m_pitch, camera.m_maxRange));
 }
 
 TEST_CASE("Edge case - Zero offsets")
@@ -518,7 +487,7 @@ TEST_CASE("Edge case - Zero offsets")
 
     camera.UpdateFront(0.0f, 0.0f);
 
-    CHECK(FloatEquals(camera.m_yaw, initialYaw));
-    CHECK(FloatEquals(camera.m_pitch, initialPitch));
-    CHECK(Vec3Equals(camera.GetFront(), initialFront));
+    CHECK(FloatApproxEquals(camera.m_yaw, initialYaw));
+    CHECK(FloatApproxEquals(camera.m_pitch, initialPitch));
+    CHECK(Vec3ApproxEquals(camera.GetFront(), initialFront));
 }

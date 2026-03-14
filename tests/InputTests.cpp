@@ -6,8 +6,10 @@
 #include <stdexcept> // For std::logic_error (used by ENGINE_ASSERT in test builds)
 
 // We need to include the class we want to test.
+#include "core/Config.h"
 #include "core/Input.h"
 #include "core/EventBus.h"
+#include "core/InputEvents.h"
 
 static EventBus s_TestEventBus;
 
@@ -15,11 +17,9 @@ static EventBus s_TestEventBus;
 // This ensures test isolation
 void ResetInputState()
 {
-    // Use explicit size (1024) since sizeof might not work on incomplete array types
-    constexpr size_t KEY_ARRAY_SIZE = 1024;
-    memset(Input::s_Keys, 0, KEY_ARRAY_SIZE * sizeof(bool));
-    memset(Input::s_KeysLastFrame, 0, KEY_ARRAY_SIZE * sizeof(bool));
-    memset(Input::s_KeysRaw, 0, KEY_ARRAY_SIZE * sizeof(bool));
+    memset(Input::s_Keys, 0, Config::MAX_KEYS * sizeof(bool));
+    memset(Input::s_KeysLastFrame, 0, Config::MAX_KEYS * sizeof(bool));
+    memset(Input::s_KeysRaw, 0, Config::MAX_KEYS * sizeof(bool));
 
     Input::s_FirstMouse = true;
     Input::s_LastX = 400.0;
@@ -31,11 +31,21 @@ void ResetInputState()
     Input::s_EventBus = &s_TestEventBus;
 }
 
+// Helper to set up mouse state for movement tests
+void SetupMouseState()
+{
+    Input::s_FirstMouse = false;
+    Input::s_LastX = 400.0;
+    Input::s_LastY = 300.0;
+    Input::s_CurrentX = 400.0;
+    Input::s_CurrentY = 300.0;
+}
+
 // ===================================================================
 // KEYBOARD INPUT TESTS
 // ===================================================================
 
-TEST_CASE("IsKeyDown - Returns true only on first frame key is pressed")
+TEST_CASE("Input - IsKeyDown returns true only on first frame key is pressed")
 {
     ResetInputState();
 
@@ -59,7 +69,7 @@ TEST_CASE("IsKeyDown - Returns true only on first frame key is pressed")
     CHECK(Input::IsKeyHeld(GLFW_KEY_W) == false);
 }
 
-TEST_CASE("IsKeyHeld - Returns true while key is held down")
+TEST_CASE("Input - IsKeyHeld returns true while key is held down")
 {
     ResetInputState();
 
@@ -82,7 +92,7 @@ TEST_CASE("IsKeyHeld - Returns true while key is held down")
     CHECK(Input::IsKeyHeld(GLFW_KEY_SPACE) == false);
 }
 
-TEST_CASE("IsKeyHeld - Returns false when key is not pressed")
+TEST_CASE("Input - IsKeyHeld returns false when key is not pressed")
 {
     ResetInputState();
 
@@ -93,7 +103,7 @@ TEST_CASE("IsKeyHeld - Returns false when key is not pressed")
     CHECK(Input::IsKeyHeld(GLFW_KEY_ESCAPE) == false);
 }
 
-TEST_CASE("Multiple keys can be held simultaneously")
+TEST_CASE("Input - Multiple keys can be held simultaneously")
 {
     ResetInputState();
 
@@ -117,7 +127,7 @@ TEST_CASE("Multiple keys can be held simultaneously")
     CHECK(Input::IsKeyHeld(GLFW_KEY_S) == true);
 }
 
-TEST_CASE("Rapid key press and release")
+TEST_CASE("Input - Rapid key press and release")
 {
     ResetInputState();
 
@@ -137,11 +147,23 @@ TEST_CASE("Rapid key press and release")
     CHECK(Input::IsKeyHeld(GLFW_KEY_X) == true);
 }
 
+TEST_CASE("Input - GLFW_REPEAT action is ignored")
+{
+    ResetInputState();
+
+    // GLFW_REPEAT should not change key state
+    Input::KeyCallBack(nullptr, GLFW_KEY_W, 0, GLFW_REPEAT, 0);
+    Input::Update();
+
+    CHECK(Input::IsKeyHeld(GLFW_KEY_W) == false);
+    CHECK(Input::IsKeyDown(GLFW_KEY_W) == false);
+}
+
 // ===================================================================
 // MOUSE INPUT TESTS
 // ===================================================================
 
-TEST_CASE("GetMouseOffset - Returns zero when mouse hasn't moved")
+TEST_CASE("Input - GetMouseOffset returns zero when mouse hasn't moved")
 {
     ResetInputState();
 
@@ -153,16 +175,10 @@ TEST_CASE("GetMouseOffset - Returns zero when mouse hasn't moved")
     CHECK(offset.y == 0.0f);
 }
 
-TEST_CASE("GetMouseOffset - Calculates offset correctly after mouse movement")
+TEST_CASE("Input - GetMouseOffset calculates offset correctly after mouse movement")
 {
     ResetInputState();
-
-    // Set up initial state (simulate first mouse event already happened)
-    Input::s_FirstMouse = false;
-    Input::s_LastX = 400.0;
-    Input::s_LastY = 300.0;
-    Input::s_CurrentX = 400.0;
-    Input::s_CurrentY = 300.0;
+    SetupMouseState();
 
     // Simulate mouse movement to the right
     Input::MouseCallBack(nullptr, 450.0, 300.0); // Moved 50 pixels right
@@ -181,16 +197,10 @@ TEST_CASE("GetMouseOffset - Calculates offset correctly after mouse movement")
     CHECK(offset.y == -50.0f); // Y is inverted
 }
 
-TEST_CASE("GetMouseOffset - Resets to zero when mouse stops moving")
+TEST_CASE("Input - GetMouseOffset resets to zero when mouse stops moving")
 {
     ResetInputState();
-
-    // Set up initial state (simulate first mouse event already happened)
-    Input::s_FirstMouse = false;
-    Input::s_LastX = 400.0;
-    Input::s_LastY = 300.0;
-    Input::s_CurrentX = 400.0;
-    Input::s_CurrentY = 300.0;
+    SetupMouseState();
 
     // Move mouse
     Input::MouseCallBack(nullptr, 500.0, 400.0);
@@ -209,7 +219,7 @@ TEST_CASE("GetMouseOffset - Resets to zero when mouse stops moving")
     CHECK(offset.y == 0.0f);
 }
 
-TEST_CASE("MouseCallBack - Handles first mouse event correctly")
+TEST_CASE("Input - MouseCallBack handles first mouse event correctly")
 {
     ResetInputState();
 
@@ -229,14 +239,10 @@ TEST_CASE("MouseCallBack - Handles first mouse event correctly")
     CHECK(offset.y == 0.0f);
 }
 
-TEST_CASE("MouseCallBack - Updates current position correctly")
+TEST_CASE("Input - MouseCallBack updates current position correctly")
 {
     ResetInputState();
-
-    // Set initial state
-    Input::s_FirstMouse = false;
-    Input::s_LastX = 400.0;
-    Input::s_LastY = 300.0;
+    SetupMouseState();
 
     // Move mouse
     Input::MouseCallBack(nullptr, 450.0, 350.0);
@@ -246,14 +252,10 @@ TEST_CASE("MouseCallBack - Updates current position correctly")
     CHECK(Input::s_LastX == 400.0); // Should not change until Update()
 }
 
-TEST_CASE("Mouse offset calculation with sensitivity")
+TEST_CASE("Input - Mouse offset calculation with sensitivity")
 {
     ResetInputState();
-
-    // Note: Sensitivity is applied in MouseCallBack, but let's test the offset calculation
-    Input::s_FirstMouse = false;
-    Input::s_LastX = 400.0;
-    Input::s_LastY = 300.0;
+    SetupMouseState();
 
     // Move mouse diagonally
     Input::MouseCallBack(nullptr, 500.0, 400.0);
@@ -264,13 +266,30 @@ TEST_CASE("Mouse offset calculation with sensitivity")
     CHECK(offset.y == -100.0f); // Y is inverted
 }
 
-TEST_CASE("Update - Correctly updates mouse offset and resets for next frame")
+TEST_CASE("Input - MouseMoveEvent includes sensitivity scaling")
 {
     ResetInputState();
+    SetupMouseState();
 
-    Input::s_FirstMouse = false;
-    Input::s_LastX = 400.0;
-    Input::s_LastY = 300.0;
+    float receivedX = 0.0f, receivedY = 0.0f;
+    s_TestEventBus.Subscribe<MouseMoveEvent>(
+        std::function<void(const MouseMoveEvent &)>([&](const MouseMoveEvent &e) {
+            receivedX = e.xOffset;
+            receivedY = e.yOffset;
+        }));
+
+    Input::MouseCallBack(nullptr, 500.0, 400.0);
+    Input::Update();
+
+    // Raw offset is 100, -100. Sensitivity is 0.1f.
+    CHECK(receivedX == doctest::Approx(100.0f * Input::s_Sensitivity));
+    CHECK(receivedY == doctest::Approx(-100.0f * Input::s_Sensitivity));
+}
+
+TEST_CASE("Input - Update correctly updates mouse offset and resets for next frame")
+{
+    ResetInputState();
+    SetupMouseState();
 
     // Frame 1: Move mouse
     Input::MouseCallBack(nullptr, 450.0, 350.0);
@@ -292,16 +311,10 @@ TEST_CASE("Update - Correctly updates mouse offset and resets for next frame")
     CHECK(Input::s_LastY == 350.0);
 }
 
-TEST_CASE("Update - Handles keyboard and mouse state together")
+TEST_CASE("Input - Update handles keyboard and mouse state together")
 {
     ResetInputState();
-
-    // Set up initial mouse state (simulate first mouse event already happened)
-    Input::s_FirstMouse = false;
-    Input::s_LastX = 400.0;
-    Input::s_LastY = 300.0;
-    Input::s_CurrentX = 400.0;
-    Input::s_CurrentY = 300.0;
+    SetupMouseState();
 
     // Press key and move mouse simultaneously
     Input::KeyCallBack(nullptr, GLFW_KEY_W, 0, GLFW_PRESS, 0);
@@ -318,22 +331,35 @@ TEST_CASE("Update - Handles keyboard and mouse state together")
 // EDGE CASES
 // ===================================================================
 
-TEST_CASE("Edge case - Invalid key codes")
+TEST_CASE("Input - Invalid key codes return false without UB")
 {
     ResetInputState();
 
     Input::Update();
 
-    // Very large key code
+    // Very large key code (out of bounds)
     CHECK(Input::IsKeyHeld(9999) == false);
     CHECK(Input::IsKeyDown(9999) == false);
 
-    // Negative key code
+    // Negative key code (GLFW_KEY_UNKNOWN = -1)
     CHECK(Input::IsKeyHeld(-1) == false);
     CHECK(Input::IsKeyDown(-1) == false);
 }
 
-TEST_CASE("Update - Aborts with message when EventBus is not initialized")
+TEST_CASE("Input - KeyCallBack ignores invalid key codes")
+{
+    ResetInputState();
+
+    // Should not crash or cause UB
+    Input::KeyCallBack(nullptr, -1, 0, GLFW_PRESS, 0);
+    Input::KeyCallBack(nullptr, Config::MAX_KEYS, 0, GLFW_PRESS, 0);
+    Input::Update();
+
+    // State should remain clean
+    CHECK(Input::IsKeyHeld(0) == false);
+}
+
+TEST_CASE("Input - Update aborts with message when EventBus is not initialized")
 {
     ResetInputState();
     Input::s_EventBus = nullptr;
@@ -341,7 +367,7 @@ TEST_CASE("Update - Aborts with message when EventBus is not initialized")
     CHECK_THROWS_AS(Input::Update(), std::logic_error);
 }
 
-TEST_CASE("Edge case - Mouse movement at screen boundaries")
+TEST_CASE("Input - Mouse movement at screen boundaries")
 {
     ResetInputState();
 

@@ -27,7 +27,7 @@ void Scene::Update(float deltaTime) {
 
   for (auto &gameObject : m_gameObjects) {
     if (!gameObject->IsActive())
-      return;
+      continue;
     gameObject->Update(deltaTime);
 
     gameObject->Draw(context);

@@ -196,8 +196,18 @@ if(BUILD_TESTING)
     add_executable(run-tests
         tests/InputTests.cpp
         tests/CameraTests.cpp
+        tests/EventBusTests.cpp
+        tests/TransformComponentTests.cpp
+        tests/CameraControllerTests.cpp
+        tests/GameObjectTests.cpp
+        tests/SceneTests.cpp
+        tests/RenderContextTests.cpp
         src/core/Input.cpp
         src/cameras/Camera.cpp
+        src/scene/CameraController.cpp
+        src/scene/GameObject.cpp
+        src/scene/Scene.cpp
+        vendor/glad/src/glad.c
     )
 
     # Add a compile definition to expose private members for testing
@@ -208,7 +218,10 @@ if(BUILD_TESTING)
         ${CMAKE_SOURCE_DIR}/src
         ${CMAKE_SOURCE_DIR}/vendor/doctest
         # We need GLFW headers because Input.h includes it
-        ${CMAKE_SOURCE_DIR}/vendor/glfw/include #<-- You might need to adjust this path
+        ${CMAKE_SOURCE_DIR}/vendor/glfw/include
+        ${CMAKE_SOURCE_DIR}/vendor/glad/include
+        ${CMAKE_SOURCE_DIR}/vendor/glm
+        ${CMAKE_SOURCE_DIR}/tests
     )
 
     # Link the test executable to the libraries it needs.
@@ -216,5 +229,5 @@ if(BUILD_TESTING)
     target_link_libraries(run-tests PRIVATE glfw)
 
     # Add the test to CTest so we can run it easily
-    add_test(NAME InputTests COMMAND run-tests)
+    add_test(NAME AllTests COMMAND run-tests)
 endif()
