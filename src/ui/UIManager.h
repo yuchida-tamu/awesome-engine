@@ -31,7 +31,6 @@ public:
   ~UIManager() override;
 
   // Takes ownership of the element. Returns an ID you can use to deregister it.
-  // TODO: Store the element in m_elements and return its ID.
   int Register(std::unique_ptr<UIElement> element);
 
   // Removes the element with the given ID. Safe to call with an unknown ID
@@ -54,6 +53,8 @@ public:
   //   element->Render(shader).
   //   7. Restore the saved OpenGL state.
   void Render();
+
+  int Count() { return m_elements.size(); };
 
 private:
   struct ElementEntry {

@@ -1,4 +1,5 @@
 #include "ui/UIManager.h"
+#include "ui/UIElement.h"
 #include <algorithm>
 
 // ===================================================================
@@ -26,9 +27,10 @@ int UIManager::Register(std::unique_ptr<UIElement> element) {
 }
 
 void UIManager::Deregister(int id) {
-  // TODO: Remove the element with the matching ID.
-  //   Use std::remove_if + erase idiom on m_elements.
-  //   Safe to call with an ID that doesn't exist (just does nothing).
+  m_elements.erase(
+      std::remove_if(m_elements.begin(), m_elements.end(),
+                     [id](const ElementEntry &entry) { return entry.id == id; }),
+      m_elements.end());
 }
 
 // ===================================================================

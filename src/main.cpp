@@ -89,12 +89,9 @@ int main() {
     float lastFrame = 0.0f;
 
     Camera camera{};
-
     // Set initial camera position (back away from origin to see the model)
     glm::vec3 cameraPosition = glm::vec3(0.0f, 2.0f, 5.0f);
     camera.UpdatePosition(cameraPosition);
-
-    float cameraSpeed;
 
     Scene scene{eventBus};
 
