@@ -53,12 +53,26 @@ TEST_CASE("UIManager - Deregister removes element") {
   CHECK(manager.Count() == 0);
 }
 
-// TEST_CASE("UIManager - Deregistering unknown ID is safe") {
-//   // Should not crash or throw when given an ID that was never registered.
-//   EventBus bus;
-//   UIManager manager(bus);
-//   manager.Deregister(999); // no-op, should not crash
-// }
+TEST_CASE("UIManager - Deregistering unknown ID is safe") {
+  SUBCASE("Without registered elements") {
+    // Should not crash or throw when given an ID that was never registered.
+    EventBus bus;
+    UIManager manager(bus);
+    manager.Deregister(999); // no-op, should not crash
+  }
+  SUBCASE("With registered elements, would not deregister other elements") {
+    // Should not crash or throw when given an ID that was never registered.
+    EventBus bus;
+    UIManager manager(bus);
+    auto element = std::make_unique<MockUIElement>();
+    auto *rawPtr = element.get();
+    manager.Register(std::move(element));
+    manager.Deregister(999); // no-op, should not crash
+    manager.Update(0.016f);
+    CHECK(manager.Count() == 1);
+    CHECK(rawPtr->updateCount == 1);
+  }
+}
 
 // ===================================================================
 // UPDATE TESTS
