@@ -1,4 +1,5 @@
 #include "ui/UIManager.h"
+#include "rendering/Shader.h"
 #include "ui/UIElement.h"
 #include <algorithm>
 
@@ -6,11 +7,18 @@
 // CONSTRUCTION / DESTRUCTION
 // ===================================================================
 
-UIManager::UIManager(EventBus &eventBus) : InputListener(eventBus) {
-  // TODO: Subscribe to any events the UI system needs.
-  //   For example, subscribe to a WindowResizeEvent to update
-  //   m_screenWidth / m_screenHeight for the orthographic projection.
-}
+UIManager::UIManager(EventBus &eventBus)
+    : InputListener(eventBus),
+      m_projection(glm::ortho(0.0f, static_cast<float>(Config::WINDOW_WIDTH),
+                              0.0f, static_cast<float>(Config::WINDOW_HEIGHT),
+                              -1.0f, 1.0f)) {}
+
+UIManager::UIManager(EventBus &eventBus, Shader shader)
+    : InputListener(eventBus),
+      m_projection(glm::ortho(0.0f, static_cast<float>(Config::WINDOW_WIDTH),
+                              0.0f, static_cast<float>(Config::WINDOW_HEIGHT),
+                              -1.0f, 1.0f)),
+      m_shader(std::move(shader)) {}
 
 UIManager::~UIManager() {
   // TODO: Unsubscribe from any EventBus subscriptions.
@@ -27,10 +35,11 @@ int UIManager::Register(std::unique_ptr<UIElement> element) {
 }
 
 void UIManager::Deregister(int id) {
-  m_elements.erase(
-      std::remove_if(m_elements.begin(), m_elements.end(),
-                     [id](const ElementEntry &entry) { return entry.id == id; }),
-      m_elements.end());
+  m_elements.erase(std::remove_if(m_elements.begin(), m_elements.end(),
+                                  [id](const ElementEntry &entry) {
+                                    return entry.id == id;
+                                  }),
+                   m_elements.end());
 }
 
 // ===================================================================
@@ -43,21 +52,33 @@ void UIManager::Update(float deltaTime) {
   }
 }
 
+std::vector<UIElement *> UIManager::GetVisibleElements() {
+  std::vector<UIElement *> visible;
+  for (auto &entry : m_elements) {
+    if (entry.element->IsVisible()) {
+      visible.push_back(entry.element.get());
+    }
+  }
+  return visible;
+}
+
 void UIManager::Render() {
-  // TODO: Render all visible UI elements.
-  //
-  // Steps:
-  //   1. glDisable(GL_DEPTH_TEST);
-  //   2. glEnable(GL_BLEND);
-  //      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  //   3. glm::mat4 projection = glm::ortho(0.0f, m_screenWidth, 0.0f,
-  //   m_screenHeight);
-  //   4. Activate text shader, set "projection" uniform.
-  //   5. for (auto &entry : m_elements) {
-  //        if (entry.element->IsVisible()) {
-  //          entry.element->Render(shader);
-  //        }
-  //      }
-  //   6. glEnable(GL_DEPTH_TEST);
-  //      glDisable(GL_BLEND);
+  if (!m_shader.has_value()) {
+    return;
+  }
+
+  glDisable(GL_DEPTH_TEST);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+  m_shader->UseProgram();
+  m_shader->SetUniformMatrix4FloatPtr("projection",
+                                      glm::value_ptr(m_projection));
+
+  for (auto *element : GetVisibleElements()) {
+    element->Render(*m_shader);
+  }
+
+  glEnable(GL_DEPTH_TEST);
+  glDisable(GL_BLEND);
 }

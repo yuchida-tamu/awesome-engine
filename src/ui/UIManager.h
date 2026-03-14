@@ -2,11 +2,16 @@
 
 #include "core/Config.h"
 #include "core/InputListener.h"
+#include "glad/glad.h"
 #include "ui/UIElement.h"
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <memory>
+#include <optional>
 #include <vector>
 
-class Shader;
+#include "rendering/Shader.h"
 
 // Manages all UI elements. Owns an orthographic projection for screen-space
 // rendering.
@@ -28,6 +33,7 @@ class Shader;
 class UIManager : public InputListener {
 public:
   UIManager(EventBus &eventBus);
+  UIManager(EventBus &eventBus, Shader shader);
   ~UIManager() override;
 
   // Takes ownership of the element. Returns an ID you can use to deregister it.
@@ -56,15 +62,21 @@ public:
 
   int Count() { return m_elements.size(); };
 
+#ifdef UNIT_TEST
+public:
+#else
+private:
+#endif
+  std::vector<UIElement *> GetVisibleElements();
+
 private:
   struct ElementEntry {
     int id;
     std::unique_ptr<UIElement> element;
   };
+  glm::mat4 m_projection;
+  std::optional<Shader> m_shader;
 
   std::vector<ElementEntry> m_elements;
   int m_nextId = 1;
-
-  float m_screenWidth = Config::WINDOW_WIDTH;
-  float m_screenHeight = Config::WINDOW_HEIGHT;
 };

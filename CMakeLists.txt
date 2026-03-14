@@ -217,6 +217,7 @@ if(BUILD_TESTING)
         src/scene/Scene.cpp
         src/ui/UIManager.cpp
         src/ui/TextElement.cpp
+        src/rendering/Shader.cpp
         vendor/glad/src/glad.c
     )
 
