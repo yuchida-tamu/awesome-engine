@@ -99,6 +99,29 @@ TEST_CASE("CameraController - WASD movement directions") {
 }
 ```
 
+### Testing private methods via UNIT_TEST macro
+Functions should not be made public just for testing. If a private method needs direct test coverage, use the `UNIT_TEST` macro to conditionally expose it only in test builds:
+
+**In the header** — add a guarded access block before the `private:` section that contains the method:
+```cpp
+class MyClass {
+public:
+  void PublicMethod();
+
+#ifdef UNIT_TEST
+public:
+#else
+private:
+#endif
+  std::vector<Item *> GetFilteredItems();
+
+private:
+  std::vector<Item> m_items;
+};
+```
+
+The method stays private in production builds. Tests can call it directly because `UNIT_TEST` is defined for the test target.
+
 ### Mock components
 Extend `Component` for test doubles. Keep them minimal:
 ```cpp

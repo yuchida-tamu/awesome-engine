@@ -13,6 +13,65 @@ Concrete examples from this project demonstrating each testing pattern.
 
 ---
 
+## Testing private methods with UNIT_TEST macro
+
+From `UIManagerTests.cpp` — testing a private filtering method exposed via `UNIT_TEST`:
+
+**Header (`UIManager.h`)**:
+```cpp
+class UIManager : public InputListener {
+public:
+  int Register(std::unique_ptr<UIElement> element);
+  void Render();
+
+#ifdef UNIT_TEST
+public:
+#else
+private:
+#endif
+  std::vector<UIElement *> GetVisibleElements();
+
+private:
+  std::vector<ElementEntry> m_elements;
+};
+```
+
+**Test (`UIManagerTests.cpp`)**:
+```cpp
+TEST_CASE("UIManager - GetVisibleElements returns only visible elements") {
+  EventBus bus;
+  UIManager manager(bus);
+  auto visible1 = std::make_unique<MockUIElement>();
+  auto visible2 = std::make_unique<MockUIElement>();
+  auto hidden = std::make_unique<MockUIElement>();
+  auto *rawVisible1 = visible1.get();
+  auto *rawVisible2 = visible2.get();
+
+  hidden->SetVisible(false);
+
+  manager.Register(std::move(visible1));
+  manager.Register(std::move(hidden));
+  manager.Register(std::move(visible2));
+
+  auto result = manager.GetVisibleElements();
+
+  CHECK(result.size() == 2);
+  CHECK(result[0] == rawVisible1);
+  CHECK(result[1] == rawVisible2);
+}
+
+TEST_CASE("UIManager - GetVisibleElements returns empty when no elements") {
+  EventBus bus;
+  UIManager manager(bus);
+
+  auto result = manager.GetVisibleElements();
+
+  CHECK(result.empty());
+}
+```
+
+---
+
 ## Complete test file template
 
 Minimal template for a new test file:
