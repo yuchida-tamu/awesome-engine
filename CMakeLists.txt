@@ -117,6 +117,23 @@ foreach(TEXTURE_FILE ${TEXTURE_FILES})
     )
 endforeach()
 
+# Define the output directory for fonts
+set(FONT_OUTPUT_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/fonts)
+file(MAKE_DIRECTORY ${FONT_OUTPUT_DIR})
+
+# Find all font files
+file(GLOB FONT_FILES "${CMAKE_SOURCE_DIR}/assets/fonts/*.ttf" "${CMAKE_SOURCE_DIR}/assets/fonts/*.otf")
+
+# Copy each font file to the output directory
+foreach(FONT_FILE ${FONT_FILES})
+    add_custom_command(
+        TARGET awesome-engine POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${FONT_FILE}
+        ${FONT_OUTPUT_DIR}
+    )
+endforeach()
+
 # Define the output directory for the models
 set(MODEL_OUTPUT_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/models)
 
@@ -237,7 +254,7 @@ if(BUILD_TESTING)
 
     # Link the test executable to the libraries it needs.
     # We need GLFW because the Input class calls GLFW functions.
-    target_link_libraries(run-tests PRIVATE glfw)
+    target_link_libraries(run-tests PRIVATE glfw Freetype::Freetype)
 
     # Add the test to CTest so we can run it easily
     add_test(NAME AllTests COMMAND run-tests)

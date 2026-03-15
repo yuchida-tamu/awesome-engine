@@ -41,23 +41,12 @@ public:
 
   // Removes the element with the given ID. Safe to call with an unknown ID
   // (no-op).
-  // TODO: Find and erase the element from m_elements.
   void Deregister(int id);
 
   // Calls Update(deltaTime) on every registered element.
   void Update(float deltaTime);
 
   // Renders all visible elements with orthographic projection.
-  // TODO: Implement the following steps:
-  //   1. Save current OpenGL state (depth test, blend mode).
-  //   2. Disable depth testing (glDisable(GL_DEPTH_TEST)).
-  //   3. Enable blending (glEnable(GL_BLEND), glBlendFunc(GL_SRC_ALPHA,
-  //   GL_ONE_MINUS_SRC_ALPHA)).
-  //   4. Set up orthographic projection matrix.
-  //   5. Activate the text shader, set the projection uniform.
-  //   6. Loop through m_elements: if element->IsVisible(), call
-  //   element->Render(shader).
-  //   7. Restore the saved OpenGL state.
   void Render();
 
   int Count() { return m_elements.size(); };

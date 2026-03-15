@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <glad/glad.h>
 
 #include <GLFW/glfw3.h>
@@ -8,6 +9,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <utility>
 
 // Core
 #include "core/Config.h"
@@ -31,6 +33,9 @@
 #include "scene/TransformComponent.h"
 #include "scene/WorldSpaceGizmo.h"
 #include "stb_image.h"
+#include "ui/TextElement.h"
+#include "ui/UIElement.h"
+#include "ui/UIManager.h"
 
 void error_callback(int error, const char *description) {
   std::cerr << "GLFW Error: " << description << std::endl;
@@ -79,6 +84,15 @@ int main() {
   // model).
   stbi_set_flip_vertically_on_load(true);
 
+  Shader textShader("shaders/default_ui.vert.glsl",
+                    "shaders/default_ui.frag.glsl");
+  UIManager uiManager(eventBus, std::move(textShader));
+  auto text = std::make_unique<TextElement>();
+  text->SetText("Awesome Engine");
+  text->SetPosition(glm::vec2(12.0, 12.0));
+  text->SetColor(glm::vec3(1.0, 0.1, 0.4));
+  uiManager.Register(std::move(text));
+
   try {
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glEnable(GL_MULTISAMPLE);
@@ -126,6 +140,10 @@ int main() {
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
       scene.Update(deltaTime);
+
+      // UI
+      uiManager.Update(deltaTime);
+      uiManager.Render();
 
       // Swap buffers and poll events
       glfwSwapBuffers(window);

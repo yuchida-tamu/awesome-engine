@@ -1,21 +1,46 @@
 #include "ui/TextElement.h"
+#include "ui/UIManager.h"
+#include <_abort.h>
+#include <utility>
 
 // ===================================================================
 // CONSTRUCTION / DESTRUCTION
 // ===================================================================
 
 TextElement::TextElement() {
-  // TODO: Set up OpenGL objects for rendering text quads.
-  //   1. Generate a VAO and VBO (glGenVertexArrays, glGenBuffers).
-  //   2. Configure the VBO for dynamic draw — each character quad
-  //      has 6 vertices with (vec2 position, vec2 texCoord).
-  //   3. Optionally call a LoadFont() method here to load glyphs.
+  LoadFont();
+
+  // Set default font size
+  FT_Set_Pixel_Sizes(m_face, 0, 48);
+
+  if (FT_Load_Char(m_face, 'X', FT_LOAD_RENDER)) {
+    std::cerr << "ERROR::FREETYPE: Failed to load Glyph" << std::endl;
+    abort();
+  }
+
+  LoadCharacter();
+
+  glGenVertexArrays(1, &m_vao);
+  glGenBuffers(1, &m_vbo);
+  glBindVertexArray(m_vao);
+  glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, NULL, GL_DYNAMIC_DRAW);
+  glEnableVertexAttribArray(0);
+  glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  glBindVertexArray(0);
 }
 
 TextElement::~TextElement() {
-  // TODO: Clean up OpenGL resources.
-  //   - Delete glyph textures (glDeleteTextures for each entry in m_glyphs).
-  //   - Delete VAO and VBO (glDeleteVertexArrays, glDeleteBuffers).
+  for (auto &[ch, glyph] : m_glyphs) {
+    glDeleteTextures(1, &glyph.textureID);
+  }
+
+  glDeleteVertexArrays(1, &m_vao);
+  glDeleteBuffers(1, &m_vbo);
+
+  m_vao = 0;
+  m_vbo = 0;
 }
 
 // ===================================================================
@@ -43,26 +68,92 @@ float TextElement::GetScale() const { return m_scale; }
 // ===================================================================
 
 void TextElement::Render(Shader &shader) {
-  // TODO: Render the text string character by character.
-  //
-  // Outline:
-  //   1. Activate the shader and set the "textColor" uniform to m_color.
-  //   2. Bind the VAO.
-  //   3. For each character in m_text:
-  //      a. Look up the GlyphMetrics from m_glyphs.
-  //      b. Calculate the quad position using:
-  //         - xpos = x + glyph.bearing.x * m_scale
-  //         - ypos = y - (glyph.size.y - glyph.bearing.y) * m_scale
-  //      c. Calculate the quad size:
-  //         - w = glyph.size.x * m_scale
-  //         - h = glyph.size.y * m_scale
-  //      d. Update the VBO with the 6 vertices for this quad.
-  //      e. Bind the glyph texture (glBindTexture).
-  //      f. Draw the quad (glDrawArrays(GL_TRIANGLES, 0, 6)).
-  //      g. Advance the x cursor by (glyph.advance >> 6) * m_scale.
+  shader.UseProgram();
+  shader.SetUniformVec3("textColor", glm::value_ptr(m_color));
+  glActiveTexture(GL_TEXTURE0);
+  glBindVertexArray(m_vao);
+
+  float x = m_position.x;
+
+  std::string::const_iterator c;
+  for (c = m_text.begin(); c != m_text.end(); c++) {
+    GlyphMetrics glyph = m_glyphs[*c];
+
+    float xpos = x + glyph.bearing.x * m_scale;
+    float ypos = m_position.y - (glyph.size.y - glyph.bearing.y) * m_scale;
+
+    float w = glyph.size.x * m_scale;
+    float h = glyph.size.y * m_scale;
+
+    float vertices[6][4] = {
+        {xpos, ypos + h, 0.0f, 0.0f}, {xpos, ypos, 0.0f, 1.0f},
+        {xpos + w, ypos, 1.0f, 1.0f}, {xpos, ypos + h, 0.0f, 0.0f},
+        {xpos + w, ypos, 1.0f, 1.0f}, {xpos + w, ypos + h, 1.0f, 0.0f}};
+
+    glBindTexture(GL_TEXTURE_2D, glyph.textureID);
+    glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    x += (glyph.advance >> 6) * m_scale;
+  }
+  glBindVertexArray(0);
+  glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void TextElement::Update(float deltaTime) {
   // TODO: Update any text animations (e.g., typewriter effect, blinking).
   // For static text, this can remain empty.
+}
+
+void TextElement::LoadFont() {
+  if (FT_Init_FreeType(&m_ft)) {
+    std::cerr << "ERROR::FREETYPE: Could not init FreeType Library"
+              << std::endl;
+    abort();
+    return;
+  }
+
+  if (FT_New_Face(m_ft, "fonts/Roboto.ttf", 0, &m_face)) {
+    std::cerr << "ERROR::FREETYPE: Failed to load font" << std::endl;
+    abort();
+    return;
+  }
+}
+
+void TextElement::LoadCharacter() {
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // disable byte alignment DESTRUCTION
+  for (unsigned char c = 0; c < 128; c++) {
+
+    if (FT_Load_Char(m_face, c, FT_LOAD_RENDER)) {
+      std::cerr << "ERROR::FREETYPE: Failed to load Glyph" << std::endl;
+      abort();
+    }
+    // generate texture
+    unsigned int texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, m_face->glyph->bitmap.width,
+                 m_face->glyph->bitmap.rows, 0, GL_RED, GL_UNSIGNED_BYTE,
+                 m_face->glyph->bitmap.buffer);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    GlyphMetrics glyph = {
+        texture,
+        glm::ivec2(m_face->glyph->bitmap.width, m_face->glyph->bitmap.rows),
+        glm::ivec2(m_face->glyph->bitmap_left, m_face->glyph->bitmap_top),
+        static_cast<unsigned int>(m_face->glyph->advance.x)};
+
+    m_glyphs.insert(std::pair<char, GlyphMetrics>(c, glyph));
+  }
+
+  // Clear resources
+  FT_Done_Face(m_face);
+  FT_Done_FreeType(m_ft);
 }

@@ -1,9 +1,12 @@
 #pragma once
 
 #include "ui/UIElement.h"
+#include <ft2build.h>
 #include <glm/glm.hpp>
+#include <iostream>
 #include <map>
 #include <string>
+#include FT_FREETYPE_H
 
 // Holds the metrics for a single glyph loaded from FreeType.
 // Each glyph becomes a small OpenGL texture that we render as a textured quad.
@@ -11,7 +14,7 @@ struct GlyphMetrics {
   unsigned int textureID; // OpenGL texture handle for this glyph
   glm::ivec2 size;        // Width and height of the glyph in pixels
   glm::ivec2 bearing;     // Offset from baseline to top-left of glyph
-  unsigned int advance;   // Horizontal offset to the next glyph (in 1/64 pixels)
+  unsigned int advance; // Horizontal offset to the next glyph (in 1/64 pixels)
 };
 
 // Renders a line of text as a series of textured quads.
@@ -42,11 +45,8 @@ public:
   float GetScale() const;
 
   // --- UIElement overrides ---
-  // TODO: Implement — iterate m_text, look up each char in m_glyphs,
-  //       render a textured quad per character.
   void Render(Shader &shader) override;
 
-  // TODO: Implement — update animations if needed (e.g., blinking text).
   void Update(float deltaTime) override;
 
 private:
@@ -54,11 +54,16 @@ private:
   glm::vec3 m_color{1.0f, 1.0f, 1.0f}; // Default: white
   float m_scale = 1.0f;
 
+  FT_Library m_ft;
+  FT_Face m_face;
+
   // Maps ASCII character code -> glyph metrics.
-  // TODO: Populate this in a LoadFont() method using FreeType.
   std::map<char, GlyphMetrics> m_glyphs;
 
   // TODO: OpenGL objects for rendering quads (VAO, VBO).
-  // unsigned int m_vao = 0;
-  // unsigned int m_vbo = 0;
+  unsigned int m_vao = 0;
+  unsigned int m_vbo = 0;
+
+  void LoadFont();
+  void LoadCharacter();
 };

@@ -4,7 +4,8 @@
 
 class Shader;
 
-// Abstract base class for all UI primitives (text labels, panels, buttons, etc.).
+// Abstract base class for all UI primitives (text labels, panels, buttons,
+// etc.).
 //
 // UI elements live in screen-space pixel coordinates:
 //   - m_position is the bottom-left corner of the element in pixels
