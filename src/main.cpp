@@ -63,6 +63,7 @@ int main() {
   GLFWwindow *window =
       glfwCreateWindow(Config::WINDOW_WIDTH, Config::WINDOW_HEIGHT,
                        "Awesome Engine", NULL, NULL);
+
   if (window == NULL) {
     std::cerr << "Failed to create GLFW window" << std::endl;
     glfwTerminate();
@@ -77,6 +78,11 @@ int main() {
     return -1;
   }
 
+  glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+  glEnable(GL_MULTISAMPLE);
+  glEnable(GL_DEPTH_TEST);
+  glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+
   EventBus eventBus;
   Input::Initialize(window, eventBus);
 
@@ -84,23 +90,18 @@ int main() {
   // model).
   stbi_set_flip_vertically_on_load(true);
 
-  Shader textShader("shaders/default_ui.vert.glsl",
-                    "shaders/default_ui.frag.glsl");
-  UIManager uiManager(eventBus, std::move(textShader));
-  auto text = std::make_unique<TextElement>();
-  text->SetText("Awesome Engine");
-  text->SetPosition(glm::vec2(12.0, 12.0));
-  text->SetColor(glm::vec3(1.0, 0.1, 0.4));
-  uiManager.Register(std::move(text));
-
   try {
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    glEnable(GL_MULTISAMPLE);
-    glEnable(GL_DEPTH_TEST);
-    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-
     float deltaTime = 0.0f;
     float lastFrame = 0.0f;
+
+    Shader textShader("shaders/default_ui.vert.glsl",
+                      "shaders/default_ui.frag.glsl");
+    UIManager uiManager(eventBus, std::move(textShader));
+    auto text = std::make_unique<TextElement>();
+    text->SetText("Awesome Engine");
+    text->SetPosition(glm::vec2(12.0, 12.0));
+    text->SetColor(glm::vec3(1.0, 0.1, 0.4));
+    uiManager.Register(std::move(text));
 
     Camera camera{};
     // Set initial camera position (back away from origin to see the model)
