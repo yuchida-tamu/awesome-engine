@@ -5,7 +5,7 @@
 // A minimal concrete UIElement for testing the base class interface.
 class StubUIElement : public UIElement {
 public:
-  void Render(Shader &shader) override {}
+  void Render(const glm::mat4 &projection) override {}
   void Update(float deltaTime) override {}
 };
 

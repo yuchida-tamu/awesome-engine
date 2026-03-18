@@ -11,7 +11,7 @@ public:
   int renderCount = 0;
   float lastDeltaTime = 0.0f;
 
-  void Render(Shader &shader) override { renderCount++; }
+  void Render(const glm::mat4 &projection) override { renderCount++; }
   void Update(float deltaTime) override {
     updateCount++;
     lastDeltaTime = deltaTime;
@@ -130,8 +130,7 @@ TEST_CASE("UIManager - GetVisibleElements returns empty when no elements") {
   CHECK(result.empty());
 }
 
-TEST_CASE("UIManager - Render is no-op without shader") {
-  // Without an injected Shader, Render() should return early.
+TEST_CASE("UIManager - Render calls Render on visible elements") {
   EventBus bus;
   UIManager manager(bus);
   auto elem = std::make_unique<MockUIElement>();
@@ -140,5 +139,5 @@ TEST_CASE("UIManager - Render is no-op without shader") {
   manager.Register(std::move(elem));
   manager.Render();
 
-  CHECK(rawPtr->renderCount == 0);
+  CHECK(rawPtr->renderCount == 1);
 }

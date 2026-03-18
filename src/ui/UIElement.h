@@ -1,6 +1,7 @@
 #pragma once
 
 #include <glm/glm.hpp>
+#include <iostream>
 
 class Shader;
 
@@ -20,7 +21,7 @@ public:
   virtual ~UIElement() = default;
 
   // --- Pure virtuals — subclasses fill these in ---
-  virtual void Render(Shader &shader) = 0;
+  virtual void Render(const glm::mat4 &projection) = 0;
   virtual void Update(float deltaTime) = 0;
 
   // --- Position / size ---
@@ -33,6 +34,12 @@ public:
   // --- Visibility ---
   void SetVisible(bool visible) { m_visible = visible; }
   bool IsVisible() const { return m_visible; }
+
+  // --- Hitting test ---
+  bool ContainPoint(glm::vec2 point) const {
+    return point.x >= m_position.x && point.x <= m_position.x + m_size.x &&
+           point.y >= m_position.y && point.y <= m_position.y + m_size.y;
+  }
 
 protected:
   glm::vec2 m_position{0.0f, 0.0f};

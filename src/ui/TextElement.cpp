@@ -1,6 +1,8 @@
 #include "ui/TextElement.h"
-#include "ui/UIManager.h"
+#include <glad/glad.h>
+
 #include <_abort.h>
+#include <glm/gtc/type_ptr.hpp>
 #include <utility>
 
 // ===================================================================
@@ -8,6 +10,11 @@
 // ===================================================================
 
 TextElement::TextElement() {
+#ifndef UNIT_TEST
+  m_shader.emplace("shaders/default_ui.vert.glsl",
+                    "shaders/default_ui.frag.glsl");
+#endif
+
   LoadFont();
 
   // Set default font size
@@ -67,9 +74,18 @@ float TextElement::GetScale() const { return m_scale; }
 // UIElement OVERRIDES
 // ===================================================================
 
-void TextElement::Render(Shader &shader) {
-  shader.UseProgram();
-  shader.SetUniformVec3("textColor", glm::value_ptr(m_color));
+void TextElement::Render(const glm::mat4 &projection) {
+  if (!m_shader)
+    return;
+
+  glDisable(GL_DEPTH_TEST);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+  m_shader->UseProgram();
+  m_shader->SetUniformMatrix4FloatPtr("projection",
+                                      glm::value_ptr(projection));
+  m_shader->SetUniformVec3("textColor", glm::value_ptr(m_color));
   glActiveTexture(GL_TEXTURE0);
   glBindVertexArray(m_vao);
 
@@ -101,6 +117,9 @@ void TextElement::Render(Shader &shader) {
   }
   glBindVertexArray(0);
   glBindTexture(GL_TEXTURE_2D, 0);
+
+  glEnable(GL_DEPTH_TEST);
+  glDisable(GL_BLEND);
 }
 
 void TextElement::Update(float deltaTime) {

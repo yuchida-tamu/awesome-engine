@@ -14,6 +14,8 @@ public:
   static void Update();
   static bool IsKeyDown(int key);
   static bool IsKeyHeld(int key);
+  static bool IsMouseButtonDown(int button);
+  static bool IsMouseButtonHeld(int button);
   static glm::vec2 GetMouseOffset();
 
 #ifdef UNIT_TEST
@@ -26,11 +28,16 @@ private:
   static void KeyCallBack(GLFWwindow *window, int key, int scancode, int action,
                           int mods);
   static void MouseCallBack(GLFWwindow *window, double xPos, double yPos);
+  static void MouseButtonCallBack(GLFWwindow *window, int button, int action,
+                                  int mods);
   // We need three states for robust polling: current frame, previous frame, and
   // raw state.
   static bool s_Keys[];
   static bool s_KeysLastFrame[];
   static bool s_KeysRaw[];
+  static bool s_MouseButtons[];
+  static bool s_MouseButtonsLastFrame[];
+  static bool s_MouseButtonsRaw[];
   static bool s_FirstMouse;
   static double s_LastX, s_LastY;
   static double s_CurrentX, s_CurrentY;

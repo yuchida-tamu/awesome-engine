@@ -1,10 +1,12 @@
 #pragma once
 
+#include "rendering/Shader.h"
 #include "ui/UIElement.h"
 #include <ft2build.h>
 #include <glm/glm.hpp>
 #include <iostream>
 #include <map>
+#include <optional>
 #include <string>
 #include FT_FREETYPE_H
 
@@ -45,7 +47,7 @@ public:
   float GetScale() const;
 
   // --- UIElement overrides ---
-  void Render(Shader &shader) override;
+  void Render(const glm::mat4 &projection) override;
 
   void Update(float deltaTime) override;
 
@@ -59,6 +61,8 @@ private:
 
   // Maps ASCII character code -> glyph metrics.
   std::map<char, GlyphMetrics> m_glyphs;
+
+  std::optional<Shader> m_shader;
 
   // TODO: OpenGL objects for rendering quads (VAO, VBO).
   unsigned int m_vao = 0;

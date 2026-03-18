@@ -11,6 +11,9 @@
 bool Input::s_Keys[Config::MAX_KEYS];
 bool Input::s_KeysLastFrame[Config::MAX_KEYS];
 bool Input::s_KeysRaw[Config::MAX_KEYS];
+bool Input::s_MouseButtons[Config::MAX_MOUSE_BUTTONS];
+bool Input::s_MouseButtonsLastFrame[Config::MAX_MOUSE_BUTTONS];
+bool Input::s_MouseButtonsRaw[Config::MAX_MOUSE_BUTTONS];
 
 float Input::s_XOffset = 0.0f;
 float Input::s_YOffset = 0.0f;
@@ -28,11 +31,15 @@ void Input::Initialize(GLFWwindow *window, EventBus &eventBus) {
   memset(s_Keys, 0, sizeof(s_Keys));
   memset(s_KeysLastFrame, 0, sizeof(s_KeysLastFrame));
   memset(s_KeysRaw, 0, sizeof(s_KeysRaw));
+  memset(s_MouseButtons, 0, sizeof(s_MouseButtons));
+  memset(s_MouseButtonsLastFrame, 0, sizeof(s_MouseButtonsLastFrame));
+  memset(s_MouseButtonsRaw, 0, sizeof(s_MouseButtonsRaw));
   s_EventBus = &eventBus;
 
-  glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+  glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
   glfwSetKeyCallback(window, KeyCallBack);
   glfwSetCursorPosCallback(window, MouseCallBack);
+  glfwSetMouseButtonCallback(window, MouseButtonCallBack);
 }
 
 void Input::Update() {
@@ -54,6 +61,26 @@ void Input::Update() {
     }
     if (!s_Keys[i] && s_KeysLastFrame[i]) {
       s_EventBus->Publish(KeyEvent{i, KeyAction::Up});
+    }
+  }
+
+  // Copy mouse button state (same triple-buffer pattern as keyboard)
+  memcpy(s_MouseButtonsLastFrame, s_MouseButtons, sizeof(s_MouseButtons));
+  memcpy(s_MouseButtons, s_MouseButtonsRaw, sizeof(s_MouseButtons));
+
+  // Publish mouse button events
+  for (int i = 0; i < Config::MAX_MOUSE_BUTTONS; ++i) {
+    if (s_MouseButtons[i] && !s_MouseButtonsLastFrame[i]) {
+      s_EventBus->Publish(MouseClickEvent{(float)s_CurrentX, (float)s_CurrentY,
+                                          i, KeyAction::Down});
+    }
+    if (s_MouseButtons[i]) {
+      s_EventBus->Publish(MouseClickEvent{(float)s_CurrentX, (float)s_CurrentY,
+                                          i, KeyAction::Held});
+    }
+    if (!s_MouseButtons[i] && s_MouseButtonsLastFrame[i]) {
+      s_EventBus->Publish(MouseClickEvent{(float)s_CurrentX, (float)s_CurrentY,
+                                          i, KeyAction::Up});
     }
   }
 
@@ -92,6 +119,18 @@ bool Input::IsKeyHeld(int key) {
   return s_Keys[key];
 }
 
+bool Input::IsMouseButtonDown(int button) {
+  if (button < 0 || button >= Config::MAX_MOUSE_BUTTONS)
+    return false;
+  return s_MouseButtons[button] && !s_MouseButtonsLastFrame[button];
+}
+
+bool Input::IsMouseButtonHeld(int button) {
+  if (button < 0 || button >= Config::MAX_MOUSE_BUTTONS)
+    return false;
+  return s_MouseButtons[button];
+}
+
 glm::vec2 Input::GetMouseOffset() { return glm::vec2(s_XOffset, s_YOffset); }
 
 // This is the function that GLFW calls. It runs on the main thread, but
@@ -105,6 +144,17 @@ void Input::KeyCallBack(GLFWwindow *window, int key, int scancode, int action,
     s_KeysRaw[key] = true;
   } else if (action == GLFW_RELEASE) {
     s_KeysRaw[key] = false;
+  }
+}
+
+void Input::MouseButtonCallBack(GLFWwindow *window, int button, int action,
+                                int mods) {
+  if (button < 0 || button >= Config::MAX_MOUSE_BUTTONS)
+    return;
+  if (action == GLFW_PRESS) {
+    s_MouseButtonsRaw[button] = true;
+  } else if (action == GLFW_RELEASE) {
+    s_MouseButtonsRaw[button] = false;
   }
 }
 

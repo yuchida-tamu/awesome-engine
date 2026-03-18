@@ -20,6 +20,9 @@ void ResetInputState()
     memset(Input::s_Keys, 0, Config::MAX_KEYS * sizeof(bool));
     memset(Input::s_KeysLastFrame, 0, Config::MAX_KEYS * sizeof(bool));
     memset(Input::s_KeysRaw, 0, Config::MAX_KEYS * sizeof(bool));
+    memset(Input::s_MouseButtons, 0, Config::MAX_MOUSE_BUTTONS * sizeof(bool));
+    memset(Input::s_MouseButtonsLastFrame, 0, Config::MAX_MOUSE_BUTTONS * sizeof(bool));
+    memset(Input::s_MouseButtonsRaw, 0, Config::MAX_MOUSE_BUTTONS * sizeof(bool));
 
     Input::s_FirstMouse = true;
     Input::s_LastX = 400.0;
@@ -325,6 +328,96 @@ TEST_CASE("Input - Update handles keyboard and mouse state together")
     CHECK(Input::IsKeyHeld(GLFW_KEY_W) == true);
     glm::vec2 offset = Input::GetMouseOffset();
     CHECK(offset.x == 50.0f);
+}
+
+// ===================================================================
+// MOUSE BUTTON TESTS
+// ===================================================================
+
+TEST_CASE("Input - IsMouseButtonDown returns true only on first frame button is pressed")
+{
+    ResetInputState();
+
+    Input::MouseButtonCallBack(nullptr, GLFW_MOUSE_BUTTON_LEFT, GLFW_PRESS, 0);
+
+    // Frame 1: First frame after press
+    Input::Update();
+    CHECK(Input::IsMouseButtonDown(GLFW_MOUSE_BUTTON_LEFT) == true);
+    CHECK(Input::IsMouseButtonHeld(GLFW_MOUSE_BUTTON_LEFT) == true);
+
+    // Frame 2: Still held, but not "just pressed"
+    Input::Update();
+    CHECK(Input::IsMouseButtonDown(GLFW_MOUSE_BUTTON_LEFT) == false);
+    CHECK(Input::IsMouseButtonHeld(GLFW_MOUSE_BUTTON_LEFT) == true);
+
+    // Frame 3: Release
+    Input::MouseButtonCallBack(nullptr, GLFW_MOUSE_BUTTON_LEFT, GLFW_RELEASE, 0);
+    Input::Update();
+    CHECK(Input::IsMouseButtonDown(GLFW_MOUSE_BUTTON_LEFT) == false);
+    CHECK(Input::IsMouseButtonHeld(GLFW_MOUSE_BUTTON_LEFT) == false);
+}
+
+TEST_CASE("Input - IsMouseButtonHeld returns true while button is held")
+{
+    ResetInputState();
+
+    Input::MouseButtonCallBack(nullptr, GLFW_MOUSE_BUTTON_RIGHT, GLFW_PRESS, 0);
+    Input::Update();
+    CHECK(Input::IsMouseButtonHeld(GLFW_MOUSE_BUTTON_RIGHT) == true);
+
+    Input::Update();
+    CHECK(Input::IsMouseButtonHeld(GLFW_MOUSE_BUTTON_RIGHT) == true);
+
+    Input::Update();
+    CHECK(Input::IsMouseButtonHeld(GLFW_MOUSE_BUTTON_RIGHT) == true);
+
+    Input::MouseButtonCallBack(nullptr, GLFW_MOUSE_BUTTON_RIGHT, GLFW_RELEASE, 0);
+    Input::Update();
+    CHECK(Input::IsMouseButtonHeld(GLFW_MOUSE_BUTTON_RIGHT) == false);
+}
+
+TEST_CASE("Input - MouseClickEvent published with correct action and position")
+{
+    ResetInputState();
+    SetupMouseState();
+
+    // Move cursor to a known position
+    Input::MouseCallBack(nullptr, 150.0, 250.0);
+
+    int receivedButton = -1;
+    KeyAction receivedAction = KeyAction::Held;
+    float receivedX = 0.0f, receivedY = 0.0f;
+
+    s_TestEventBus.Subscribe<MouseClickEvent>(
+        std::function<void(const MouseClickEvent &)>([&](const MouseClickEvent &e) {
+            if (e.key == KeyAction::Down) {
+                receivedButton = e.button;
+                receivedAction = e.key;
+                receivedX = e.xPos;
+                receivedY = e.yPos;
+            }
+        }));
+
+    Input::MouseButtonCallBack(nullptr, GLFW_MOUSE_BUTTON_LEFT, GLFW_PRESS, 0);
+    Input::Update();
+
+    CHECK(receivedButton == GLFW_MOUSE_BUTTON_LEFT);
+    CHECK(receivedAction == KeyAction::Down);
+    CHECK(receivedX == doctest::Approx(150.0f));
+    CHECK(receivedY == doctest::Approx(250.0f));
+}
+
+TEST_CASE("Input - MouseButtonCallBack ignores invalid button codes")
+{
+    ResetInputState();
+
+    // Should not crash or cause UB
+    Input::MouseButtonCallBack(nullptr, -1, GLFW_PRESS, 0);
+    Input::MouseButtonCallBack(nullptr, Config::MAX_MOUSE_BUTTONS, GLFW_PRESS, 0);
+    Input::Update();
+
+    // State should remain clean
+    CHECK(Input::IsMouseButtonHeld(0) == false);
 }
 
 // ===================================================================

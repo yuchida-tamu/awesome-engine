@@ -8,6 +8,7 @@ namespace Config
 
     // Input system configuration
     constexpr int MAX_KEYS = 1024;
+    constexpr int MAX_MOUSE_BUTTONS = 8;
 
     // Shader system configuration
     constexpr int SHADER_LOG_SIZE = 512;

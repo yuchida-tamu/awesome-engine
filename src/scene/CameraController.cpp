@@ -11,11 +11,14 @@ CameraController::CameraController(Camera &camera, EventBus &eventBus)
       m_eventBus.Subscribe<KeyEvent>([this](const KeyEvent &e) { OnKey(e); });
   m_mouseSub = m_eventBus.Subscribe<MouseMoveEvent>(
       [this](const MouseMoveEvent &e) { OnMouseMove(e); });
+  m_mouseClickSub = m_eventBus.Subscribe<MouseClickEvent>(
+      [this](const MouseClickEvent &e) { OnMouseClick(e); });
 }
 
 CameraController::~CameraController() {
   m_eventBus.Unsubscribe(m_keySub);
   m_eventBus.Unsubscribe(m_mouseSub);
+  m_eventBus.Unsubscribe(m_mouseClickSub);
 }
 
 void CameraController::OnKey(const KeyEvent &event) {
@@ -32,7 +35,25 @@ void CameraController::OnKey(const KeyEvent &event) {
     m_moveDirection += m_camera.GetRight();
 }
 
+void CameraController::OnMouseClick(const MouseClickEvent &event) {
+  if (event.button == GLFW_MOUSE_BUTTON_LEFT && event.key == KeyAction::Down) {
+    m_isDragging = true;
+    m_firstDragFrame = true;
+  }
+  if (event.button == GLFW_MOUSE_BUTTON_LEFT && event.key == KeyAction::Up) {
+    m_isDragging = false;
+  }
+}
+
 void CameraController::OnMouseMove(const MouseMoveEvent &event) {
+  if (!m_isDragging)
+    return;
+
+  if (m_firstDragFrame) {
+    m_firstDragFrame = false;
+    return;
+  }
+
   m_camera.UpdateFront(event.xOffset, event.yOffset);
 }
 

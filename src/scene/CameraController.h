@@ -17,10 +17,15 @@ public:
 private:
   void OnKey(const KeyEvent &event);
   void OnMouseMove(const MouseMoveEvent &event);
+  void OnMouseClick(const MouseClickEvent &event);
 
   Camera &m_camera;
   SubscriptionID m_keySub;
   SubscriptionID m_mouseSub;
+  SubscriptionID m_mouseClickSub;
+
+  bool m_isDragging = false;
+  bool m_firstDragFrame = true;
 
   glm::vec3 m_moveDirection{0.0f};
   float m_speed = Config::DEFAULT_CAMERA_SPEED;

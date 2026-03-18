@@ -1,17 +1,15 @@
 #pragma once
 
 #include "core/Config.h"
+#include "core/EventBus.h"
+#include "core/InputEvents.h"
 #include "core/InputListener.h"
-#include "glad/glad.h"
+#include "ui/Clickable.h"
 #include "ui/UIElement.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
 #include <memory>
-#include <optional>
 #include <vector>
-
-#include "rendering/Shader.h"
 
 // Manages all UI elements. Owns an orthographic projection for screen-space
 // rendering.
@@ -33,7 +31,6 @@
 class UIManager : public InputListener {
 public:
   UIManager(EventBus &eventBus);
-  UIManager(EventBus &eventBus, Shader shader);
   ~UIManager() override;
 
   // Takes ownership of the element. Returns an ID you can use to deregister it.
@@ -63,9 +60,12 @@ private:
     int id;
     std::unique_ptr<UIElement> element;
   };
+
+  SubscriptionID m_clickSub;
   glm::mat4 m_projection;
-  std::optional<Shader> m_shader;
 
   std::vector<ElementEntry> m_elements;
   int m_nextId = 1;
+
+  void OnMouseClick(const MouseClickEvent &e);
 };

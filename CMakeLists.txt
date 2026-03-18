@@ -53,6 +53,7 @@ add_executable(awesome-engine
     src/scene/CameraController
     src/ui/UIManager.cpp
     src/ui/TextElement.cpp
+    src/ui/ButtonElement.cpp
 )
 
 # Tell our target where to find its public header files
@@ -227,6 +228,7 @@ if(BUILD_TESTING)
         tests/UIElementTests.cpp
         tests/UIManagerTests.cpp
         tests/TextElementTests.cpp
+        tests/ButtonElementTests.cpp
         src/core/Input.cpp
         src/cameras/Camera.cpp
         src/scene/CameraController.cpp
@@ -234,6 +236,7 @@ if(BUILD_TESTING)
         src/scene/Scene.cpp
         src/ui/UIManager.cpp
         src/ui/TextElement.cpp
+        src/ui/ButtonElement.cpp
         src/rendering/Shader.cpp
         vendor/glad/src/glad.c
     )

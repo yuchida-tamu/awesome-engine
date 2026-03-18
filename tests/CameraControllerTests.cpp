@@ -2,10 +2,13 @@
 #include "TestHelpers.h"
 
 #include "cameras/Camera.h"
+#include "core/Config.h"
 #include "core/EventBus.h"
+#include "core/Input.h"
 #include "core/InputEvents.h"
 #include "scene/CameraController.h"
 #include <GLFW/glfw3.h>
+#include <cstring>
 
 // ===================================================================
 // CONSTRUCTION / DESTRUCTION TESTS
@@ -170,10 +173,162 @@ TEST_CASE("CameraController - Mouse move updates camera front direction") {
 
   glm::vec3 frontBefore = camera.GetFront();
 
+  // Must hold right mouse button and skip first drag frame
+  bus.Publish(MouseClickEvent{0.0f, 0.0f, GLFW_MOUSE_BUTTON_LEFT,
+                              KeyAction::Down});
+  bus.Publish(MouseMoveEvent{0.0f, 0.0f}); // first frame skipped
+
   bus.Publish(MouseMoveEvent{10.0f, 0.0f});
 
   glm::vec3 frontAfter = camera.GetFront();
   CHECK_FALSE(Vec3ApproxEquals(frontBefore, frontAfter));
+}
+
+TEST_CASE("CameraController - Mouse move without left button held does not "
+          "change camera") {
+  Camera camera;
+  EventBus bus;
+  CameraController controller(camera, bus);
+
+  glm::vec3 frontBefore = camera.GetFront();
+
+  bus.Publish(MouseMoveEvent{10.0f, 5.0f});
+
+  CHECK(Vec3ApproxEquals(camera.GetFront(), frontBefore));
+}
+
+TEST_CASE("CameraController - Mouse move with left button held updates "
+          "camera") {
+  Camera camera;
+  EventBus bus;
+  CameraController controller(camera, bus);
+
+  glm::vec3 frontBefore = camera.GetFront();
+
+  bus.Publish(MouseClickEvent{0.0f, 0.0f, GLFW_MOUSE_BUTTON_LEFT,
+                              KeyAction::Down});
+  bus.Publish(MouseMoveEvent{0.0f, 0.0f}); // skip first drag frame
+  bus.Publish(MouseMoveEvent{10.0f, 0.0f}); // actual movement
+
+  CHECK_FALSE(Vec3ApproxEquals(camera.GetFront(), frontBefore));
+}
+
+TEST_CASE("CameraController - First mouse move after drag start is skipped") {
+  Camera camera;
+  EventBus bus;
+  CameraController controller(camera, bus);
+
+  glm::vec3 frontBefore = camera.GetFront();
+
+  bus.Publish(MouseClickEvent{0.0f, 0.0f, GLFW_MOUSE_BUTTON_LEFT,
+                              KeyAction::Down});
+  bus.Publish(MouseMoveEvent{100.0f, 100.0f}); // large offset, but skipped
+
+  CHECK(Vec3ApproxEquals(camera.GetFront(), frontBefore));
+}
+
+TEST_CASE("CameraController - Right button does not enable camera look") {
+  Camera camera;
+  EventBus bus;
+  CameraController controller(camera, bus);
+
+  glm::vec3 frontBefore = camera.GetFront();
+
+  bus.Publish(MouseClickEvent{0.0f, 0.0f, GLFW_MOUSE_BUTTON_RIGHT,
+                              KeyAction::Down});
+  bus.Publish(MouseMoveEvent{0.0f, 0.0f});
+  bus.Publish(MouseMoveEvent{10.0f, 5.0f});
+
+  CHECK(Vec3ApproxEquals(camera.GetFront(), frontBefore));
+}
+
+TEST_CASE("CameraController - Camera stops updating after left button "
+          "released") {
+  Camera camera;
+  EventBus bus;
+  CameraController controller(camera, bus);
+
+  // Start dragging
+  bus.Publish(MouseClickEvent{0.0f, 0.0f, GLFW_MOUSE_BUTTON_LEFT,
+                              KeyAction::Down});
+  bus.Publish(MouseMoveEvent{0.0f, 0.0f}); // skip first
+  bus.Publish(MouseMoveEvent{10.0f, 0.0f}); // actual move
+
+  // Release
+  bus.Publish(MouseClickEvent{0.0f, 0.0f, GLFW_MOUSE_BUTTON_LEFT,
+                              KeyAction::Up});
+
+  glm::vec3 frontAfterRelease = camera.GetFront();
+
+  // Move mouse after release — should not change
+  bus.Publish(MouseMoveEvent{20.0f, 20.0f});
+  CHECK(Vec3ApproxEquals(camera.GetFront(), frontAfterRelease));
+}
+
+TEST_CASE("CameraController - WASD still works without mouse button held") {
+  Camera camera;
+  EventBus bus;
+  CameraController controller(camera, bus);
+
+  glm::vec3 posBefore = camera.GetPosition();
+
+  bus.Publish(KeyEvent{GLFW_KEY_W, KeyAction::Held});
+  controller.Update(1.0f);
+
+  CHECK_FALSE(Vec3ApproxEquals(camera.GetPosition(), posBefore));
+}
+
+// ===================================================================
+// INTEGRATION TESTS (Full Input → EventBus → CameraController pipeline)
+// ===================================================================
+
+// Helper to reset Input state for integration tests
+static void ResetInputForIntegration(EventBus &bus) {
+  memset(Input::s_Keys, 0, Config::MAX_KEYS * sizeof(bool));
+  memset(Input::s_KeysLastFrame, 0, Config::MAX_KEYS * sizeof(bool));
+  memset(Input::s_KeysRaw, 0, Config::MAX_KEYS * sizeof(bool));
+  memset(Input::s_MouseButtons, 0, Config::MAX_MOUSE_BUTTONS * sizeof(bool));
+  memset(Input::s_MouseButtonsLastFrame, 0,
+         Config::MAX_MOUSE_BUTTONS * sizeof(bool));
+  memset(Input::s_MouseButtonsRaw, 0,
+         Config::MAX_MOUSE_BUTTONS * sizeof(bool));
+  Input::s_FirstMouse = false;
+  Input::s_LastX = 400.0;
+  Input::s_LastY = 300.0;
+  Input::s_CurrentX = 400.0;
+  Input::s_CurrentY = 300.0;
+  Input::s_XOffset = 0.0f;
+  Input::s_YOffset = 0.0f;
+  Input::s_EventBus = &bus;
+}
+
+TEST_CASE("Integration - Left-drag through Input pipeline updates camera") {
+  EventBus bus;
+  ResetInputForIntegration(bus);
+
+  Camera camera;
+  CameraController controller(camera, bus);
+
+  glm::vec3 frontBefore = camera.GetFront();
+
+  // Simulate: glfwPollEvents fires right-click + cursor move
+  Input::MouseButtonCallBack(nullptr, GLFW_MOUSE_BUTTON_LEFT, GLFW_PRESS, 0);
+  Input::MouseCallBack(nullptr, 450.0, 300.0);
+
+  // Frame 1: Input::Update detects Down, publishes MouseClickEvent + MouseMoveEvent
+  Input::Update();
+
+  // Camera should NOT have moved (firstDragFrame skipped the MouseMoveEvent)
+  CHECK(Vec3ApproxEquals(camera.GetFront(), frontBefore));
+
+  // Simulate: continued dragging
+  Input::MouseCallBack(nullptr, 500.0, 300.0);
+
+  // Frame 2: Input::Update publishes Held + MouseMoveEvent
+  Input::Update();
+
+  // Camera SHOULD have moved now
+  CHECK_FALSE(Vec3ApproxEquals(camera.GetFront(), frontBefore));
 }
 
 // ===================================================================

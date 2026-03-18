@@ -15,6 +15,7 @@
 #include "core/Config.h"
 #include "core/EventBus.h"
 #include "core/Input.h"
+#include "core/InputEvents.h"
 #include "core/TextureLoader.h"
 
 #include "cameras/Camera.h"
@@ -33,6 +34,7 @@
 #include "scene/TransformComponent.h"
 #include "scene/WorldSpaceGizmo.h"
 #include "stb_image.h"
+#include "ui/ButtonElement.h"
 #include "ui/TextElement.h"
 #include "ui/UIElement.h"
 #include "ui/UIManager.h"
@@ -78,7 +80,7 @@ int main() {
     return -1;
   }
 
-  glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+  glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
   glEnable(GL_MULTISAMPLE);
   glEnable(GL_DEPTH_TEST);
   glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -94,14 +96,26 @@ int main() {
     float deltaTime = 0.0f;
     float lastFrame = 0.0f;
 
-    Shader textShader("shaders/default_ui.vert.glsl",
-                      "shaders/default_ui.frag.glsl");
-    UIManager uiManager(eventBus, std::move(textShader));
+    UIManager uiManager(eventBus);
     auto text = std::make_unique<TextElement>();
     text->SetText("Awesome Engine");
     text->SetPosition(glm::vec2(12.0, 12.0));
     text->SetColor(glm::vec3(1.0, 0.1, 0.4));
-    uiManager.Register(std::move(text));
+    // uiManager.Register(std::move(text));
+
+    auto button = std::make_unique<ButtonElement>();
+    ButtonElement *buttonRawPtr = button.get();
+    button->SetPosition({100.0f, 100.0f});
+    button->SetSize({200.0f, 50.0f});
+    button->SetColor({0.2f, 0.6f, 1.0f});
+    button->SetOnClick([buttonRawPtr](const MouseClickEvent &e) {
+      if (e.key == KeyAction::Held && e.button == GLFW_MOUSE_BUTTON_LEFT) {
+        buttonRawPtr->SetColor({0.4f, 0.8f, 1.0f});
+      } else if (e.key == KeyAction::Up && e.button == GLFW_MOUSE_BUTTON_LEFT) {
+        buttonRawPtr->SetColor({0.2f, 0.6f, 1.0f});
+      }
+    });
+    uiManager.Register(std::move(button));
 
     Camera camera{};
     // Set initial camera position (back away from origin to see the model)

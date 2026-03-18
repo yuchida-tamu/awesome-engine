@@ -1,7 +1,10 @@
 #include "ui/UIManager.h"
-#include "rendering/Shader.h"
+#include "core/Config.h"
+#include "core/InputEvents.h"
 #include "ui/UIElement.h"
 #include <algorithm>
+#include <iostream>
+#include <memory>
 
 // ===================================================================
 // CONSTRUCTION / DESTRUCTION
@@ -11,14 +14,10 @@ UIManager::UIManager(EventBus &eventBus)
     : InputListener(eventBus),
       m_projection(glm::ortho(0.0f, static_cast<float>(Config::WINDOW_WIDTH),
                               0.0f, static_cast<float>(Config::WINDOW_HEIGHT),
-                              -1.0f, 1.0f)) {}
-
-UIManager::UIManager(EventBus &eventBus, Shader shader)
-    : InputListener(eventBus),
-      m_projection(glm::ortho(0.0f, static_cast<float>(Config::WINDOW_WIDTH),
-                              0.0f, static_cast<float>(Config::WINDOW_HEIGHT),
-                              -1.0f, 1.0f)),
-      m_shader(std::move(shader)) {}
+                              -1.0f, 1.0f)) {
+  m_clickSub = m_eventBus.Subscribe<MouseClickEvent>(
+      [this](const MouseClickEvent &e) { OnMouseClick(e); });
+}
 
 UIManager::~UIManager() {
   // TODO: Unsubscribe from any EventBus subscriptions.
@@ -63,22 +62,25 @@ std::vector<UIElement *> UIManager::GetVisibleElements() {
 }
 
 void UIManager::Render() {
-  if (!m_shader.has_value()) {
-    return;
-  }
-
-  glDisable(GL_DEPTH_TEST);
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-  m_shader->UseProgram();
-  m_shader->SetUniformMatrix4FloatPtr("projection",
-                                      glm::value_ptr(m_projection));
-
   for (auto *element : GetVisibleElements()) {
-    element->Render(*m_shader);
+    element->Render(m_projection);
   }
+}
 
-  glEnable(GL_DEPTH_TEST);
-  glDisable(GL_BLEND);
+void UIManager::OnMouseClick(const MouseClickEvent &e) {
+  // Iterate in reverse (top-most element first, like z-index)
+  for (auto it = m_elements.rbegin(); it != m_elements.rend(); ++it) {
+
+    if (it->element->IsVisible() &&
+        it->element->ContainPoint({e.xPos, Config::WINDOW_HEIGHT - e.yPos})) {
+
+      Clickable *clickable = dynamic_cast<Clickable *>(it->element.get());
+      if (clickable) {
+
+        clickable->OnClick(e);
+      }
+      // only the topmost element gets the m_clickSub
+      break;
+    }
+  }
 }
