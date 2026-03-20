@@ -46,6 +46,9 @@ public:
   void SetScale(float scale);
   float GetScale() const;
 
+  // Returns the total width of the current text in pixels
+  float MeasureWidth() const;
+
   // --- UIElement overrides ---
   void Render(const glm::mat4 &projection) override;
 

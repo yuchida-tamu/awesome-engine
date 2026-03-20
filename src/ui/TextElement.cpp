@@ -13,7 +13,6 @@ TextElement::TextElement() {
 #ifndef UNIT_TEST
   m_shader.emplace("shaders/default_ui.vert.glsl",
                     "shaders/default_ui.frag.glsl");
-#endif
 
   LoadFont();
 
@@ -36,18 +35,22 @@ TextElement::TextElement() {
   glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
   glBindVertexArray(0);
+#endif
 }
 
 TextElement::~TextElement() {
   for (auto &[ch, glyph] : m_glyphs) {
-    glDeleteTextures(1, &glyph.textureID);
+    if (glyph.textureID) {
+      glDeleteTextures(1, &glyph.textureID);
+    }
   }
 
-  glDeleteVertexArrays(1, &m_vao);
-  glDeleteBuffers(1, &m_vbo);
-
-  m_vao = 0;
-  m_vbo = 0;
+  if (m_vao) {
+    glDeleteVertexArrays(1, &m_vao);
+  }
+  if (m_vbo) {
+    glDeleteBuffers(1, &m_vbo);
+  }
 }
 
 // ===================================================================
@@ -69,6 +72,21 @@ glm::vec3 TextElement::GetColor() const { return m_color; }
 void TextElement::SetScale(float scale) { m_scale = scale; }
 
 float TextElement::GetScale() const { return m_scale; }
+
+float TextElement::MeasureWidth() const {
+  if (m_text.empty() || m_glyphs.empty()) {
+    return 0.0f;
+  }
+
+  float width = 0.0f;
+  for (char c : m_text) {
+    auto it = m_glyphs.find(c);
+    if (it != m_glyphs.end()) {
+      width += (it->second.advance >> 6) * m_scale;
+    }
+  }
+  return width;
+}
 
 // ===================================================================
 // UIElement OVERRIDES

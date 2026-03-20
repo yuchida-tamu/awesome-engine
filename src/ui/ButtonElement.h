@@ -5,7 +5,11 @@
 #include "ui/Clickable.h"
 #include "ui/UIElement.h"
 #include <functional>
+#include <memory>
 #include <optional>
+#include <string>
+
+class TextElement;
 
 class ButtonElement : public UIElement, public Clickable {
 public:
@@ -21,13 +25,22 @@ public:
   void SetColor(glm::vec3 color);
   glm::vec3 GetColor() const;
 
+  // --- Label ---
+  void SetLabel(const std::string &label);
+  std::string GetLabel() const;
+  void SetLabelColor(glm::vec3 color);
+  glm::vec3 GetLabelColor() const;
+
   void Render(const glm::mat4 &projection) override;
   void Update(float deltaTime) override;
 
 private:
   ClickCallBack m_onClick;
   glm::vec3 m_color{1.0f, 1.0f, 1.0f};
+  std::string m_label;
+  glm::vec3 m_labelColor{1.0f, 1.0f, 1.0f};
   std::optional<Shader> m_shader;
   unsigned int m_vao = 0;
   unsigned int m_vbo = 0;
+  std::unique_ptr<TextElement> m_textElement;
 };

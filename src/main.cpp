@@ -108,6 +108,7 @@ int main() {
     button->SetPosition({100.0f, 100.0f});
     button->SetSize({200.0f, 50.0f});
     button->SetColor({0.2f, 0.6f, 1.0f});
+    button->SetLabel("Click Me");
     button->SetOnClick([buttonRawPtr](const MouseClickEvent &e) {
       if (e.key == KeyAction::Held && e.button == GLFW_MOUSE_BUTTON_LEFT) {
         buttonRawPtr->SetColor({0.4f, 0.8f, 1.0f});

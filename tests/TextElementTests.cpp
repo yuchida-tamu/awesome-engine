@@ -51,6 +51,15 @@ TEST_CASE("TextElement - Default scale is 1.0") {
 }
 
 // ===================================================================
+// MEASURE WIDTH TESTS
+// ===================================================================
+
+TEST_CASE("TextElement - MeasureWidth returns 0 for empty text") {
+  TextElement text;
+  CHECK(text.MeasureWidth() == doctest::Approx(0.0f));
+}
+
+// ===================================================================
 // INHERITED UIElement BEHAVIOR
 // ===================================================================
 

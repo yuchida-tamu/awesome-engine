@@ -60,6 +60,40 @@ TEST_CASE("ButtonElement - Inherits UIElement position/size/visibility") {
   CHECK(button.IsVisible() == false);
 }
 
+// ===================================================================
+// LABEL TESTS
+// ===================================================================
+
+TEST_CASE("ButtonElement - Default label is empty") {
+  ButtonElement button;
+  CHECK(button.GetLabel().empty());
+}
+
+TEST_CASE("ButtonElement - SetLabel stores the label") {
+  ButtonElement button;
+  button.SetLabel("Click Me");
+  CHECK(button.GetLabel() == "Click Me");
+}
+
+TEST_CASE("ButtonElement - Default label color is white") {
+  ButtonElement button;
+  CHECK(button.GetLabelColor().r == doctest::Approx(1.0f));
+  CHECK(button.GetLabelColor().g == doctest::Approx(1.0f));
+  CHECK(button.GetLabelColor().b == doctest::Approx(1.0f));
+}
+
+TEST_CASE("ButtonElement - SetLabelColor stores the label color") {
+  ButtonElement button;
+  button.SetLabelColor({1.0f, 0.0f, 0.5f});
+  CHECK(button.GetLabelColor().r == doctest::Approx(1.0f));
+  CHECK(button.GetLabelColor().g == doctest::Approx(0.0f));
+  CHECK(button.GetLabelColor().b == doctest::Approx(0.5f));
+}
+
+// ===================================================================
+// INHERITED UIElement BEHAVIOR (continued)
+// ===================================================================
+
 TEST_CASE("ButtonElement - ContainPoint works with position and size") {
   ButtonElement button;
   button.SetPosition({100.0f, 200.0f});

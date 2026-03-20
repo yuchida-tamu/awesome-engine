@@ -1,5 +1,6 @@
 #include "ui/ButtonElement.h"
 #include "core/InputEvents.h"
+#include "ui/TextElement.h"
 #include <glad/glad.h>
 
 #include <glm/gtc/type_ptr.hpp>
@@ -69,6 +70,14 @@ void ButtonElement::SetColor(glm::vec3 color) { m_color = color; }
 
 glm::vec3 ButtonElement::GetColor() const { return m_color; }
 
+void ButtonElement::SetLabel(const std::string &label) { m_label = label; }
+
+std::string ButtonElement::GetLabel() const { return m_label; }
+
+void ButtonElement::SetLabelColor(glm::vec3 color) { m_labelColor = color; }
+
+glm::vec3 ButtonElement::GetLabelColor() const { return m_labelColor; }
+
 // ===================================================================
 // UIElement OVERRIDES
 // ===================================================================
@@ -91,6 +100,24 @@ void ButtonElement::Render(const glm::mat4 &projection) {
   glBindVertexArray(m_vao);
   glDrawArrays(GL_TRIANGLES, 0, 6);
   glBindVertexArray(0);
+
+  // Render label text if set
+  if (!m_label.empty()) {
+    if (!m_textElement) {
+      m_textElement = std::make_unique<TextElement>();
+    }
+
+    float scale = m_size.y / 48.0f * 0.6f;
+    m_textElement->SetText(m_label);
+    m_textElement->SetColor(m_labelColor);
+    m_textElement->SetScale(scale);
+
+    float textWidth = m_textElement->MeasureWidth();
+    float textX = m_position.x + (m_size.x - textWidth) / 2.0f;
+    float textY = m_position.y + m_size.y * 0.3f;
+    m_textElement->SetPosition({textX, textY});
+    m_textElement->Render(projection);
+  }
 
   glEnable(GL_DEPTH_TEST);
   glDisable(GL_BLEND);
