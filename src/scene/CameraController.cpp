@@ -26,9 +26,12 @@ void CameraController::OnKey(const KeyEvent &event) {
     return;
 
   if (event.key == GLFW_KEY_W)
-    m_moveDirection += m_camera.GetFront();
+    m_moveDirection +=
+        glm::vec3(m_camera.GetFront().x, 0, m_camera.GetFront().z);
   if (event.key == GLFW_KEY_S)
-    m_moveDirection -= m_camera.GetFront();
+    m_moveDirection -=
+        glm::vec3(m_camera.GetFront().x, 0, m_camera.GetFront().z);
+  ;
   if (event.key == GLFW_KEY_A)
     m_moveDirection -= m_camera.GetRight();
   if (event.key == GLFW_KEY_D)

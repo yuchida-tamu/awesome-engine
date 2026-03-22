@@ -29,10 +29,10 @@
 #include "rendering/Shader.h"
 #include "scene/CameraController.h"
 #include "scene/GameObject.h"
+#include "scene/GridGizmo.h"
 #include "scene/RenderComponent.h"
 #include "scene/Scene.h"
 #include "scene/TransformComponent.h"
-#include "scene/GridGizmo.h"
 #include "scene/WorldSpaceGizmo.h"
 #include "stb_image.h"
 #include "ui/ButtonElement.h"
@@ -121,7 +121,7 @@ int main() {
 
     Camera camera{};
     // Set initial camera position (back away from origin to see the model)
-    glm::vec3 cameraPosition = glm::vec3(0.0f, 2.0f, 5.0f);
+    glm::vec3 cameraPosition = glm::vec3(0.0f, 4.0f, 5.0f);
     camera.UpdatePosition(cameraPosition);
 
     Scene scene{eventBus};
