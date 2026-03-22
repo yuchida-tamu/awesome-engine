@@ -32,6 +32,7 @@ public:
   void SetUnifromFloat(const std::string &uniformName, float value);
   void SetUniformVec2(const std::string &unifromName, const float *ptr);
   void SetUniformVec3(const std::string &uniformName, const float *ptr);
+  void SetUniformVec4(const std::string &uniformName, const float *ptr);
   void SetUniformMatrix4FloatPtr(const std::string &uniformName,
                                  const float *ptr);
 

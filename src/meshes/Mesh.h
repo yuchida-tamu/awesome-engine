@@ -23,7 +23,7 @@ public:
         std::string type;
         std::string path;
     };
-    Mesh(std::vector<Vertex> vertices, std::vector<Texture> textures, std::vector<unsigned int> indices);
+    Mesh(std::vector<Vertex> vertices, std::vector<Texture> textures, std::vector<unsigned int> indices, glm::vec4 baseColorFactor = glm::vec4(1.0f));
     ~Mesh();
 
     // Rule of 5: Delete copy operations (OpenGL handles can't be safely copied)
@@ -41,6 +41,7 @@ private:
     std::vector<Vertex> m_vertices;
     std::vector<Texture> m_textures;
     std::vector<unsigned int> m_indices;
+    glm::vec4 m_baseColorFactor{1.0f};
 
     void initialize();
     void cleanup();

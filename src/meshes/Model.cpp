@@ -23,7 +23,7 @@ void Model::Draw(Shader &shader)
 void Model::loadModel(std::string path)
 {
     Assimp::Importer import;
-    const aiScene *scene = import.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
+    const aiScene *scene = import.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_PreTransformVertices);
 
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
     {
@@ -32,6 +32,7 @@ void Model::loadModel(std::string path)
     }
     m_scene = scene; // Store scene pointer for embedded texture access
     m_directory = path.substr(0, path.find_last_of('/'));
+
     processNode(scene->mRootNode, scene);
 }
 
@@ -99,17 +100,36 @@ Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene)
     }
 
     // retrieve material index. sequentially stores diffuseMap and specularMap to a vector (dynamic array)
+    glm::vec4 baseColorFactor(1.0f);
     if (mesh->mMaterialIndex >= 0)
     {
         aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
         std::vector<Mesh::Texture> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
         textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
 
+        // glTF PBR stores base color under aiTextureType_BASE_COLOR instead of DIFFUSE
+        if (diffuseMaps.empty())
+        {
+            std::vector<Mesh::Texture> baseColorMaps = loadMaterialTextures(material, aiTextureType_BASE_COLOR, "texture_diffuse");
+            textures.insert(textures.end(), baseColorMaps.begin(), baseColorMaps.end());
+        }
+
         std::vector<Mesh::Texture> specularMap = loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
         textures.insert(textures.end(), specularMap.begin(), specularMap.end());
+
+        // Extract base color factor from PBR material (fallback to diffuse color)
+        aiColor4D color;
+        if (material->Get(AI_MATKEY_BASE_COLOR, color) == AI_SUCCESS)
+        {
+            baseColorFactor = glm::vec4(color.r, color.g, color.b, color.a);
+        }
+        else if (material->Get(AI_MATKEY_COLOR_DIFFUSE, color) == AI_SUCCESS)
+        {
+            baseColorFactor = glm::vec4(color.r, color.g, color.b, color.a);
+        }
     }
 
-    return Mesh(vertices, textures, indices);
+    return Mesh(vertices, textures, indices, baseColorFactor);
 }
 std::vector<Mesh::Texture> Model::loadMaterialTextures(aiMaterial *material, aiTextureType type, std::string typeName)
 {

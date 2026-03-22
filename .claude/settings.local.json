@@ -3,7 +3,8 @@
     "allow": [
       "WebSearch",
       "Bash(make test:*)",
-      "Bash(./bin/run-tests -tc=\"CameraController - Scroll clamped at max scroll distance\" -s 2>&1)"
+      "Bash(./bin/run-tests -tc=\"CameraController - Scroll clamped at max scroll distance\" -s 2>&1)",
+      "Bash(grep -r Model /Users/yutauchida/Projects/openGl/awesome-engine/tests/ --include=*.cpp --include=*.h)"
     ]
   }
 }

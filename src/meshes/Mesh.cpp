@@ -2,11 +2,12 @@
 #include <cstddef> // For offsetof
 #include <iostream>
 
-Mesh::Mesh(std::vector<Vertex> vertices, std::vector<Texture> textures, std::vector<unsigned int> indices)
+Mesh::Mesh(std::vector<Vertex> vertices, std::vector<Texture> textures, std::vector<unsigned int> indices, glm::vec4 baseColorFactor)
 {
     m_vertices = vertices;
     m_textures = textures;
     m_indices = indices;
+    m_baseColorFactor = baseColorFactor;
 
     initialize();
 }
@@ -20,7 +21,8 @@ Mesh::Mesh(Mesh &&other) noexcept
     : m_VAO(other.m_VAO), m_VBO(other.m_VBO), m_EBO(other.m_EBO),
       m_vertices(std::move(other.m_vertices)),
       m_textures(std::move(other.m_textures)),
-      m_indices(std::move(other.m_indices))
+      m_indices(std::move(other.m_indices)),
+      m_baseColorFactor(other.m_baseColorFactor)
 {
     // Reset the moved-from object's handles so it doesn't delete our buffers
     other.m_VAO = 0;
@@ -43,6 +45,7 @@ Mesh &Mesh::operator=(Mesh &&other) noexcept
         m_vertices = std::move(other.m_vertices);
         m_textures = std::move(other.m_textures);
         m_indices = std::move(other.m_indices);
+        m_baseColorFactor = other.m_baseColorFactor;
 
         // Reset the moved-from object's handles
         other.m_VAO = 0;
@@ -131,6 +134,9 @@ void Mesh::Draw(Shader &shader)
     {
         glActiveTexture(GL_TEXTURE0);
     }
+
+    // Set base color factor (tints texture or provides solid color when no texture)
+    shader.SetUniformVec4("baseColorFactor", &m_baseColorFactor[0]);
 
     // draw mesh
     // Binding VAO automatically binds the EBO that was bound when VAO was created
