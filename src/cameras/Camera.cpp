@@ -31,10 +31,10 @@ void Camera::UpdateFront(float xOffset, float yOffset) {
 }
 
 void Camera::UpdatePosition(glm::vec3 pos) {
-  std::cout << "xpos: " << pos.x << std::endl;
-  std::cout << "ypos: " << pos.y << std::endl;
-  std::cout << "zpos: " << pos.z << std::endl;
-
+  // std::cout << "xpos: " << pos.x << std::endl;
+  // std::cout << "ypos: " << pos.y << std::endl;
+  // std::cout << "zpos: " << pos.z << std::endl;
+  //
   m_position = pos;
 }
 
