@@ -33,3 +33,12 @@ void Scene::Update(float deltaTime) {
     gameObject->Draw(context);
   }
 }
+
+RenderContext Scene::GetRenderContext() {
+  RenderContext context{};
+  if (m_cameras.size() > 0) {
+    context.SetProjection(m_projection);
+    context.SetView(m_cameras[0]->GetCameraView());
+  }
+  return context;
+}

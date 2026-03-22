@@ -47,6 +47,7 @@ add_executable(awesome-engine
     src/rendering/Skybox.cpp
     src/rendering/Shader.cpp
     src/scene/WorldSpaceGizmo.cpp
+    src/scene/GridGizmo.cpp
     src/scene/Scene.cpp
     src/scene/GameObject
     src/scene/RenderComponent

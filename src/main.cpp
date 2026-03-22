@@ -32,6 +32,7 @@
 #include "scene/RenderComponent.h"
 #include "scene/Scene.h"
 #include "scene/TransformComponent.h"
+#include "scene/GridGizmo.h"
 #include "scene/WorldSpaceGizmo.h"
 #include "stb_image.h"
 #include "ui/ButtonElement.h"
@@ -140,6 +141,7 @@ int main() {
 
     scene.AddGameObject(std ::move(cube));
     //    WorldSpaceGizmo worldSpaceGizmo{};
+    GridGizmo gridGizmo{};
 
     // Main loop
     while (!glfwWindowShouldClose(window)) {
@@ -156,6 +158,7 @@ int main() {
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
       scene.Update(deltaTime);
+      gridGizmo.On(scene.GetRenderContext());
 
       // UI
       uiManager.Update(deltaTime);

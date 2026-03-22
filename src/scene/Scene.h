@@ -6,6 +6,7 @@
 
 #include "cameras/Camera.h"
 #include "core/EventBus.h"
+#include "rendering/RenderContext.h"
 #include "scene/GameObject.h"
 
 class Scene {
@@ -30,6 +31,7 @@ public:
   // Add Lighting to Scene
   // AddLight(Light light)
   void Update(float deltaTime);
+  RenderContext GetRenderContext();
 
 private:
   EventBus &m_eventBus;
