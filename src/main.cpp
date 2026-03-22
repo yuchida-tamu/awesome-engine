@@ -120,9 +120,6 @@ int main() {
     uiManager.Register(std::move(button));
 
     Camera camera{};
-    // Set initial camera position (back away from origin to see the model)
-    glm::vec3 cameraPosition = glm::vec3(0.0f, 4.0f, 5.0f);
-    camera.UpdatePosition(cameraPosition);
 
     Scene scene{eventBus};
 

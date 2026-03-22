@@ -13,6 +13,9 @@ CameraController::CameraController(Camera &camera, EventBus &eventBus)
       [this](const MouseMoveEvent &e) { OnMouseMove(e); });
   m_mouseClickSub = m_eventBus.Subscribe<MouseClickEvent>(
       [this](const MouseClickEvent &e) { OnMouseClick(e); });
+
+  m_camera.UpdatePosition(glm::vec3(0.0f, 4.0f, 5.0f));
+  m_camera.LookAt(glm::vec3(0.0f, 0.0f, 0.0f));
 }
 
 CameraController::~CameraController() {

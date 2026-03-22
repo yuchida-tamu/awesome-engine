@@ -491,3 +491,44 @@ TEST_CASE("Edge case - Zero offsets")
     CHECK(FloatApproxEquals(camera.m_pitch, initialPitch));
     CHECK(Vec3ApproxEquals(camera.GetFront(), initialFront));
 }
+
+// ===================================================================
+// LookAt TESTS
+// ===================================================================
+
+TEST_CASE("Camera - LookAt sets front toward target along positive X axis")
+{
+    Camera camera{};
+    camera.UpdatePosition(glm::vec3(0.0f, 0.0f, 0.0f));
+
+    camera.LookAt(glm::vec3(5.0f, 0.0f, 0.0f));
+
+    CHECK(Vec3ApproxEquals(camera.GetFront(), glm::vec3(1.0f, 0.0f, 0.0f)));
+    CHECK(FloatApproxEquals(camera.m_yaw, 0.0f));
+    CHECK(FloatApproxEquals(camera.m_pitch, 0.0f));
+}
+
+TEST_CASE("Camera - LookAt sets front toward target along positive Z axis")
+{
+    Camera camera{};
+    camera.UpdatePosition(glm::vec3(0.0f, 0.0f, 0.0f));
+
+    camera.LookAt(glm::vec3(0.0f, 0.0f, 5.0f));
+
+    CHECK(Vec3ApproxEquals(camera.GetFront(), glm::vec3(0.0f, 0.0f, 1.0f)));
+    CHECK(FloatApproxEquals(camera.m_yaw, 90.0f));
+    CHECK(FloatApproxEquals(camera.m_pitch, 0.0f));
+}
+
+TEST_CASE("Camera - LookAt sets pitch when target is elevated")
+{
+    Camera camera{};
+    camera.UpdatePosition(glm::vec3(0.0f, 0.0f, 0.0f));
+
+    // Target elevated along negative Z
+    camera.LookAt(glm::vec3(0.0f, 1.0f, -1.0f));
+
+    CHECK(FloatApproxEquals(camera.m_pitch, 45.0f));
+    CHECK(FloatApproxEquals(camera.m_yaw, -90.0f));
+    CHECK(FloatApproxEquals(glm::length(camera.GetFront()), 1.0f));
+}

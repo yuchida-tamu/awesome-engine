@@ -85,24 +85,26 @@ TEST_CASE("CameraController - WASD movement directions") {
   SUBCASE("W key moves camera forward") {
     glm::vec3 posBefore = camera.GetPosition();
     glm::vec3 front = camera.GetFront();
+    glm::vec3 frontXZ = glm::vec3(front.x, 0.0f, front.z);
 
     bus.Publish(KeyEvent{GLFW_KEY_W, KeyAction::Held});
     controller.Update(1.0f);
 
     glm::vec3 movement = camera.GetPosition() - posBefore;
-    CHECK(glm::dot(glm::normalize(movement), glm::normalize(front)) ==
+    CHECK(glm::dot(glm::normalize(movement), glm::normalize(frontXZ)) ==
           doctest::Approx(1.0f).epsilon(0.01));
   }
 
   SUBCASE("S key moves camera backward") {
     glm::vec3 posBefore = camera.GetPosition();
     glm::vec3 front = camera.GetFront();
+    glm::vec3 frontXZ = glm::vec3(front.x, 0.0f, front.z);
 
     bus.Publish(KeyEvent{GLFW_KEY_S, KeyAction::Held});
     controller.Update(1.0f);
 
     glm::vec3 movement = camera.GetPosition() - posBefore;
-    CHECK(glm::dot(glm::normalize(movement), glm::normalize(front)) ==
+    CHECK(glm::dot(glm::normalize(movement), glm::normalize(frontXZ)) ==
           doctest::Approx(-1.0f).epsilon(0.01));
   }
 
@@ -151,13 +153,15 @@ TEST_CASE("CameraController - Movement scales with deltaTime") {
   EventBus bus2;
   CameraController controller2(camera2, bus2);
 
+  glm::vec3 start1 = camera1.GetPosition();
   bus1.Publish(KeyEvent{GLFW_KEY_W, KeyAction::Held});
   controller1.Update(0.5f);
-  float dist1 = glm::length(camera1.GetPosition() - glm::vec3(0.0f));
+  float dist1 = glm::length(camera1.GetPosition() - start1);
 
+  glm::vec3 start2 = camera2.GetPosition();
   bus2.Publish(KeyEvent{GLFW_KEY_W, KeyAction::Held});
   controller2.Update(1.0f);
-  float dist2 = glm::length(camera2.GetPosition() - glm::vec3(0.0f));
+  float dist2 = glm::length(camera2.GetPosition() - start2);
 
   CHECK(dist2 == doctest::Approx(dist1 * 2.0f).epsilon(0.01));
 }
