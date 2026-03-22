@@ -16,7 +16,7 @@ CameraController::CameraController(Camera &camera, EventBus &eventBus)
   m_scrollSub = m_eventBus.Subscribe<ScrollEvent>(
       [this](const ScrollEvent &e) { OnScroll(e); });
 
-  m_camera.UpdatePosition(glm::vec3(0.0f, 4.0f, 5.0f));
+  m_camera.UpdatePosition(glm::vec3(20.0f, 25.0f, 20.0f));
   m_camera.LookAt(glm::vec3(0.0f, 0.0f, 0.0f));
 }
 
@@ -73,15 +73,14 @@ void CameraController::OnScroll(const ScrollEvent &event) {
   float desiredDelta = event.yOffset * m_speed;
   float clampedDistance =
       glm::clamp(m_scrollDistance + desiredDelta, -m_zoomOutDistanceBound,
-                  m_zoomInDistanceBound);
+                 m_zoomInDistanceBound);
   float actualDelta = clampedDistance - m_scrollDistance;
 
   if (actualDelta == 0.0f)
     return;
 
   m_scrollDistance = clampedDistance;
-  glm::vec3 newPos =
-      m_camera.GetPosition() + m_camera.GetFront() * actualDelta;
+  glm::vec3 newPos = m_camera.GetPosition() + m_camera.GetFront() * actualDelta;
   m_camera.UpdatePosition(newPos);
 }
 

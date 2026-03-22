@@ -1,5 +1,6 @@
 #include "Camera.h"
 #include <cmath>
+#include <iostream>
 
 Camera::Camera()
     : m_pitch(0.0f), m_yaw(-90.0f), m_position(glm::vec3(0.0f, 0.0f, 0.0f)),
@@ -29,7 +30,13 @@ void Camera::UpdateFront(float xOffset, float yOffset) {
   m_front = glm::normalize(direction);
 }
 
-void Camera::UpdatePosition(glm::vec3 pos) { m_position = pos; }
+void Camera::UpdatePosition(glm::vec3 pos) {
+  std::cout << "xpos: " << pos.x << std::endl;
+  std::cout << "ypos: " << pos.y << std::endl;
+  std::cout << "zpos: " << pos.z << std::endl;
+
+  m_position = pos;
+}
 
 /**
  * Update Camera front to face the designated position
