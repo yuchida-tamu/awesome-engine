@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "WebSearch",
-      "Bash(make test:*)"
+      "Bash(make test:*)",
+      "Bash(./bin/run-tests -tc=\"CameraController - Scroll clamped at max scroll distance\" -s 2>&1)"
     ]
   }
 }

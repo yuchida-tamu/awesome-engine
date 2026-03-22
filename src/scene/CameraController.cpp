@@ -13,6 +13,8 @@ CameraController::CameraController(Camera &camera, EventBus &eventBus)
       [this](const MouseMoveEvent &e) { OnMouseMove(e); });
   m_mouseClickSub = m_eventBus.Subscribe<MouseClickEvent>(
       [this](const MouseClickEvent &e) { OnMouseClick(e); });
+  m_scrollSub = m_eventBus.Subscribe<ScrollEvent>(
+      [this](const ScrollEvent &e) { OnScroll(e); });
 
   m_camera.UpdatePosition(glm::vec3(0.0f, 4.0f, 5.0f));
   m_camera.LookAt(glm::vec3(0.0f, 0.0f, 0.0f));
@@ -22,6 +24,7 @@ CameraController::~CameraController() {
   m_eventBus.Unsubscribe(m_keySub);
   m_eventBus.Unsubscribe(m_mouseSub);
   m_eventBus.Unsubscribe(m_mouseClickSub);
+  m_eventBus.Unsubscribe(m_scrollSub);
 }
 
 void CameraController::OnKey(const KeyEvent &event) {
@@ -61,6 +64,25 @@ void CameraController::OnMouseMove(const MouseMoveEvent &event) {
   }
 
   m_camera.UpdateFront(event.xOffset, event.yOffset);
+}
+
+void CameraController::OnScroll(const ScrollEvent &event) {
+  if (event.yOffset == 0.0f)
+    return;
+
+  float desiredDelta = event.yOffset * m_speed;
+  float clampedDistance =
+      glm::clamp(m_scrollDistance + desiredDelta, -m_zoomOutDistanceBound,
+                  m_zoomInDistanceBound);
+  float actualDelta = clampedDistance - m_scrollDistance;
+
+  if (actualDelta == 0.0f)
+    return;
+
+  m_scrollDistance = clampedDistance;
+  glm::vec3 newPos =
+      m_camera.GetPosition() + m_camera.GetFront() * actualDelta;
+  m_camera.UpdatePosition(newPos);
 }
 
 void CameraController::Update(float deltaTime) {

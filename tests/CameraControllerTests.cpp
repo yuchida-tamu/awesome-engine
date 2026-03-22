@@ -303,6 +303,8 @@ static void ResetInputForIntegration(EventBus &bus) {
   Input::s_CurrentY = 300.0;
   Input::s_XOffset = 0.0f;
   Input::s_YOffset = 0.0f;
+  Input::s_ScrollYOffset = 0.0f;
+  Input::s_ScrollYRaw = 0.0f;
   Input::s_EventBus = &bus;
 }
 
@@ -333,6 +335,132 @@ TEST_CASE("Integration - Left-drag through Input pipeline updates camera") {
 
   // Camera SHOULD have moved now
   CHECK_FALSE(Vec3ApproxEquals(camera.GetFront(), frontBefore));
+}
+
+// ===================================================================
+// SCROLL EVENT TESTS
+// ===================================================================
+
+TEST_CASE("CameraController - Scroll down moves camera backward (zoom out)") {
+  Camera camera;
+  EventBus bus;
+  CameraController controller(camera, bus);
+
+  glm::vec3 posBefore = camera.GetPosition();
+  glm::vec3 front = camera.GetFront();
+
+  bus.Publish(ScrollEvent{-1.0f});
+
+  glm::vec3 movement = camera.GetPosition() - posBefore;
+  CHECK(glm::length(movement) > 0.0f);
+  CHECK(glm::dot(glm::normalize(movement), glm::normalize(front)) ==
+        doctest::Approx(-1.0f).epsilon(0.01));
+}
+
+TEST_CASE("CameraController - Scroll up moves camera forward (zoom in)") {
+  Camera camera;
+  EventBus bus;
+  CameraController controller(camera, bus);
+
+  // Scroll out first so there's room to scroll in
+  bus.Publish(ScrollEvent{-2.0f});
+  glm::vec3 posBefore = camera.GetPosition();
+  glm::vec3 front = camera.GetFront();
+
+  bus.Publish(ScrollEvent{1.0f});
+
+  glm::vec3 movement = camera.GetPosition() - posBefore;
+  CHECK(glm::length(movement) > 0.0f);
+  CHECK(glm::dot(glm::normalize(movement), glm::normalize(front)) ==
+        doctest::Approx(1.0f).epsilon(0.01));
+}
+
+TEST_CASE("CameraController - Scroll with zero offset does not move camera") {
+  Camera camera;
+  EventBus bus;
+  CameraController controller(camera, bus);
+
+  glm::vec3 posBefore = camera.GetPosition();
+
+  bus.Publish(ScrollEvent{0.0f});
+
+  CHECK(Vec3ApproxEquals(camera.GetPosition(), posBefore));
+}
+
+TEST_CASE("CameraController - Scroll clamped at zoom out bound") {
+  Camera camera;
+  EventBus bus;
+  CameraController controller(camera, bus);
+
+  // Zoom out bound is 25.0f. Each scroll of -1.0f moves by m_speed (2.5f).
+  // So 10 scrolls = 25.0f distance, hitting the bound.
+  for (int i = 0; i < 10; ++i) {
+    bus.Publish(ScrollEvent{-1.0f});
+  }
+  glm::vec3 posAtBound = camera.GetPosition();
+
+  bus.Publish(ScrollEvent{-1.0f});
+  CHECK(Vec3ApproxEquals(camera.GetPosition(), posAtBound));
+}
+
+TEST_CASE("CameraController - Scroll clamped at zoom in bound (original position)") {
+  Camera camera;
+  EventBus bus;
+  CameraController controller(camera, bus);
+
+  glm::vec3 posStart = camera.GetPosition();
+
+  // Zoom in bound is 0.0f — camera cannot zoom in past its starting position
+  bus.Publish(ScrollEvent{1.0f});
+  CHECK(Vec3ApproxEquals(camera.GetPosition(), posStart));
+
+  // Scroll out, then back to origin — should stop at start
+  bus.Publish(ScrollEvent{-1.0f});
+  CHECK_FALSE(Vec3ApproxEquals(camera.GetPosition(), posStart));
+
+  bus.Publish(ScrollEvent{1.0f});
+  CHECK(Vec3ApproxEquals(camera.GetPosition(), posStart));
+
+  // Another zoom in scroll should still be clamped
+  bus.Publish(ScrollEvent{1.0f});
+  CHECK(Vec3ApproxEquals(camera.GetPosition(), posStart));
+}
+
+TEST_CASE("CameraController - Scroll partially clamped at zoom out boundary") {
+  Camera camera;
+  EventBus bus;
+  CameraController controller(camera, bus);
+
+  // Scroll out 9 times (distance = 22.5f), then scroll with offset -2.0f
+  // That would be 27.5f total, but clamped to 25.0f — partial movement
+  for (int i = 0; i < 9; ++i) {
+    bus.Publish(ScrollEvent{-1.0f});
+  }
+  glm::vec3 posAt9 = camera.GetPosition();
+
+  bus.Publish(ScrollEvent{-2.0f});
+  glm::vec3 posAfterClamped = camera.GetPosition();
+
+  // Should have moved, but less than a full 2.0f * speed
+  float actualDist = glm::length(posAfterClamped - posAt9);
+  float fullDist = 2.0f * Config::DEFAULT_CAMERA_SPEED;
+  CHECK(actualDist > 0.0f);
+  CHECK(actualDist < fullDist);
+}
+
+TEST_CASE("CameraController - Scroll subscription cleaned up on destruction") {
+  Camera camera;
+  EventBus bus;
+
+  {
+    CameraController controller(camera, bus);
+  } // controller destroyed here
+
+  glm::vec3 posAfter = camera.GetPosition();
+
+  bus.Publish(ScrollEvent{-1.0f});
+
+  CHECK(Vec3ApproxEquals(camera.GetPosition(), posAfter));
 }
 
 // ===================================================================
@@ -375,4 +503,26 @@ TEST_CASE("CameraController - Movement resets after Update") {
   // No new key events — should not move
   controller.Update(1.0f);
   CHECK(Vec3ApproxEquals(camera.GetPosition(), posAfterFirstUpdate));
+}
+
+TEST_CASE("Integration - Scroll through Input pipeline moves camera") {
+  EventBus bus;
+  ResetInputForIntegration(bus);
+
+  Camera camera;
+  CameraController controller(camera, bus);
+
+  glm::vec3 posBefore = camera.GetPosition();
+  glm::vec3 front = camera.GetFront();
+
+  // Simulate: glfwPollEvents fires scroll callback (zoom out)
+  Input::ScrollCallBack(nullptr, 0.0, -1.0);
+
+  // Input::Update publishes ScrollEvent
+  Input::Update();
+
+  glm::vec3 movement = camera.GetPosition() - posBefore;
+  CHECK(glm::length(movement) > 0.0f);
+  CHECK(glm::dot(glm::normalize(movement), glm::normalize(front)) ==
+        doctest::Approx(-1.0f).epsilon(0.01));
 }

@@ -30,6 +30,8 @@ private:
   static void MouseCallBack(GLFWwindow *window, double xPos, double yPos);
   static void MouseButtonCallBack(GLFWwindow *window, int button, int action,
                                   int mods);
+  static void ScrollCallBack(GLFWwindow *window, double xOffset,
+                              double yOffset);
   // We need three states for robust polling: current frame, previous frame, and
   // raw state.
   static bool s_Keys[];
@@ -43,4 +45,6 @@ private:
   static double s_CurrentX, s_CurrentY;
   static float s_XOffset, s_YOffset;
   static float s_Sensitivity;
+  static float s_ScrollYOffset;
+  static float s_ScrollYRaw;
 };

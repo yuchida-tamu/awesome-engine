@@ -18,6 +18,8 @@ bool Input::s_MouseButtonsRaw[Config::MAX_MOUSE_BUTTONS];
 float Input::s_XOffset = 0.0f;
 float Input::s_YOffset = 0.0f;
 float Input::s_Sensitivity = 0.1f;
+float Input::s_ScrollYOffset = 0.0f;
+float Input::s_ScrollYRaw = 0.0f;
 double Input::s_LastX =
     Config::WINDOW_WIDTH / 2.0; // Initialize to screen center
 double Input::s_LastY = Config::WINDOW_HEIGHT / 2.0;
@@ -40,6 +42,7 @@ void Input::Initialize(GLFWwindow *window, EventBus &eventBus) {
   glfwSetKeyCallback(window, KeyCallBack);
   glfwSetCursorPosCallback(window, MouseCallBack);
   glfwSetMouseButtonCallback(window, MouseButtonCallBack);
+  glfwSetScrollCallback(window, ScrollCallBack);
 }
 
 void Input::Update() {
@@ -98,6 +101,13 @@ void Input::Update() {
   if (s_XOffset != 0.0f || s_YOffset != 0.0f) {
     s_EventBus->Publish(
         MouseMoveEvent{s_XOffset * s_Sensitivity, s_YOffset * s_Sensitivity});
+  }
+
+  // Publish scroll event (only if there was scroll input)
+  s_ScrollYOffset = s_ScrollYRaw;
+  if (s_ScrollYOffset != 0.0f) {
+    s_EventBus->Publish(ScrollEvent{s_ScrollYOffset});
+    s_ScrollYRaw = 0.0f;
   }
 }
 
@@ -167,4 +177,9 @@ void Input::MouseCallBack(GLFWwindow *window, double xPos, double yPos) {
 
   s_CurrentX = xPos;
   s_CurrentY = yPos;
+}
+
+void Input::ScrollCallBack(GLFWwindow *window, double xOffset,
+                            double yOffset) {
+  s_ScrollYRaw = static_cast<float>(yOffset);
 }
