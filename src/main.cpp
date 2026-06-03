@@ -129,25 +129,6 @@ int main() {
     scene.AddGameObject(std::move(cameraObj));
     scene.AddCamera(&camera);
 
-    auto officeObj = std::make_unique<GameObject>();
-    auto *officeTransform = officeObj->AddComponent<TransformComponent>();
-    officeTransform->SetPosition(glm::vec3(0, 0, 0));
-    // officeTransform->Rotate(-90.0f, glm::vec3(1.0f, 0.0f, 0.0f));
-    auto officeModel = std::make_unique<Model>("models/office/office.glb");
-    Shader modelShader =
-        Shader("shaders/simple_model.vert", "shaders/simple_model.frag");
-    officeObj->AddComponent<RenderComponent>(std::move(officeModel),
-                                             &modelShader);
-
-    auto deskObj = std::make_unique<GameObject>();
-    auto *deskTransform = deskObj->AddComponent<TransformComponent>();
-    deskTransform->SetPosition(glm::vec3(0, 0, 0));
-    auto deskModel = std::make_unique<Model>("models/office/desk.glb");
-    deskObj->AddComponent<RenderComponent>(std::move(deskModel), &modelShader);
-
-    scene.AddGameObject(std::move(officeObj));
-    scene.AddGameObject(std::move(deskObj));
-
     //    WorldSpaceGizmo worldSpaceGizmo{};
     GridGizmo gridGizmo{};
 
