@@ -231,7 +231,9 @@ if(BUILD_TESTING)
         tests/TextElementTests.cpp
         tests/ButtonElementTests.cpp
         tests/ChunkTests.cpp
+        tests/ChunkMesherTests.cpp
         src/voxel/Chunk.cpp
+        src/voxel/ChunkMesher.cpp
         src/core/Input.cpp
         src/cameras/Camera.cpp
         src/scene/CameraController.cpp
