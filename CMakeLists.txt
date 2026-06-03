@@ -230,6 +230,8 @@ if(BUILD_TESTING)
         tests/UIManagerTests.cpp
         tests/TextElementTests.cpp
         tests/ButtonElementTests.cpp
+        tests/ChunkTests.cpp
+        src/voxel/Chunk.cpp
         src/core/Input.cpp
         src/cameras/Camera.cpp
         src/scene/CameraController.cpp
