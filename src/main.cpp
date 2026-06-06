@@ -40,6 +40,8 @@
 #include "ui/TextElement.h"
 #include "ui/UIElement.h"
 #include "ui/UIManager.h"
+#include "voxel/Chunk.h"
+#include "voxel/VoxelChunk.h"
 
 void error_callback(int error, const char *description) {
   std::cerr << "GLFW Error: " << description << std::endl;
@@ -128,6 +130,23 @@ int main() {
     cameraObj->AddComponent<CameraController>(camera, eventBus);
     scene.AddGameObject(std::move(cameraObj));
     scene.AddCamera(&camera);
+
+    Shader cubeShader("shaders/cube.vert.glsl", "shaders/cube.frag.glsl");
+    Chunk chunk;
+    for (int z = 0; z < Chunk::SIZE; ++z) {
+      for (int x = 0; x < Chunk::SIZE; ++x) {
+        int dx = std::abs(x - 8), dz = std::abs(z - 8);
+        int height = std::max(1, 8 - std::max(dx, dz));
+        for (int y = 0; y < height; ++y) {
+          chunk.setBlock(x, y, z, 1);
+        }
+      }
+    }
+    auto chunkObj = std::make_unique<GameObject>();
+    chunkObj->AddComponent<TransformComponent>();
+    chunkObj->AddComponent<RenderComponent>(std::make_unique<VoxelChunk>(chunk),
+                                            &cubeShader);
+    scene.AddGameObject(std::move(chunkObj));
 
     //    WorldSpaceGizmo worldSpaceGizmo{};
     GridGizmo gridGizmo{};

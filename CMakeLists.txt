@@ -55,6 +55,9 @@ add_executable(awesome-engine
     src/ui/UIManager.cpp
     src/ui/TextElement.cpp
     src/ui/ButtonElement.cpp
+    src/voxel/VoxelChunk.cpp
+    src/voxel/ChunkMesher.cpp
+    src/voxel/Chunk.cpp
 )
 
 # Tell our target where to find its public header files
