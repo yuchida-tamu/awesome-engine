@@ -236,6 +236,7 @@ if(BUILD_TESTING)
         tests/ButtonElementTests.cpp
         tests/ChunkTests.cpp
         tests/ChunkMesherTests.cpp
+        tests/BlockTests.cpp
         src/voxel/Chunk.cpp
         src/voxel/ChunkMesher.cpp
         src/core/Input.cpp

@@ -1,5 +1,5 @@
-#include "doctest.h"
 #include "TestHelpers.h"
+#include "doctest.h"
 
 #include <stdexcept>
 
@@ -60,7 +60,8 @@ TEST_CASE("Chunk - blockAt outside the chunk returns AIR") {
     CHECK(chunk.blockAt(0, 0, -1) == Chunk::AIR);
   }
   SUBCASE("coordinates at or past SIZE") {
-    // Valid indices are 0..SIZE-1, so SIZE itself is the first out-of-range one.
+    // Valid indices are 0..SIZE-1, so SIZE itself is the first out-of-range
+    // one.
     CHECK(chunk.blockAt(Chunk::SIZE, 0, 0) == Chunk::AIR);
     CHECK(chunk.blockAt(0, Chunk::SIZE, 0) == Chunk::AIR);
     CHECK(chunk.blockAt(0, 0, Chunk::SIZE) == Chunk::AIR);
@@ -78,5 +79,6 @@ TEST_CASE("Chunk - setBlock outside the chunk asserts") {
   CHECK_THROWS_AS(chunk.setBlock(0, 0, Chunk::SIZE, 1), std::logic_error);
 
   // A valid write in the same test must NOT throw.
-  CHECK_NOTHROW(chunk.setBlock(Chunk::SIZE - 1, Chunk::SIZE - 1, Chunk::SIZE - 1, 1));
+  CHECK_NOTHROW(
+      chunk.setBlock(Chunk::SIZE - 1, Chunk::SIZE - 1, Chunk::SIZE - 1, 1));
 }
