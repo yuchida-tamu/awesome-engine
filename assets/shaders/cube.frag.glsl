@@ -10,7 +10,7 @@ uniform sampler2D texture_diffuse1;
 
 void main() {
     // Simple directional light
-    vec3 lightDir = normalize(vec3(1.0, 1.0, 1.0));
+    vec3 lightDir = normalize(vec3(0.5, 1.0, 0.3));
     vec3 norm = normalize(Normal);
 
     // Ambient

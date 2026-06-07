@@ -67,6 +67,7 @@ target_include_directories(awesome-engine PUBLIC
     ${CMAKE_SOURCE_DIR}/vendor/glad/include
     ${CMAKE_SOURCE_DIR}/vendor/loader/include
     ${CMAKE_SOURCE_DIR}/vendor/glm
+    ${CMAKE_SOURCE_DIR}/vendor/FastnoiseLite
 )
 
 # Add Assimp include directories if found

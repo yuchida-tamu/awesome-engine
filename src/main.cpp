@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <glad/glad.h>
 
+#include "FastNoiseLite.h"
 #include <GLFW/glfw3.h>
 #include <cstddef>
 #include <glm/glm.hpp>
@@ -133,10 +134,17 @@ int main() {
 
     Shader cubeShader("shaders/cube.vert.glsl", "shaders/cube.frag.glsl");
     Chunk chunk;
+
+    FastNoiseLite noise;
+    noise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
+    noise.SetSeed(1337);
+    noise.SetFrequency(0.05f);
+
     for (int z = 0; z < Chunk::SIZE; ++z) {
       for (int x = 0; x < Chunk::SIZE; ++x) {
-        int dx = std::abs(x - 8), dz = std::abs(z - 8);
-        int height = std::max(1, 8 - std::max(dx, dz));
+        float n = noise.GetNoise((float)x, (float)z); // returns [-1, 1]
+        int height =
+            (int)((n + 1.0f) * 0.5f * 14) + 1; // remap [-1, 1] -> [1, 15]
         for (int y = 0; y < height; ++y) {
           chunk.setBlock(x, y, z, 1);
         }
