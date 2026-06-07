@@ -1,4 +1,5 @@
 #include "voxel/ChunkMesher.h"
+#include "voxel/Block.h"
 
 namespace {
 struct Face {
@@ -41,8 +42,9 @@ MeshData ChunkMesher::Build(const Chunk &chunk) {
 
           auto base = static_cast<unsigned int>(mesh.vertices.size());
           for (int i = 0; i < 4; ++i) {
-            mesh.vertices.push_back(
-                {cell + face.corners[i], face.normal, kFaceUV[i]});
+            mesh.vertices.push_back({cell + face.corners[i], face.normal,
+                                     kFaceUV[i],
+                                     blockColor(chunk.blockAt(x, y, z))});
           }
 
           // Quad = two triangles: (0, 1, 2) and (2, 3, 0)
