@@ -133,28 +133,38 @@ int main() {
     scene.AddCamera(&camera);
 
     Shader cubeShader("shaders/cube.vert.glsl", "shaders/cube.frag.glsl");
-    Chunk chunk;
 
     FastNoiseLite noise;
     noise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
     noise.SetSeed(1337);
     noise.SetFrequency(0.05f);
 
-    for (int z = 0; z < Chunk::SIZE; ++z) {
-      for (int x = 0; x < Chunk::SIZE; ++x) {
-        float n = noise.GetNoise((float)x, (float)z); // returns [-1, 1]
-        int height =
-            (int)((n + 1.0f) * 0.5f * 14) + 1; // remap [-1, 1] -> [1, 15]
-        for (int y = 0; y < height; ++y) {
-          chunk.setBlock(x, y, z, 1);
+    int worldSize = 8; // grid is worldSize x worldSize chunks
+    for (int chunkX = 0; chunkX < worldSize; ++chunkX) {
+      for (int chunkZ = 0; chunkZ < worldSize; ++chunkZ) {
+        Chunk chunk; // fresh chunk per grid cell
+
+        for (int z = 0; z < Chunk::SIZE; ++z) {
+          for (int x = 0; x < Chunk::SIZE; ++x) {
+            float n = noise.GetNoise((float)(chunkX * Chunk::SIZE + x),
+                                     (float)(chunkZ * Chunk::SIZE + z));
+            int height =
+                (int)((n + 1.0f) * 0.5f * 14) + 1; // remap [-1, 1] -> [1, 15]
+            for (int y = 0; y < height; ++y) {
+              chunk.setBlock(x, y, z, 1);
+            }
+          }
         }
+
+        // Build the renderable once, after the chunk is fully filled.
+        auto chunkObj = std::make_unique<GameObject>();
+        chunkObj->AddComponent<TransformComponent>()->SetPosition(
+            {chunkX * Chunk::SIZE, 0, chunkZ * Chunk::SIZE});
+        chunkObj->AddComponent<RenderComponent>(
+            std::make_unique<VoxelChunk>(chunk), &cubeShader);
+        scene.AddGameObject(std::move(chunkObj));
       }
     }
-    auto chunkObj = std::make_unique<GameObject>();
-    chunkObj->AddComponent<TransformComponent>();
-    chunkObj->AddComponent<RenderComponent>(std::make_unique<VoxelChunk>(chunk),
-                                            &cubeShader);
-    scene.AddGameObject(std::move(chunkObj));
 
     //    WorldSpaceGizmo worldSpaceGizmo{};
     GridGizmo gridGizmo{};
