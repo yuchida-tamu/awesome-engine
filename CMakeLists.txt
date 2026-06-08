@@ -58,6 +58,7 @@ add_executable(awesome-engine
     src/voxel/VoxelChunk.cpp
     src/voxel/ChunkMesher.cpp
     src/voxel/Chunk.cpp
+    src/voxel/TerrainGenerator.cpp
 )
 
 # Tell our target where to find its public header files
@@ -237,8 +238,10 @@ if(BUILD_TESTING)
         tests/ChunkTests.cpp
         tests/ChunkMesherTests.cpp
         tests/BlockTests.cpp
+        tests/TerrainGeneratorTests.cpp
         src/voxel/Chunk.cpp
         src/voxel/ChunkMesher.cpp
+        src/voxel/TerrainGenerator.cpp
         src/core/Input.cpp
         src/cameras/Camera.cpp
         src/scene/CameraController.cpp
@@ -262,6 +265,7 @@ if(BUILD_TESTING)
         ${CMAKE_SOURCE_DIR}/vendor/glfw/include
         ${CMAKE_SOURCE_DIR}/vendor/glad/include
         ${CMAKE_SOURCE_DIR}/vendor/glm
+        ${CMAKE_SOURCE_DIR}/vendor/FastNoiseLite
         ${CMAKE_SOURCE_DIR}/tests
     )
 

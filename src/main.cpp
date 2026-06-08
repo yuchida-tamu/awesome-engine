@@ -42,6 +42,7 @@
 #include "ui/UIElement.h"
 #include "ui/UIManager.h"
 #include "voxel/Chunk.h"
+#include "voxel/TerrainGenerator.h"
 #include "voxel/VoxelChunk.h"
 
 void error_callback(int error, const char *description) {
@@ -134,27 +135,13 @@ int main() {
 
     Shader cubeShader("shaders/cube.vert.glsl", "shaders/cube.frag.glsl");
 
-    FastNoiseLite noise;
-    noise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
-    noise.SetSeed(1337);
-    noise.SetFrequency(0.05f);
+    TerrainGenerator terrainGenerator(1337, 0.1f);
 
     int worldSize = 8; // grid is worldSize x worldSize chunks
     for (int chunkX = 0; chunkX < worldSize; ++chunkX) {
       for (int chunkZ = 0; chunkZ < worldSize; ++chunkZ) {
-        Chunk chunk; // fresh chunk per grid cell
 
-        for (int z = 0; z < Chunk::SIZE; ++z) {
-          for (int x = 0; x < Chunk::SIZE; ++x) {
-            float n = noise.GetNoise((float)(chunkX * Chunk::SIZE + x),
-                                     (float)(chunkZ * Chunk::SIZE + z));
-            int height =
-                (int)((n + 1.0f) * 0.5f * 14) + 1; // remap [-1, 1] -> [1, 15]
-            for (int y = 0; y < height; ++y) {
-              chunk.setBlock(x, y, z, 1);
-            }
-          }
-        }
+        auto chunk = terrainGenerator.generateChunk(chunkX, chunkZ);
 
         // Build the renderable once, after the chunk is fully filled.
         auto chunkObj = std::make_unique<GameObject>();
