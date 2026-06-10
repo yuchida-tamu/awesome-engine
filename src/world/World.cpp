@@ -13,9 +13,10 @@
 
 World::World(int seed) : m_generator(seed) {}
 
-void World::Populate(Scene &scene, Shader &shader, int radius) {
-  for (int chunkX = -radius; chunkX <= radius; ++chunkX) {
-    for (int chunkZ = -radius; chunkZ <= radius; ++chunkZ) {
+void World::Populate(Scene &scene, Shader &shader, int centerX, int centerZ,
+                     int radius) {
+  for (int chunkX = centerX - radius; chunkX <= centerX + radius; ++chunkX) {
+    for (int chunkZ = centerZ - radius; chunkZ <= centerZ + radius; ++chunkZ) {
       auto chunk = m_generator.generateChunk(chunkX, chunkZ);
       auto chunkObj = std::make_unique<GameObject>();
       chunkObj->AddComponent<TransformComponent>()->SetPosition(

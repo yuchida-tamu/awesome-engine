@@ -240,6 +240,7 @@ if(BUILD_TESTING)
         tests/ChunkMesherTests.cpp
         tests/BlockTests.cpp
         tests/TerrainGeneratorTests.cpp
+        tests/CoordsTests.cpp
         src/voxel/Chunk.cpp
         src/voxel/ChunkMesher.cpp
         src/voxel/TerrainGenerator.cpp

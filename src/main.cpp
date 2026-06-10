@@ -44,6 +44,7 @@
 #include "voxel/Chunk.h"
 #include "voxel/TerrainGenerator.h"
 #include "voxel/VoxelChunk.h"
+#include "world/Coords.h"
 #include "world/World.h"
 
 void error_callback(int error, const char *description) {
@@ -137,7 +138,8 @@ int main() {
     Shader cubeShader("shaders/cube.vert.glsl", "shaders/cube.frag.glsl");
 
     World world;
-    world.Populate(scene, cubeShader, 3);
+    world.Populate(scene, cubeShader, worldToChunk(camera.GetPosition().x),
+                   worldToChunk(camera.GetPosition().z), 3);
 
     //    WorldSpaceGizmo worldSpaceGizmo{};
     GridGizmo gridGizmo{};

@@ -7,7 +7,8 @@
 class World {
 public:
   World(int seed = 1337);
-  void Populate(Scene &scene, Shader &shader, int radius);
+  void Populate(Scene &scene, Shader &shader, int centerX, int centerZ,
+                int radius);
 
 private:
   TerrainGenerator m_generator;
