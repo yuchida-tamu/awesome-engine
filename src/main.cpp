@@ -44,6 +44,7 @@
 #include "voxel/Chunk.h"
 #include "voxel/TerrainGenerator.h"
 #include "voxel/VoxelChunk.h"
+#include "world/World.h"
 
 void error_callback(int error, const char *description) {
   std::cerr << "GLFW Error: " << description << std::endl;
@@ -135,23 +136,8 @@ int main() {
 
     Shader cubeShader("shaders/cube.vert.glsl", "shaders/cube.frag.glsl");
 
-    TerrainGenerator terrainGenerator(1337, 0.1f);
-
-    int worldSize = 8; // grid is worldSize x worldSize chunks
-    for (int chunkX = 0; chunkX < worldSize; ++chunkX) {
-      for (int chunkZ = 0; chunkZ < worldSize; ++chunkZ) {
-
-        auto chunk = terrainGenerator.generateChunk(chunkX, chunkZ);
-
-        // Build the renderable once, after the chunk is fully filled.
-        auto chunkObj = std::make_unique<GameObject>();
-        chunkObj->AddComponent<TransformComponent>()->SetPosition(
-            {chunkX * Chunk::SIZE, 0, chunkZ * Chunk::SIZE});
-        chunkObj->AddComponent<RenderComponent>(
-            std::make_unique<VoxelChunk>(chunk), &cubeShader);
-        scene.AddGameObject(std::move(chunkObj));
-      }
-    }
+    World world;
+    world.Populate(scene, cubeShader, 3);
 
     //    WorldSpaceGizmo worldSpaceGizmo{};
     GridGizmo gridGizmo{};

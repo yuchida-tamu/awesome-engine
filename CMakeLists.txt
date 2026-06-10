@@ -49,9 +49,9 @@ add_executable(awesome-engine
     src/scene/WorldSpaceGizmo.cpp
     src/scene/GridGizmo.cpp
     src/scene/Scene.cpp
-    src/scene/GameObject
-    src/scene/RenderComponent
-    src/scene/CameraController
+    src/scene/GameObject.cpp
+    src/scene/RenderComponent.cpp
+    src/scene/CameraController.cpp
     src/ui/UIManager.cpp
     src/ui/TextElement.cpp
     src/ui/ButtonElement.cpp
@@ -59,6 +59,7 @@ add_executable(awesome-engine
     src/voxel/ChunkMesher.cpp
     src/voxel/Chunk.cpp
     src/voxel/TerrainGenerator.cpp
+    src/world/World.cpp
 )
 
 # Tell our target where to find its public header files
