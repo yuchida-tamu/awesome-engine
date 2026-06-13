@@ -1,4 +1,5 @@
 #include "voxel/TerrainGenerator.h"
+#include "voxel/Block.h"
 #include "voxel/Chunk.h"
 
 TerrainGenerator::TerrainGenerator(int seed, float frequency) {
@@ -19,13 +20,23 @@ Chunk TerrainGenerator::generateChunk(int chunkX, int chunkZ) const {
       // remap the noise to fit in the chunk coordinate
       int height = (int)((n + 1.0f) * 0.5f * (Chunk::SIZE - 2)) + 1;
       for (int y = 0; y < height; ++y) {
-        // its block id is currently hard coded
-        // but it should be assigned dynamically once we have more advanced
-        // terrain generation system
-        chunk.setBlock(x, y, z, 1);
+        int depth = (height - 1) - y;
+        chunk.setBlock(x, y, z, getBlockIdForDepth(depth));
       }
     }
   }
 
   return chunk;
+}
+
+uint8_t TerrainGenerator::getBlockIdForDepth(int depth) const {
+  if (depth == 0) {
+    return static_cast<uint8_t>(BlockType::Grass);
+  }
+
+  if (depth <= 3) {
+    return static_cast<uint8_t>(BlockType::Dirt);
+  }
+
+  return static_cast<uint8_t>(BlockType::Stone);
 }

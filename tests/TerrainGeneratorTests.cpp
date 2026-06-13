@@ -1,10 +1,16 @@
 #include "TestHelpers.h"
 #include "doctest.h"
 
+#include "voxel/Block.h"
 #include "voxel/Chunk.h"
 #include "voxel/TerrainGenerator.h"
 
 namespace {
+
+// Block ids as plain ints so doctest prints them as numbers, not characters.
+const int GRASS = static_cast<uint8_t>(BlockType::Grass);
+const int DIRT = static_cast<uint8_t>(BlockType::Dirt);
+const int STONE = static_cast<uint8_t>(BlockType::Stone);
 
 // Number of solid blocks stacked contiguously from the floor of a column.
 // Returns -1 if the column has a "floating" block (a solid cell with air
@@ -95,4 +101,51 @@ TEST_CASE("TerrainGenerator - different seeds produce different terrain") {
   TerrainGenerator a(1);
   TerrainGenerator b(2);
   CHECK_FALSE(chunksIdentical(a.generateChunk(0, 0), b.generateChunk(0, 0)));
+}
+
+// ===================================================================
+// DEPTH-LAYERING TESTS (grass surface / dirt / stone deep)
+// ===================================================================
+
+TEST_CASE("TerrainGenerator - the surface cell of every column is grass") {
+  TerrainGenerator gen(1337);
+  Chunk chunk = gen.generateChunk(0, 0);
+
+  bool surfaceAlwaysGrass = true;
+  for (int z = 0; z < Chunk::SIZE; ++z) {
+    for (int x = 0; x < Chunk::SIZE; ++x) {
+      int h = solidColumnHeight(chunk, x, z);
+      if (h >= 1 && chunk.blockAt(x, h - 1, z) != GRASS) {
+        surfaceAlwaysGrass = false;
+      }
+    }
+  }
+  CHECK(surfaceAlwaysGrass);
+}
+
+TEST_CASE("TerrainGenerator - columns layer grass -> dirt -> stone with depth") {
+  TerrainGenerator gen(1337);
+  Chunk chunk = gen.generateChunk(0, 0);
+
+  // Use the tallest column so all three layers are present (need height >= 5
+  // to reach depth 4, the first stone cell).
+  int bx = 0, bz = 0, tallest = 0;
+  for (int z = 0; z < Chunk::SIZE; ++z) {
+    for (int x = 0; x < Chunk::SIZE; ++x) {
+      int h = solidColumnHeight(chunk, x, z);
+      if (h > tallest) {
+        tallest = h;
+        bx = x;
+        bz = z;
+      }
+    }
+  }
+  REQUIRE(tallest >= 5); // the seed must produce a column tall enough
+
+  int top = tallest - 1;
+  CHECK(chunk.blockAt(bx, top, bz) == GRASS);     // depth 0 (surface)
+  CHECK(chunk.blockAt(bx, top - 1, bz) == DIRT);  // depth 1
+  CHECK(chunk.blockAt(bx, top - 3, bz) == DIRT);  // depth 3 (last dirt)
+  CHECK(chunk.blockAt(bx, top - 4, bz) == STONE); // depth 4 (first stone)
+  CHECK(chunk.blockAt(bx, 0, bz) == STONE);       // bottom is deep -> stone
 }

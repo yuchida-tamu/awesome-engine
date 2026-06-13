@@ -6,6 +6,7 @@ enum class BlockType : uint8_t {
   Air = 0,
   Grass = 1,
   Stone = 2,
+  Dirt = 3,
 };
 
 inline glm::vec3 blockColor(uint8_t id) {
@@ -15,6 +16,9 @@ inline glm::vec3 blockColor(uint8_t id) {
   }
   case BlockType::Stone: {
     return {0.5f, 0.5f, 0.5f};
+  }
+  case BlockType::Dirt: {
+    return {0.608f, 0.463f, 0.325f};
   }
   default: {
     return {1.0f, 1.0f, 1.0f};
