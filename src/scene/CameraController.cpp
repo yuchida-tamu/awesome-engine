@@ -16,7 +16,7 @@ CameraController::CameraController(Camera &camera, EventBus &eventBus)
   m_scrollSub = m_eventBus.Subscribe<ScrollEvent>(
       [this](const ScrollEvent &e) { OnScroll(e); });
 
-  m_camera.UpdatePosition(glm::vec3(20.0f, 25.0f, 20.0f));
+  m_camera.UpdatePosition(glm::vec3(20.0f, 8.0f, 20.0f));
   m_camera.LookAt(glm::vec3(0.0f, 0.0f, 0.0f));
 }
 
