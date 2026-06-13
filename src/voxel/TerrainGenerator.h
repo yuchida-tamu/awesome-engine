@@ -7,10 +7,10 @@ class TerrainGenerator {
 public:
   explicit TerrainGenerator(int seed, float frequency = 0.125f);
 
-  Chunk generateChunk(int chunkX, int chunkZ) const;
+  Chunk GenerateChunk(int chunkX, int chunkZ) const;
 
 private:
   FastNoiseLite m_noise;
 
-  uint8_t getBlockIdForDepth(int depth) const;
+  static uint8_t getBlockIdForDepth(int depth);
 };

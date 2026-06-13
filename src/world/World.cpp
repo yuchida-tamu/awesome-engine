@@ -9,7 +9,6 @@
 #include "voxel/TerrainGenerator.h"
 #include "voxel/VoxelChunk.h"
 #include "world/Coords.h"
-#include <cstdint>
 #include <memory>
 #include <utility>
 
@@ -28,10 +27,10 @@ void World::Update(Scene &scene, Shader &shader, int centerX, int centerZ,
         continue;
       }
 
-      auto chunk = m_generator.generateChunk(chunkX, chunkZ);
+      auto chunk = m_generator.GenerateChunk(chunkX, chunkZ);
       auto chunkObj = std::make_unique<GameObject>();
 
-      m_map[encodeKey(chunkX, chunkZ)] = chunkObj.get();
+      m_map[EncodeKey(chunkX, chunkZ)] = chunkObj.get();
       chunkObj->AddComponent<TransformComponent>()->SetPosition(
           {chunkX * Chunk::SIZE, 0, chunkZ * Chunk::SIZE});
       chunkObj->AddComponent<RenderComponent>(
@@ -41,8 +40,8 @@ void World::Update(Scene &scene, Shader &shader, int centerX, int centerZ,
   }
 
   for (auto it = m_map.begin(); it != m_map.end();) {
-    auto [cx, cz] = decodeKey(it->first);
-    if (isOutsideOfRadius(cx, cz, centerX, centerZ, radius)) {
+    auto [cx, cz] = DecodeKey(it->first);
+    if (IsOutsideOfRadius(cx, cz, centerX, centerZ, radius)) {
       scene.RemoveGameObject(it->second);
       it = m_map.erase(it);
     } else {
@@ -55,7 +54,7 @@ void World::Update(Scene &scene, Shader &shader, int centerX, int centerZ,
 }
 
 bool World::isChunkLoaded(int cx, int cz) const {
-  return m_map.count(encodeKey(cx, cz)) != 0;
+  return m_map.count(EncodeKey(cx, cz)) != 0;
 }
 
 bool World::isCenterMoved(int cx, int cz) const {

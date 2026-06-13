@@ -16,9 +16,6 @@ public:
   // Diallow copying
   Scene(const Scene &other) = delete;
   Scene &operator=(const Scene &other) = delete;
-  // Allow moving
-  Scene(const Scene &&other) noexcept;
-  Scene &operator=(const Scene &&other) noexcept;
 
   // NOTE: this appraoch has a performance downside (using heap memory)
   // For now the project itself if fairly small and I prioritize simplicity over

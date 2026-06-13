@@ -17,8 +17,8 @@ public:
   static constexpr uint8_t AIR = 0;
 
   // Read/write a single cell. Coordinates are local to the chunk: [0, SIZE).
-  uint8_t blockAt(int x, int y, int z) const;
-  void setBlock(int x, int y, int z, uint8_t id);
+  uint8_t BlockAt(int x, int y, int z) const;
+  void SetBlock(int x, int y, int z, uint8_t id);
 
 #ifdef UNIT_TEST
 public:

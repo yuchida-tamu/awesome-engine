@@ -13,13 +13,13 @@ bool Chunk::inBounds(int x, int y, int z) const {
   return x >= 0 && x < SIZE && y >= 0 && y < SIZE && z >= 0 && z < SIZE;
 }
 
-uint8_t Chunk::blockAt(int x, int y, int z) const {
+uint8_t Chunk::BlockAt(int x, int y, int z) const {
   if (!inBounds(x, y, z))
     return AIR; // outside the chunk is treated as empty space
   return m_blocks[index(x, y, z)];
 }
 
-void Chunk::setBlock(int x, int y, int z, uint8_t id) {
-  ENGINE_ASSERT(inBounds(x, y, z), "Chunk::setBlock coordinate out of range");
+void Chunk::SetBlock(int x, int y, int z, uint8_t id) {
+  ENGINE_ASSERT(inBounds(x, y, z), "Chunk::SetBlock coordinate out of range");
   m_blocks[index(x, y, z)] = id;
 }

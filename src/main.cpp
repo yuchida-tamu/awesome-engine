@@ -1,7 +1,5 @@
-#include <algorithm>
 #include <glad/glad.h>
 
-#include "FastNoiseLite.h"
 #include <GLFW/glfw3.h>
 #include <cstddef>
 #include <glm/glm.hpp>
@@ -20,30 +18,15 @@
 #include "core/TextureLoader.h"
 
 #include "cameras/Camera.h"
-#include "meshes/Model.h"
-#include "rendering/PostProcessBlurEffectStrategy.h"
-#include "rendering/PostProcessEdgeEffectStrategy.h"
-#include "rendering/PostProcessInvertEffectStrategy.h"
-#include "rendering/PostProcessing.h"
-#include "rendering/RenderContext.h"
-
-#include "meshes/Cube.h"
 #include "rendering/Shader.h"
 #include "scene/CameraController.h"
 #include "scene/GameObject.h"
 #include "scene/GridGizmo.h"
-#include "scene/RenderComponent.h"
 #include "scene/Scene.h"
-#include "scene/TransformComponent.h"
-#include "scene/WorldSpaceGizmo.h"
 #include "stb_image.h"
 #include "ui/ButtonElement.h"
-#include "ui/TextElement.h"
 #include "ui/UIElement.h"
 #include "ui/UIManager.h"
-#include "voxel/Chunk.h"
-#include "voxel/TerrainGenerator.h"
-#include "voxel/VoxelChunk.h"
 #include "world/Coords.h"
 #include "world/World.h"
 
@@ -105,11 +88,6 @@ int main() {
     float lastFrame = 0.0f;
 
     UIManager uiManager(eventBus);
-    auto text = std::make_unique<TextElement>();
-    text->SetText("Awesome Engine");
-    text->SetPosition(glm::vec2(12.0, 12.0));
-    text->SetColor(glm::vec3(1.0, 0.1, 0.4));
-    // uiManager.Register(std::move(text));
 
     auto button = std::make_unique<ButtonElement>();
     ButtonElement *buttonRawPtr = button.get();
@@ -139,7 +117,6 @@ int main() {
 
     World world;
 
-    //    WorldSpaceGizmo worldSpaceGizmo{};
     GridGizmo gridGizmo{};
 
     // Main loop
@@ -156,8 +133,8 @@ int main() {
 
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-      world.Update(scene, cubeShader, worldToChunk(camera.GetPosition().x),
-                   worldToChunk(camera.GetPosition().z), 7);
+      world.Update(scene, cubeShader, WorldToChunk(camera.GetPosition().x),
+                   WorldToChunk(camera.GetPosition().z), 7);
       scene.Update(deltaTime);
       gridGizmo.On(scene.GetRenderContext());
 

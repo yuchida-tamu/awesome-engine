@@ -30,13 +30,13 @@ MeshData ChunkMesher::Build(const Chunk &chunk) {
   for (int z = 0; z < Chunk::SIZE; ++z) {
     for (int y = 0; y < Chunk::SIZE; ++y) {
       for (int x = 0; x < Chunk::SIZE; ++x) {
-        if (chunk.blockAt(x, y, z) == Chunk::AIR)
+        if (chunk.BlockAt(x, y, z) == Chunk::AIR)
           continue;
 
         glm::vec3 cell(x, y, z);
         for (const Face &face : kFaces) {
           // Check if a face is hidden by a solid neighbor. If so, skip
-          if (chunk.blockAt(x + face.dx, y + face.dy, z + face.dz) !=
+          if (chunk.BlockAt(x + face.dx, y + face.dy, z + face.dz) !=
               Chunk::AIR)
             continue;
 
@@ -44,7 +44,7 @@ MeshData ChunkMesher::Build(const Chunk &chunk) {
           for (int i = 0; i < 4; ++i) {
             mesh.vertices.push_back({cell + face.corners[i], face.normal,
                                      kFaceUV[i],
-                                     blockColor(chunk.blockAt(x, y, z))});
+                                     BlockColor(chunk.BlockAt(x, y, z))});
           }
 
           // Quad = two triangles: (0, 1, 2) and (2, 3, 0)

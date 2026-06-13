@@ -17,11 +17,11 @@ const int STONE = static_cast<uint8_t>(BlockType::Stone);
 // beneath it) — an invalid heightmap fill.
 int solidColumnHeight(const Chunk &chunk, int x, int z) {
   int h = 0;
-  while (h < Chunk::SIZE && chunk.blockAt(x, h, z) != Chunk::AIR) {
+  while (h < Chunk::SIZE && chunk.BlockAt(x, h, z) != Chunk::AIR) {
     ++h;
   }
   for (int y = h; y < Chunk::SIZE; ++y) {
-    if (chunk.blockAt(x, y, z) != Chunk::AIR) {
+    if (chunk.BlockAt(x, y, z) != Chunk::AIR) {
       return -1; // gap / floating block above the solid run
     }
   }
@@ -32,7 +32,7 @@ bool chunksIdentical(const Chunk &a, const Chunk &b) {
   for (int z = 0; z < Chunk::SIZE; ++z)
     for (int y = 0; y < Chunk::SIZE; ++y)
       for (int x = 0; x < Chunk::SIZE; ++x)
-        if (a.blockAt(x, y, z) != b.blockAt(x, y, z))
+        if (a.BlockAt(x, y, z) != b.BlockAt(x, y, z))
           return false;
   return true;
 }
@@ -45,13 +45,13 @@ bool chunksIdentical(const Chunk &a, const Chunk &b) {
 
 TEST_CASE("TerrainGenerator - columns are filled solid from the floor up") {
   TerrainGenerator gen(1337);
-  Chunk chunk = gen.generateChunk(0, 0);
+  Chunk chunk = gen.GenerateChunk(0, 0);
 
   bool floorAlwaysSolid = true; // height >= 1 everywhere, so y=0 is never air
   bool noFloatingBlocks = true; // every column is a contiguous run from y=0
   for (int z = 0; z < Chunk::SIZE; ++z) {
     for (int x = 0; x < Chunk::SIZE; ++x) {
-      if (chunk.blockAt(x, 0, z) == Chunk::AIR)
+      if (chunk.BlockAt(x, 0, z) == Chunk::AIR)
         floorAlwaysSolid = false;
       if (solidColumnHeight(chunk, x, z) < 0)
         noFloatingBlocks = false;
@@ -68,15 +68,15 @@ TEST_CASE("TerrainGenerator - columns are filled solid from the floor up") {
 TEST_CASE("TerrainGenerator - terrain stays within the chunk height") {
   TerrainGenerator gen(1337);
 
-  // generateChunk fills via setBlock, which asserts on an out-of-range y.
-  CHECK_NOTHROW(gen.generateChunk(0, 0));
+  // GenerateChunk fills via SetBlock, which asserts on an out-of-range y.
+  CHECK_NOTHROW(gen.GenerateChunk(0, 0));
 
   // Max height is SIZE-1, so the topmost layer is always left as air.
-  Chunk chunk = gen.generateChunk(0, 0);
+  Chunk chunk = gen.GenerateChunk(0, 0);
   bool topLayerIsAir = true;
   for (int z = 0; z < Chunk::SIZE; ++z)
     for (int x = 0; x < Chunk::SIZE; ++x)
-      if (chunk.blockAt(x, Chunk::SIZE - 1, z) != Chunk::AIR)
+      if (chunk.BlockAt(x, Chunk::SIZE - 1, z) != Chunk::AIR)
         topLayerIsAir = false;
   CHECK(topLayerIsAir);
 }
@@ -88,19 +88,19 @@ TEST_CASE("TerrainGenerator - terrain stays within the chunk height") {
 TEST_CASE("TerrainGenerator - same seed and coords produce identical terrain") {
   TerrainGenerator a(1337);
   TerrainGenerator b(1337);
-  CHECK(chunksIdentical(a.generateChunk(2, 5), b.generateChunk(2, 5)));
+  CHECK(chunksIdentical(a.GenerateChunk(2, 5), b.GenerateChunk(2, 5)));
 }
 
 TEST_CASE("TerrainGenerator - different chunk coords produce different terrain") {
   // If the world offset weren't applied, every chunk would be identical.
   TerrainGenerator gen(1337);
-  CHECK_FALSE(chunksIdentical(gen.generateChunk(0, 0), gen.generateChunk(7, 3)));
+  CHECK_FALSE(chunksIdentical(gen.GenerateChunk(0, 0), gen.GenerateChunk(7, 3)));
 }
 
 TEST_CASE("TerrainGenerator - different seeds produce different terrain") {
   TerrainGenerator a(1);
   TerrainGenerator b(2);
-  CHECK_FALSE(chunksIdentical(a.generateChunk(0, 0), b.generateChunk(0, 0)));
+  CHECK_FALSE(chunksIdentical(a.GenerateChunk(0, 0), b.GenerateChunk(0, 0)));
 }
 
 // ===================================================================
@@ -109,13 +109,13 @@ TEST_CASE("TerrainGenerator - different seeds produce different terrain") {
 
 TEST_CASE("TerrainGenerator - the surface cell of every column is grass") {
   TerrainGenerator gen(1337);
-  Chunk chunk = gen.generateChunk(0, 0);
+  Chunk chunk = gen.GenerateChunk(0, 0);
 
   bool surfaceAlwaysGrass = true;
   for (int z = 0; z < Chunk::SIZE; ++z) {
     for (int x = 0; x < Chunk::SIZE; ++x) {
       int h = solidColumnHeight(chunk, x, z);
-      if (h >= 1 && chunk.blockAt(x, h - 1, z) != GRASS) {
+      if (h >= 1 && chunk.BlockAt(x, h - 1, z) != GRASS) {
         surfaceAlwaysGrass = false;
       }
     }
@@ -125,7 +125,7 @@ TEST_CASE("TerrainGenerator - the surface cell of every column is grass") {
 
 TEST_CASE("TerrainGenerator - columns layer grass -> dirt -> stone with depth") {
   TerrainGenerator gen(1337);
-  Chunk chunk = gen.generateChunk(0, 0);
+  Chunk chunk = gen.GenerateChunk(0, 0);
 
   // Use the tallest column so all three layers are present (need height >= 5
   // to reach depth 4, the first stone cell).
@@ -143,9 +143,9 @@ TEST_CASE("TerrainGenerator - columns layer grass -> dirt -> stone with depth") 
   REQUIRE(tallest >= 5); // the seed must produce a column tall enough
 
   int top = tallest - 1;
-  CHECK(chunk.blockAt(bx, top, bz) == GRASS);     // depth 0 (surface)
-  CHECK(chunk.blockAt(bx, top - 1, bz) == DIRT);  // depth 1
-  CHECK(chunk.blockAt(bx, top - 3, bz) == DIRT);  // depth 3 (last dirt)
-  CHECK(chunk.blockAt(bx, top - 4, bz) == STONE); // depth 4 (first stone)
-  CHECK(chunk.blockAt(bx, 0, bz) == STONE);       // bottom is deep -> stone
+  CHECK(chunk.BlockAt(bx, top, bz) == GRASS);     // depth 0 (surface)
+  CHECK(chunk.BlockAt(bx, top - 1, bz) == DIRT);  // depth 1
+  CHECK(chunk.BlockAt(bx, top - 3, bz) == DIRT);  // depth 3 (last dirt)
+  CHECK(chunk.BlockAt(bx, top - 4, bz) == STONE); // depth 4 (first stone)
+  CHECK(chunk.BlockAt(bx, 0, bz) == STONE);       // bottom is deep -> stone
 }

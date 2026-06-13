@@ -8,9 +8,9 @@ TerrainGenerator::TerrainGenerator(int seed, float frequency) {
   m_noise.SetFrequency(frequency);
 }
 
-// Set block id at each cell of a Chunk that locates at (chunkX, chunkY)
-// coordinate in the world space
-Chunk TerrainGenerator::generateChunk(int chunkX, int chunkZ) const {
+// Fills the Chunk at chunk-grid coordinate (chunkX, chunkZ), sampling noise in
+// world space so neighbouring chunks line up.
+Chunk TerrainGenerator::GenerateChunk(int chunkX, int chunkZ) const {
   Chunk chunk;
   // x and z here are the coordinate within the chunk.
   for (int z = 0; z < Chunk::SIZE; ++z) {
@@ -21,7 +21,7 @@ Chunk TerrainGenerator::generateChunk(int chunkX, int chunkZ) const {
       int height = (int)((n + 1.0f) * 0.5f * (Chunk::SIZE - 2)) + 1;
       for (int y = 0; y < height; ++y) {
         int depth = (height - 1) - y;
-        chunk.setBlock(x, y, z, getBlockIdForDepth(depth));
+        chunk.SetBlock(x, y, z, getBlockIdForDepth(depth));
       }
     }
   }
@@ -29,7 +29,7 @@ Chunk TerrainGenerator::generateChunk(int chunkX, int chunkZ) const {
   return chunk;
 }
 
-uint8_t TerrainGenerator::getBlockIdForDepth(int depth) const {
+uint8_t TerrainGenerator::getBlockIdForDepth(int depth) {
   if (depth == 0) {
     return static_cast<uint8_t>(BlockType::Grass);
   }

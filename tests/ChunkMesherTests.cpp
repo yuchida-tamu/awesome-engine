@@ -17,7 +17,7 @@ TEST_CASE("ChunkMesher - an empty chunk produces no geometry") {
 
 TEST_CASE("ChunkMesher - a single solid block produces 6 faces") {
   Chunk chunk;
-  chunk.setBlock(0, 0, 0, 1);
+  chunk.SetBlock(0, 0, 0, 1);
 
   MeshData mesh = ChunkMesher::Build(chunk);
 
@@ -35,7 +35,7 @@ TEST_CASE("ChunkMesher - a single solid block produces 6 faces") {
 // ever rendering a frame.
 TEST_CASE("ChunkMesher - triangle winding agrees with stored normals") {
   Chunk chunk;
-  chunk.setBlock(0, 0, 0, 1);
+  chunk.SetBlock(0, 0, 0, 1);
 
   MeshData mesh = ChunkMesher::Build(chunk);
   REQUIRE(mesh.indices.size() == 36);
@@ -57,7 +57,7 @@ TEST_CASE("ChunkMesher - triangle winding agrees with stored normals") {
 // axis-aligned faces — each direction exactly once, no duplicates or gaps.
 TEST_CASE("ChunkMesher - a single block exposes all six face directions") {
   Chunk chunk;
-  chunk.setBlock(0, 0, 0, 1);
+  chunk.SetBlock(0, 0, 0, 1);
 
   MeshData mesh = ChunkMesher::Build(chunk);
   REQUIRE(mesh.vertices.size() == 24); // 6 faces * 4 verts
@@ -85,8 +85,8 @@ TEST_CASE("ChunkMesher - a single block exposes all six face directions") {
 // the "neighbor is solid -> skip" branch — the whole reason the mesher exists.
 TEST_CASE("ChunkMesher - adjacent blocks cull their shared face") {
   Chunk chunk;
-  chunk.setBlock(0, 0, 0, 1);
-  chunk.setBlock(1, 0, 0, 1); // neighbor along +X
+  chunk.SetBlock(0, 0, 0, 1);
+  chunk.SetBlock(1, 0, 0, 1); // neighbor along +X
 
   MeshData mesh = ChunkMesher::Build(chunk);
 
@@ -102,7 +102,7 @@ TEST_CASE("ChunkMesher - a solid chunk emits only its outer shell") {
   for (int z = 0; z < Chunk::SIZE; ++z)
     for (int y = 0; y < Chunk::SIZE; ++y)
       for (int x = 0; x < Chunk::SIZE; ++x)
-        chunk.setBlock(x, y, z, 1);
+        chunk.SetBlock(x, y, z, 1);
 
   MeshData mesh = ChunkMesher::Build(chunk);
 

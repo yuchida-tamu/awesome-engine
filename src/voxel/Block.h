@@ -9,7 +9,7 @@ enum class BlockType : uint8_t {
   Dirt = 3,
 };
 
-inline glm::vec3 blockColor(uint8_t id) {
+inline glm::vec3 BlockColor(uint8_t id) {
   switch (static_cast<BlockType>(id)) {
   case BlockType::Grass: {
     return {0.0f, 1.0f, 0.0f};
