@@ -5,10 +5,13 @@
 #include <cstdint>
 #include <tuple>
 
+inline constexpr float VOXEL_SCALE = 0.5f;
+inline constexpr float CHUNK_WORLD_SIZE = Chunk::SIZE * VOXEL_SCALE;
+
 // Maps one axis of a world position to the chunk index containing it.
 // Chunk c spans the half-open world range [c*SIZE, (c+1)*SIZE).
 inline int WorldToChunk(float worldCoord) {
-  return (int)std::floor(worldCoord / Chunk::SIZE);
+  return (int)std::floor(worldCoord / CHUNK_WORLD_SIZE);
 }
 
 // Packs a chunk coordinate (cx, cz) into one 64-bit key: cx in the high 32

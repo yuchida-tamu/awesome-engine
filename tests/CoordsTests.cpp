@@ -5,7 +5,9 @@
 #include "world/Coords.h"
 
 // WorldToChunk maps a world coordinate (one axis) to the index of the chunk
-// that contains it. Chunk c spans the half-open range [c*SIZE, (c+1)*SIZE).
+// that contains it. A chunk spans the half-open world range
+// [c*CHUNK_WORLD_SIZE, (c+1)*CHUNK_WORLD_SIZE) — the chunk's WORLD span
+// (SIZE * VOXEL_SCALE), NOT its voxel count (Chunk::SIZE).
 
 // ===================================================================
 // POSITIVE / BOUNDARY
@@ -14,31 +16,31 @@
 TEST_CASE("WorldToChunk - positions inside the origin chunk map to 0") {
   CHECK(WorldToChunk(0.0f) == 0);
   CHECK(WorldToChunk(1.0f) == 0);
-  CHECK(WorldToChunk((float)(Chunk::SIZE - 1)) == 0); // 15 -> 0
+  CHECK(WorldToChunk(CHUNK_WORLD_SIZE - 1.0f) == 0); // just inside the top edge
 }
 
 TEST_CASE("WorldToChunk - a chunk boundary belongs to the chunk it starts") {
-  CHECK(WorldToChunk((float)Chunk::SIZE) == 1);       // 16 -> chunk 1
-  CHECK(WorldToChunk((float)(2 * Chunk::SIZE)) == 2); // 32 -> chunk 2
+  CHECK(WorldToChunk(CHUNK_WORLD_SIZE) == 1);        // first cell of chunk 1
+  CHECK(WorldToChunk(2.0f * CHUNK_WORLD_SIZE) == 2); // first cell of chunk 2
 }
 
 TEST_CASE("WorldToChunk - positive positions floor toward the chunk start") {
-  CHECK(WorldToChunk(40.0f) == 2); // 40/16 = 2.5 -> chunk 2
-  CHECK(WorldToChunk(31.9f) == 1); // just below 32 -> chunk 1
+  CHECK(WorldToChunk(2.5f * CHUNK_WORLD_SIZE) == 2);        // mid chunk 2
+  CHECK(WorldToChunk(2.0f * CHUNK_WORLD_SIZE - 0.1f) == 1); // just below chunk 2
 }
 
 // ===================================================================
 // NEGATIVE (the floor-vs-truncation footgun)
 // ===================================================================
 
-// Chunk -1 spans [-16, 0), so any negative-but-near-origin position lives in
-// chunk -1, not 0. A naive (int)(world / SIZE) truncates toward zero and
-// wrongly returns 0 here.
+// Chunk -1 spans [-CHUNK_WORLD_SIZE, 0), so any negative-but-near-origin
+// position lives in chunk -1, not 0. A naive (int)(world / size) truncates
+// toward zero and wrongly returns 0 here.
 TEST_CASE("WorldToChunk - negative positions floor toward negative infinity") {
   CHECK(WorldToChunk(-1.0f) == -1);
   CHECK(WorldToChunk(-0.5f) == -1);
-  CHECK(WorldToChunk((float)(-Chunk::SIZE)) == -1);        // -16 -> chunk -1
-  CHECK(WorldToChunk((float)(-Chunk::SIZE) - 1.0f) == -2); // -17 -> chunk -2
+  CHECK(WorldToChunk(-CHUNK_WORLD_SIZE) == -1);        // first cell of chunk -1
+  CHECK(WorldToChunk(-CHUNK_WORLD_SIZE - 1.0f) == -2); // chunk -2
 }
 
 // ===================================================================

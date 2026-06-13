@@ -31,8 +31,10 @@ void World::Update(Scene &scene, Shader &shader, int centerX, int centerZ,
       auto chunkObj = std::make_unique<GameObject>();
 
       m_map[EncodeKey(chunkX, chunkZ)] = chunkObj.get();
-      chunkObj->AddComponent<TransformComponent>()->SetPosition(
-          {chunkX * Chunk::SIZE, 0, chunkZ * Chunk::SIZE});
+      auto transform = chunkObj->AddComponent<TransformComponent>();
+      transform->SetPosition(
+          {chunkX * CHUNK_WORLD_SIZE, 0, chunkZ * CHUNK_WORLD_SIZE});
+      transform->Scale({VOXEL_SCALE, VOXEL_SCALE, VOXEL_SCALE});
       chunkObj->AddComponent<RenderComponent>(
           std::make_unique<VoxelChunk>(chunk), &shader);
       scene.AddGameObject(std::move(chunkObj));

@@ -10,7 +10,7 @@
 class Chunk {
 public:
   // Cubic chunk for now. SIZE^3 cells stored in a flat array.
-  static constexpr int SIZE = 16;
+  static constexpr int SIZE = 32;
   static constexpr int VOLUME = SIZE * SIZE * SIZE;
 
   // Block id 0 is empty space. Any non-zero id is a solid block (for now).
