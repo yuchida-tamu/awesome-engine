@@ -3,9 +3,13 @@
 #include "voxel/Chunk.h"
 
 TerrainGenerator::TerrainGenerator(int seed, float frequency) {
-  m_noise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
+  m_noise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
   m_noise.SetSeed(seed);
   m_noise.SetFrequency(frequency);
+  m_noise.SetFractalType(FastNoiseLite::FractalType_FBm);
+  m_noise.SetFractalOctaves(5);
+  m_noise.SetFractalLacunarity(2.0f); // Default
+  m_noise.SetFractalGain(0.5f);       // Default
 }
 
 // Fills the Chunk at chunk-grid coordinate (chunkX, chunkZ), sampling noise in

@@ -5,7 +5,7 @@
 
 class TerrainGenerator {
 public:
-  explicit TerrainGenerator(int seed, float frequency = 0.125f);
+  explicit TerrainGenerator(int seed, float frequency = 0.03f);
 
   Chunk GenerateChunk(int chunkX, int chunkZ) const;
 
