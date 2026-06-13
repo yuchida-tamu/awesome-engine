@@ -1,6 +1,7 @@
 #include "voxel/TerrainGenerator.h"
 #include "voxel/Block.h"
 #include "voxel/Chunk.h"
+#include <cmath>
 
 TerrainGenerator::TerrainGenerator(int seed, float frequency) {
   m_noise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
@@ -10,6 +11,8 @@ TerrainGenerator::TerrainGenerator(int seed, float frequency) {
   m_noise.SetFractalOctaves(5);
   m_noise.SetFractalLacunarity(2.0f); // Default
   m_noise.SetFractalGain(0.5f);       // Default
+  m_noise.SetDomainWarpType(FastNoiseLite::DomainWarpType_OpenSimplex2);
+  m_noise.SetDomainWarpAmp(40.0f);
 }
 
 // Fills the Chunk at chunk-grid coordinate (chunkX, chunkZ), sampling noise in
@@ -19,10 +22,14 @@ Chunk TerrainGenerator::GenerateChunk(int chunkX, int chunkZ) const {
   // x and z here are the coordinate within the chunk.
   for (int z = 0; z < Chunk::SIZE; ++z) {
     for (int x = 0; x < Chunk::SIZE; ++x) {
-      float n = m_noise.GetNoise((float)(chunkX * Chunk::SIZE + x),
-                                 (float)(chunkZ * Chunk::SIZE + z));
+      float worldX = (float)(chunkX * Chunk::SIZE + x);
+      float worldZ = (float)(chunkZ * Chunk::SIZE + z);
+      m_noise.DomainWarp(worldX, worldZ);
+      float n = m_noise.GetNoise(worldX, worldZ);
       // remap the noise to fit in the chunk coordinate
-      int height = (int)((n + 1.0f) * 0.5f * (Chunk::SIZE - 2)) + 1;
+      float e = (n + 1.0f) * 0.5f; // 0..1
+      e = std::pow(e, 2.2);        // flattens lowlands, keeps peaks tall
+      int height = (int)(e * (Chunk::SIZE - 2)) + 1;
       for (int y = 0; y < height; ++y) {
         int depth = (height - 1) - y;
         chunk.SetBlock(x, y, z, getBlockIdForDepth(depth));
