@@ -26,6 +26,7 @@ public:
   // arise, consider migrating to ECS/Object pooling for opitimizeation.
   void AddGameObject(std::unique_ptr<GameObject> gameObject);
   // Remove GameObject to Scene
+  void RemoveGameObject(GameObject *gameObjectPtr);
   // Add Camera to Scene
   void AddCamera(Camera *camera);
   // Add Lighting to Scene

@@ -138,8 +138,6 @@ int main() {
     Shader cubeShader("shaders/cube.vert.glsl", "shaders/cube.frag.glsl");
 
     World world;
-    world.Populate(scene, cubeShader, worldToChunk(camera.GetPosition().x),
-                   worldToChunk(camera.GetPosition().z), 3);
 
     //    WorldSpaceGizmo worldSpaceGizmo{};
     GridGizmo gridGizmo{};
@@ -158,6 +156,8 @@ int main() {
 
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+      world.Update(scene, cubeShader, worldToChunk(camera.GetPosition().x),
+                   worldToChunk(camera.GetPosition().z), 3);
       scene.Update(deltaTime);
       gridGizmo.On(scene.GetRenderContext());
 

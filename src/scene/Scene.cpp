@@ -2,6 +2,8 @@
 #include "cameras/Camera.h"
 #include "core/EventBus.h"
 #include "rendering/RenderContext.h"
+#include "scene/GameObject.h"
+#include <algorithm>
 #include <memory>
 
 Scene::Scene(EventBus &eventBus) : m_eventBus(eventBus) {}
@@ -9,6 +11,17 @@ void Scene::AddCamera(Camera *camera) { m_cameras.push_back(camera); }
 
 void Scene::AddGameObject(std::unique_ptr<GameObject> gameObject) {
   m_gameObjects.push_back(std::move(gameObject));
+}
+
+void Scene::RemoveGameObject(GameObject *gameObjectPtr) {
+  auto it =
+      std::find_if(m_gameObjects.begin(), m_gameObjects.end(),
+                   [gameObjectPtr](const std::unique_ptr<GameObject> &obj) {
+                     return obj.get() == gameObjectPtr;
+                   });
+  if (it != m_gameObjects.end()) {
+    m_gameObjects.erase(it);
+  }
 }
 
 void Scene::Update(float deltaTime) {
