@@ -12,7 +12,7 @@ TerrainGenerator::TerrainGenerator(int seed, float frequency) {
   m_noise.SetFractalLacunarity(2.0f); // Default
   m_noise.SetFractalGain(0.5f);       // Default
   m_noise.SetDomainWarpType(FastNoiseLite::DomainWarpType_OpenSimplex2);
-  m_noise.SetDomainWarpAmp(40.0f);
+  m_noise.SetDomainWarpAmp(20.0f); // world units (see GenerateChunk)
 }
 
 // Fills the Chunk at chunk-grid coordinate (chunkX, chunkZ), sampling noise in
@@ -22,8 +22,11 @@ Chunk TerrainGenerator::GenerateChunk(int chunkX, int chunkZ) const {
   // x and z here are the coordinate within the chunk.
   for (int z = 0; z < Chunk::SIZE; ++z) {
     for (int x = 0; x < Chunk::SIZE; ++x) {
-      float worldX = (float)(chunkX * Chunk::SIZE + x);
-      float worldZ = (float)(chunkZ * Chunk::SIZE + z);
+      // Sample noise in WORLD space (× VOXEL_SCALE) so terrain shape depends
+      // only on world position, not on voxel resolution. Bumping resolution
+      // then adds detail without changing the terrain.
+      float worldX = (chunkX * Chunk::SIZE + x) * VOXEL_SCALE;
+      float worldZ = (chunkZ * Chunk::SIZE + z) * VOXEL_SCALE;
       m_noise.DomainWarp(worldX, worldZ);
       float n = m_noise.GetNoise(worldX, worldZ);
       // remap the noise to fit in the chunk coordinate

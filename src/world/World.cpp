@@ -12,19 +12,31 @@
 #include <memory>
 #include <utility>
 
-World::World(int seed)
-    : m_generator(seed), m_isInitialRender(true), m_currentCoord({0, 0}) {}
+World::World(int seed) : m_generator(seed), m_currentCoord({0, 0}) {}
 
 void World::Update(Scene &scene, Shader &shader, int centerX, int centerZ,
                    int radius) {
-  if (!m_isInitialRender && !isCenterMoved(centerX, centerZ)) {
+  // Nothing to do if the center hasn't moved and the region is fully streamed.
+  if (m_fullyLoaded && !isCenterMoved(centerX, centerZ)) {
     return;
   }
 
-  for (int chunkX = centerX - radius; chunkX <= centerX + radius; ++chunkX) {
+  // Generate/mesh/upload at most kLoadBudget chunks per call so a boundary
+  // crossing spreads its cost over several frames instead of hitching one.
+  // Unloading is cheap (no generation) and stays unbudgeted below.
+  constexpr int kLoadBudget = 2;
+  int loaded = 0;
+  bool allLoaded = true;
+
+  for (int chunkX = centerX - radius; chunkX <= centerX + radius && allLoaded;
+       ++chunkX) {
     for (int chunkZ = centerZ - radius; chunkZ <= centerZ + radius; ++chunkZ) {
       if (isChunkLoaded(chunkX, chunkZ)) {
         continue;
+      }
+      if (loaded >= kLoadBudget) {
+        allLoaded = false; // more remain; finish them on later frames
+        break;
       }
 
       auto chunk = m_generator.GenerateChunk(chunkX, chunkZ);
@@ -43,6 +55,8 @@ void World::Update(Scene &scene, Shader &shader, int centerX, int centerZ,
       transform->Scale({VOXEL_SCALE, VOXEL_SCALE, VOXEL_SCALE});
       chunkObj->AddComponent<RenderComponent>(std::move(voxelChunk), &shader);
       scene.AddGameObject(std::move(chunkObj));
+
+      ++loaded;
     }
   }
 
@@ -58,7 +72,7 @@ void World::Update(Scene &scene, Shader &shader, int centerX, int centerZ,
   }
 
   m_currentCoord = {centerX, centerZ};
-  m_isInitialRender = false;
+  m_fullyLoaded = allLoaded;
 }
 
 bool World::isChunkLoaded(int cx, int cz) const {

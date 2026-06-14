@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <tuple>
 
-inline constexpr float VOXEL_SCALE = 0.5f;
+// VOXEL_SCALE comes from voxel/Chunk.h. The world span of one chunk.
 inline constexpr float CHUNK_WORLD_SIZE = Chunk::SIZE * VOXEL_SCALE;
 
 // Maps one axis of a world position to the chunk index containing it.

@@ -24,7 +24,10 @@ public:
   size_t GetQuadCount() const { return m_totalQuads; }
 
 private:
-  bool m_isInitialRender;
+  // True once every in-radius chunk for the current center is loaded. Goes
+  // false when the center moves or a frame's load budget is exhausted, so
+  // Update keeps working across frames until the region is fully streamed in.
+  bool m_fullyLoaded = false;
   Coord m_currentCoord;
 
   TerrainGenerator m_generator;

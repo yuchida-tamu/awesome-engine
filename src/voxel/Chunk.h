@@ -10,7 +10,7 @@
 class Chunk {
 public:
   // Cubic chunk for now. SIZE^3 cells stored in a flat array.
-  static constexpr int SIZE = 32;
+  static constexpr int SIZE = 64;
   static constexpr int VOLUME = SIZE * SIZE * SIZE;
 
   // Block id 0 is empty space. Any non-zero id is a solid block (for now).
@@ -34,3 +34,9 @@ private:
 private:
   std::array<uint8_t, VOLUME> m_blocks{}; // value-initialized to AIR (0)
 };
+
+// World units per voxel. Lives in the voxel layer (not world/) because terrain
+// generation samples noise in world space and must not depend on world/.
+// Raising chunk resolution = increase SIZE and decrease VOXEL_SCALE together so
+// the chunk's world span (SIZE * VOXEL_SCALE) stays constant.
+inline constexpr float VOXEL_SCALE = 0.25f;
