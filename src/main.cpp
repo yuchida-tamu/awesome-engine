@@ -119,6 +119,8 @@ int main() {
 
     GridGizmo gridGizmo{};
 
+    bool wireframe = false; // toggled with F: GL_LINE vs GL_FILL
+
     // Main loop
     while (!glfwWindowShouldClose(window)) {
       float currentFrame = glfwGetTime();
@@ -131,12 +133,22 @@ int main() {
         glfwSetWindowShouldClose(window, true);
       }
 
+      // Toggle wireframe with F (edge-triggered: one tap = one flip).
+      if (Input::IsKeyDown(GLFW_KEY_F)) {
+        wireframe = !wireframe;
+      }
+
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+      // Draw the 3D scene in the selected polygon mode.
+      glPolygonMode(GL_FRONT_AND_BACK, wireframe ? GL_LINE : GL_FILL);
       world.Update(scene, cubeShader, WorldToChunk(camera.GetPosition().x),
                    WorldToChunk(camera.GetPosition().z), 7);
       scene.Update(deltaTime);
       gridGizmo.On(scene.GetRenderContext());
+
+      // Reset to fill so the UI (text/buttons) always renders solid.
+      glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
       // UI
       uiManager.Update(deltaTime);

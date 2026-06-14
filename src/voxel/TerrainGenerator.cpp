@@ -28,7 +28,7 @@ Chunk TerrainGenerator::GenerateChunk(int chunkX, int chunkZ) const {
       float n = m_noise.GetNoise(worldX, worldZ);
       // remap the noise to fit in the chunk coordinate
       float e = (n + 1.0f) * 0.5f; // 0..1
-      e = std::pow(e, 2.2);        // flattens lowlands, keeps peaks tall
+      e = std::pow(e, 3.0f);       // flattens lowlands, keeps peaks tall
       int height = (int)(e * (Chunk::SIZE - 2)) + 1;
       for (int y = 0; y < height; ++y) {
         int depth = (height - 1) - y;
