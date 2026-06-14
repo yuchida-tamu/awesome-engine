@@ -30,13 +30,18 @@ void World::Update(Scene &scene, Shader &shader, int centerX, int centerZ,
       auto chunk = m_generator.GenerateChunk(chunkX, chunkZ);
       auto chunkObj = std::make_unique<GameObject>();
 
-      m_map[EncodeKey(chunkX, chunkZ)] = chunkObj.get();
+      // Build the mesh first so we can record its quad count in the running
+      // total, then hand the VoxelChunk off to the render component.
+      auto voxelChunk = std::make_unique<VoxelChunk>(chunk);
+      size_t quadCount = voxelChunk->GetQuadCount();
+      m_totalQuads += quadCount;
+      m_map[EncodeKey(chunkX, chunkZ)] = {chunkObj.get(), quadCount};
+
       auto transform = chunkObj->AddComponent<TransformComponent>();
       transform->SetPosition(
           {chunkX * CHUNK_WORLD_SIZE, 0, chunkZ * CHUNK_WORLD_SIZE});
       transform->Scale({VOXEL_SCALE, VOXEL_SCALE, VOXEL_SCALE});
-      chunkObj->AddComponent<RenderComponent>(
-          std::make_unique<VoxelChunk>(chunk), &shader);
+      chunkObj->AddComponent<RenderComponent>(std::move(voxelChunk), &shader);
       scene.AddGameObject(std::move(chunkObj));
     }
   }
@@ -44,7 +49,8 @@ void World::Update(Scene &scene, Shader &shader, int centerX, int centerZ,
   for (auto it = m_map.begin(); it != m_map.end();) {
     auto [cx, cz] = DecodeKey(it->first);
     if (IsOutsideOfRadius(cx, cz, centerX, centerZ, radius)) {
-      scene.RemoveGameObject(it->second);
+      m_totalQuads -= it->second.quadCount;
+      scene.RemoveGameObject(it->second.object);
       it = m_map.erase(it);
     } else {
       ++it;

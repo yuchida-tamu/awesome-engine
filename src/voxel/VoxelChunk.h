@@ -8,6 +8,9 @@ public:
   explicit VoxelChunk(const Chunk &chunk);
   void Draw(Shader &shader) override;
 
+  // Quads in this chunk's mesh (6 indices per quad). For debug stats.
+  size_t GetQuadCount() const { return m_mesh.GetIndexCount() / 6; }
+
 private:
   Mesh m_mesh;
   static Mesh buildMesh(const Chunk &chunk);

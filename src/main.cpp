@@ -27,6 +27,8 @@
 #include "ui/ButtonElement.h"
 #include "ui/UIElement.h"
 #include "ui/UIManager.h"
+#include "debug/FpsCounter.h"
+#include "ui/DebugPanel.h"
 #include "world/Coords.h"
 #include "world/World.h"
 
@@ -117,6 +119,9 @@ int main() {
 
     World world;
 
+    FpsCounter fpsCounter;
+    DebugPanel debugPanel(uiManager);
+
     GridGizmo gridGizmo{};
 
     bool wireframe = false; // toggled with F: GL_LINE vs GL_FILL
@@ -138,6 +143,13 @@ int main() {
         wireframe = !wireframe;
       }
 
+      // Toggle the debug overlay with F3.
+      if (Input::IsKeyDown(GLFW_KEY_F3)) {
+        debugPanel.Toggle();
+      }
+
+      fpsCounter.Tick(deltaTime);
+
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
       // Draw the 3D scene in the selected polygon mode.
@@ -149,6 +161,13 @@ int main() {
 
       // Reset to fill so the UI (text/buttons) always renders solid.
       glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+      // Debug overlay stats (drawn as part of the UI pass below).
+      glm::vec3 camPos = camera.GetPosition();
+      DebugStats stats{fpsCounter.Fps(),      world.GetChunkCount(),
+                       world.GetQuadCount(),  camPos,
+                       WorldToChunk(camPos.x), WorldToChunk(camPos.z)};
+      debugPanel.Update(stats);
 
       // UI
       uiManager.Update(deltaTime);

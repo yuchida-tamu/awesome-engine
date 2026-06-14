@@ -55,6 +55,7 @@ add_executable(awesome-engine
     src/ui/UIManager.cpp
     src/ui/TextElement.cpp
     src/ui/ButtonElement.cpp
+    src/ui/DebugPanel.cpp
     src/voxel/VoxelChunk.cpp
     src/voxel/ChunkMesher.cpp
     src/voxel/GreedyMesher.cpp
@@ -243,6 +244,7 @@ if(BUILD_TESTING)
         tests/BlockTests.cpp
         tests/TerrainGeneratorTests.cpp
         tests/CoordsTests.cpp
+        tests/FpsCounterTests.cpp
         src/voxel/Chunk.cpp
         src/voxel/ChunkMesher.cpp
         src/voxel/GreedyMesher.cpp

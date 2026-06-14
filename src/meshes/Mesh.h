@@ -36,6 +36,9 @@ public:
 
   void Draw(Shader &shader);
 
+  // Number of indices uploaded (triangles = /3, quads = /6). Used for stats.
+  size_t GetIndexCount() const { return m_indices.size(); }
+
 private:
   unsigned int m_VAO, m_VBO, m_EBO;
   std::vector<Vertex> m_vertices;
