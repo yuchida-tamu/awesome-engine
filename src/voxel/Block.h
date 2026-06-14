@@ -25,3 +25,11 @@ inline glm::vec3 BlockColor(uint8_t id) {
   }
   }
 }
+
+inline bool IsAir(uint8_t id) {
+  return id == static_cast<uint8_t>(BlockType::Air);
+}
+
+inline bool IsSolid(uint8_t id) {
+  return id != static_cast<uint8_t>(BlockType::Air);
+}

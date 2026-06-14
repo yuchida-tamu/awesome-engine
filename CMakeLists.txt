@@ -57,6 +57,7 @@ add_executable(awesome-engine
     src/ui/ButtonElement.cpp
     src/voxel/VoxelChunk.cpp
     src/voxel/ChunkMesher.cpp
+    src/voxel/GreedyMesher.cpp
     src/voxel/Chunk.cpp
     src/voxel/TerrainGenerator.cpp
     src/world/World.cpp
@@ -238,11 +239,13 @@ if(BUILD_TESTING)
         tests/ButtonElementTests.cpp
         tests/ChunkTests.cpp
         tests/ChunkMesherTests.cpp
+        tests/GreedyMesherTests.cpp
         tests/BlockTests.cpp
         tests/TerrainGeneratorTests.cpp
         tests/CoordsTests.cpp
         src/voxel/Chunk.cpp
         src/voxel/ChunkMesher.cpp
+        src/voxel/GreedyMesher.cpp
         src/voxel/TerrainGenerator.cpp
         src/core/Input.cpp
         src/cameras/Camera.cpp
