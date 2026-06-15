@@ -32,6 +32,11 @@ void ResetInputState()
     Input::s_XOffset = 0.0f;
     Input::s_YOffset = 0.0f;
     Input::s_EventBus = &s_TestEventBus;
+
+    // Drop handlers from previous tests — their [&] captures now dangle, and
+    // firing them on a later Publish is undefined behavior (it corrupted this
+    // run's locals under -O3).
+    s_TestEventBus.Clear();
 }
 
 // Helper to set up mouse state for movement tests

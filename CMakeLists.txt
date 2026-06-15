@@ -3,6 +3,12 @@ cmake_minimum_required(VERSION 3.10)
 # Define the project
 project(AwesomeEngine VERSION 1.0)
 
+# Default to an optimized build (huge win for chunk meshing/generation). Build
+# unoptimized for debugging with: cmake -DCMAKE_BUILD_TYPE=Debug ..
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
+endif()
+
 # Set C++ standard to C++17
 set(CMAKE_CXX_STANDARD 17)
 
@@ -59,7 +65,6 @@ add_executable(awesome-engine
     src/voxel/VoxelChunk.cpp
     src/voxel/ChunkMesher.cpp
     src/voxel/GreedyMesher.cpp
-    src/voxel/Chunk.cpp
     src/voxel/TerrainGenerator.cpp
     src/world/World.cpp
 )
@@ -245,7 +250,6 @@ if(BUILD_TESTING)
         tests/TerrainGeneratorTests.cpp
         tests/CoordsTests.cpp
         tests/FpsCounterTests.cpp
-        src/voxel/Chunk.cpp
         src/voxel/ChunkMesher.cpp
         src/voxel/GreedyMesher.cpp
         src/voxel/TerrainGenerator.cpp

@@ -27,6 +27,11 @@ public:
           subs.end());
     }
   }
+  // Remove all subscriptions. Mainly for test isolation: handlers often
+  // capture locals by reference, so they must not outlive the scope that
+  // registered them.
+  void Clear() { m_subscribers.clear(); }
+
   template <typename EventT> void Publish(const EventT &event) {
     auto it = m_subscribers.find(std::type_index(typeid(EventT)));
     if (it != m_subscribers.end()) {

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/Assert.h"
 #include <array>
 #include <cstdint>
 
@@ -17,8 +18,15 @@ public:
   static constexpr uint8_t AIR = 0;
 
   // Read/write a single cell. Coordinates are local to the chunk: [0, SIZE).
-  uint8_t BlockAt(int x, int y, int z) const;
-  void SetBlock(int x, int y, int z, uint8_t id);
+  inline uint8_t BlockAt(int x, int y, int z) const {
+    if (!inBounds(x, y, z))
+      return AIR; // outside the chunk is treated as empty space
+    return m_blocks[index(x, y, z)];
+  }
+  inline void SetBlock(int x, int y, int z, uint8_t id) {
+    ENGINE_ASSERT(inBounds(x, y, z), "Chunk::SetBlock coordinate out of range");
+    m_blocks[index(x, y, z)] = id;
+  }
 
 #ifdef UNIT_TEST
 public:
@@ -26,10 +34,14 @@ public:
 private:
 #endif
   // Flatten a 3D coordinate into an index into m_blocks.
-  int index(int x, int y, int z) const;
+  inline int index(int x, int y, int z) const {
+    return x + y * SIZE + z * SIZE * SIZE;
+  }
 
   // True if (x, y, z) is a valid cell inside this chunk: each in [0, SIZE).
-  bool inBounds(int x, int y, int z) const;
+  inline bool inBounds(int x, int y, int z) const {
+    return x >= 0 && x < SIZE && y >= 0 && y < SIZE && z >= 0 && z < SIZE;
+  }
 
 private:
   std::array<uint8_t, VOLUME> m_blocks{}; // value-initialized to AIR (0)
