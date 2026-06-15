@@ -1,22 +1,34 @@
 # Awesome Engine
 
-A modern OpenGL 4.1 graphics engine built with C++17, GLFW, and GLAD. This project demonstrates core graphics programming concepts including shader management, input handling, camera systems, texture loading, and advanced lighting techniques.
+A modern OpenGL 4.1 graphics engine built with C++17, GLFW, and GLAD, evolving toward voxel rendering. Started as a learning project to explore core graphics programming concepts — shaders, cameras, input, texturing, and lighting — and is now growing a voxel pipeline on top of that foundation.
+
+> **Work in progress.** Internal structure and APIs change frequently. See the [Roadmap](#roadmap) for what's done and what's next.
 
 ## Features
 
 - **OpenGL 4.1 Core Profile** rendering
-- **Advanced Lighting System**: 
-  - Directional light (sun-like, constant direction)
-  - Point light (light bulb, distance-based attenuation)
-  - Spot light (flashlight, cone-shaped with smooth falloff)
-- **Material System**: Phong lighting model with diffuse and specular textures
-- **Input System**: Keyboard and mouse input handling with polling support
-- **Camera System**: First-person camera with mouse look and smooth movement
-- **Shader Management**: GLSL shader loading, compilation, and uniform caching
-- **Texture Loading**: PNG/JPG texture support via stb_image with multiple texture support
-- **Mesh System**: Abstract mesh base class with concrete implementations (Cube)
-- **Model Loading**: Assimp integration for loading 3D model formats
-- **Unit Testing**: Comprehensive test suite using doctest
+- **Phong lighting** with directional, point, and spot lights
+- **First-person camera** with mouse look and keyboard movement
+- **Texturing** via stb_image (PNG/JPG)
+- **Model loading** through Assimp
+- **Voxel meshing** with greedy meshing for chunk geometry
+- **Unit testing** with doctest
+
+## Roadmap
+
+This is an active work-in-progress. Internal structure and APIs change
+frequently. The current focus is voxel rendering.
+
+- [x] Core renderer: shaders, camera, input, textures, lighting
+- [x] Mesh abstraction + model loading (Assimp)
+- [x] Chunk + greedy meshing (voxel geometry)
+- [ ] Render chunks within the Scene
+- [ ] Heightmap-based terrain generation
+- [ ] Multi-chunk world streaming
+- [ ] Block types & texturing
+- [ ] Lighting / ambient occlusion for voxels
+
+_This section is updated as the project progresses._
 
 ## Prerequisites
 
@@ -102,17 +114,9 @@ cd bin && ./awesome-engine
 - **Mouse Movement**: Rotate camera view (first-person controls)
 - **ESC**: Exit application
 
-### Lighting Demo
-
-The application demonstrates three types of lighting:
-
-1. **Directional Light**: Simulates sunlight, affects all objects uniformly
-2. **Point Light**: Positioned at the light cube, creates distance-based lighting
-3. **Spot Light**: Follows the camera, creates a flashlight effect with smooth edges
-
 ## Running Tests
 
-This project includes a comprehensive unit test suite for the `Input` and `Camera` classes.
+This project includes a unit test suite built with doctest.
 
 ### Building Tests
 
@@ -159,54 +163,6 @@ The test executable supports several output modes:
 # Show help
 ./bin/run-tests --help
 ```
-
-## Project Structure
-
-```
-awesome-engine/
-├── assets/              # Game assets
-│   ├── shaders/        # GLSL shader files (.vert, .frag, .geo)
-│   ├── textures/       # Image files
-│   └── models/         # 3D model files
-├── bin/                 # Build output (executables and copied assets)
-├── build/               # CMake build files (generated)
-├── src/                 # Source code
-│   ├── cameras/        # First-person Camera with mouse look
-│   ├── core/           # Config, Input handling, TextureLoader
-│   ├── meshes/         # Abstract Mesh base, Cube, Model (Assimp)
-│   ├── rendering/      # Shader, PostProcessing (Strategy pattern), Skybox
-│   ├── scene/          # Scene, GameObject, RenderComponent (ECS)
-│   ├── utils/          # Utility helpers
-│   └── main.cpp        # Application entry point and render loop
-├── tests/               # Unit tests (doctest)
-├── vendor/              # Third-party libraries (GLAD, GLM, stb_image, doctest)
-├── CMakeLists.txt       # Build configuration
-├── Makefile             # Convenience build/run targets
-└── README.md           # This file
-```
-
-## Code Architecture
-
-### Lighting System
-
-The engine implements a comprehensive Phong lighting model with support for:
-
-- **Material Properties**: Ambient, diffuse, and specular components with shininess
-- **Multiple Light Sources**: Directional, point, and spot lights can be combined
-- **Texture-Based Materials**: Diffuse and specular maps for realistic rendering
-- **Smooth Falloff**: Spot lights feature smooth edge transitions using inner/outer cutoff angles
-
-### Shader System
-
-- **Uniform Caching**: Uniform locations are cached for performance
-- **Error Handling**: Comprehensive error checking for shader compilation and linking
-- **Type Safety**: Uses OpenGL types (GLuint, GLenum) for consistency
-
-### Memory Management
-
-- **RAII**: Resource management follows RAII principles
-- **Rule of 5**: Classes properly handle copy/move semantics
-- **Smart Pointers**: Uses `std::unique_ptr` for automatic memory management
 
 ## Development
 
