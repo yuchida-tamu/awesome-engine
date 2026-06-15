@@ -19,8 +19,9 @@ A modern OpenGL 4.1 graphics engine built with C++17, GLFW, and GLAD, evolving t
 
 ## Roadmap
 
-This is an active work-in-progress. Internal structure and APIs change
-frequently. The current focus is voxel rendering.
+This is an active work-in-progress; internal structure and APIs change frequently.
+
+**Vision.** A foundation for a **first-person game** built on **small voxels (~10 cm**, versus the ~1 m of Minecraft-likes) across a **large (~1 km+), finite, procedurally-generated world**, with **destructible** environments. Rendering is **mesh-based** for now; **GPU raymarching / sparse voxel octrees** are held in reserve as a possible pivot if mesh-based level-of-detail hits a performance wall at that scale. Since ~10 cm over ~1 km can't be materialized in memory (~10¹² voxels), the world is **procedural-on-demand + streaming + level-of-detail** — fine detail near the player, progressively coarser with distance.
 
 **Done**
 
@@ -35,19 +36,23 @@ frequently. The current focus is voxel rendering.
 - [x] Debug overlay (FPS, chunk/quad counts, camera) + wireframe toggle
 - [x] Optimized (`-O3`) Release build by default
 
-**Next**
+**Next — small-voxel FPS foundation** (roughly in order)
 
-- [ ] Biomes — temperature/moisture noise driving block selection
-- [ ] Ambient occlusion for voxels
-- [ ] Wire up the scene lighting system (directional/point/spot Phong shaders exist but are unused)
-- [ ] Block textures / texture atlas
-- [ ] Place / break blocks + voxel destruction (dynamic chunks)
+- [ ] 3D (vertical) chunking — stack chunks in Y so small voxels have vertical range _(immediate next step)_
+- [ ] Level-of-detail (LOD) streaming — fine voxels near the player, coarser with distance (the core enabler for ~10 cm at range; seams hidden with skirts)
+- [ ] Threaded chunk generation — keep frame time stable at high voxel density
+- [ ] Frustum culling — skip chunks outside the view
+- [ ] Player–voxel collision — make it a true first-person experience (also the basis for debris physics)
 
-**Later (deferred until needed)**
+**Then — destruction & content**
 
-- [ ] Threaded chunk generation
-- [ ] Level-of-detail (LOD) for distant chunks
-- [ ] Frustum culling
+- [ ] Destructible objects — discrete voxel objects + debris physics, near-field (Teardown-style)
+- [ ] Terrain digging — carve/remove terrain voxels
+- [ ] Visual & content polish (slotted in opportunistically): biomes, ambient occlusion, block textures / atlas, wiring up the multi-light Phong shaders
+
+**Possible pivot**
+
+- [ ] GPU raymarching / sparse voxel octree rendering — if mesh-based LOD can't hit ~10 cm at ~1 km
 
 _This section is updated as the project progresses._
 
