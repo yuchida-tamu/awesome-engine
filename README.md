@@ -7,11 +7,14 @@ A modern OpenGL 4.1 graphics engine built with C++17, GLFW, and GLAD, evolving t
 ## Features
 
 - **OpenGL 4.1 Core Profile** rendering
-- **Phong lighting** with directional, point, and spot lights
+- **Basic directional lighting** — a single hardcoded directional light in the voxel shader (multi-light Phong shaders exist in `assets/shaders/` but are not yet wired into the engine)
 - **First-person camera** with mouse look and keyboard movement
 - **Texturing** via stb_image (PNG/JPG)
 - **Model loading** through Assimp
-- **Voxel meshing** with greedy meshing for chunk geometry
+- **Voxel terrain** — procedural heightmap generation (FastNoiseLite: fBm + OpenSimplex2 + domain warp) meshed with greedy meshing
+- **World streaming** — chunks generate, load, and unload around the camera
+- **Block types** — grass / dirt / stone with depth-based layering and per-vertex colors
+- **Debug overlay** — live FPS, chunk/quad counts, and camera position (toggle with F3)
 - **Unit testing** with doctest
 
 ## Roadmap
@@ -19,14 +22,32 @@ A modern OpenGL 4.1 graphics engine built with C++17, GLFW, and GLAD, evolving t
 This is an active work-in-progress. Internal structure and APIs change
 frequently. The current focus is voxel rendering.
 
+**Done**
+
 - [x] Core renderer: shaders, camera, input, textures, lighting
 - [x] Mesh abstraction + model loading (Assimp)
-- [x] Chunk + greedy meshing (voxel geometry)
-- [ ] Render chunks within the Scene
-- [ ] Heightmap-based terrain generation
-- [ ] Multi-chunk world streaming
-- [ ] Block types & texturing
-- [ ] Lighting / ambient occlusion for voxels
+- [x] Chunk data structure + greedy meshing (voxel geometry)
+- [x] Render chunks within the Scene
+- [x] Heightmap terrain generation (FastNoiseLite: fBm + OpenSimplex2 + domain warp)
+- [x] Multi-chunk world streaming (camera-centered, per-frame load budget)
+- [x] Block types with depth layering (grass / dirt / stone) + per-vertex colors
+- [x] Configurable, resolution-independent voxel scale
+- [x] Debug overlay (FPS, chunk/quad counts, camera) + wireframe toggle
+- [x] Optimized (`-O3`) Release build by default
+
+**Next**
+
+- [ ] Biomes — temperature/moisture noise driving block selection
+- [ ] Ambient occlusion for voxels
+- [ ] Wire up the scene lighting system (directional/point/spot Phong shaders exist but are unused)
+- [ ] Block textures / texture atlas
+- [ ] Place / break blocks + voxel destruction (dynamic chunks)
+
+**Later (deferred until needed)**
+
+- [ ] Threaded chunk generation
+- [ ] Level-of-detail (LOD) for distant chunks
+- [ ] Frustum culling
 
 _This section is updated as the project progresses._
 
@@ -112,6 +133,8 @@ cd bin && ./awesome-engine
 
 - **W/A/S/D**: Move camera forward/left/backward/right
 - **Mouse Movement**: Rotate camera view (first-person controls)
+- **F**: Toggle wireframe rendering
+- **F3**: Toggle the debug overlay (FPS, chunk/quad counts, camera position)
 - **ESC**: Exit application
 
 ## Running Tests
