@@ -431,21 +431,22 @@ TEST_CASE("CameraController - Scroll partially clamped at zoom out boundary") {
   EventBus bus;
   CameraController controller(camera, bus);
 
-  // Scroll out 9 times (distance = 22.5f), then scroll with offset -2.0f
-  // That would be 27.5f total, but clamped to 25.0f — partial movement
-  for (int i = 0; i < 9; ++i) {
-    bus.Publish(ScrollEvent{-1.0f});
-  }
-  glm::vec3 posAt9 = camera.GetPosition();
+  // Assumes one scroll step (speed) is smaller than the zoom-out bound (25.0f),
+  // so the first scroll-out is a full step and the second overshoots the bound.
+  const float step = Config::DEFAULT_CAMERA_SPEED;
 
-  bus.Publish(ScrollEvent{-2.0f});
-  glm::vec3 posAfterClamped = camera.GetPosition();
+  // First scroll-out: a full step (not yet at the bound).
+  bus.Publish(ScrollEvent{-1.0f});
+  glm::vec3 posBefore = camera.GetPosition();
 
-  // Should have moved, but less than a full 2.0f * speed
-  float actualDist = glm::length(posAfterClamped - posAt9);
-  float fullDist = 2.0f * Config::DEFAULT_CAMERA_SPEED;
-  CHECK(actualDist > 0.0f);
-  CHECK(actualDist < fullDist);
+  // Second scroll-out would push past the zoom-out bound, so it moves only the
+  // remaining distance to the bound — a partial step, not a full one.
+  bus.Publish(ScrollEvent{-1.0f});
+  glm::vec3 posAfter = camera.GetPosition();
+
+  float actualDist = glm::length(posAfter - posBefore);
+  CHECK(actualDist > 0.0f);     // it did move...
+  CHECK(actualDist < step);     // ...but less than a full step (clamped)
 }
 
 TEST_CASE("CameraController - Scroll subscription cleaned up on destruction") {
