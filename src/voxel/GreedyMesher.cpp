@@ -2,7 +2,7 @@
 #include "voxel/Block.h"
 #include "voxel/Chunk.h"
 #include <array>
-#include <cstdint>
+#include <cstdlib> // std::abs
 
 // TODO(impl): greedy meshing — 6 passes (±X, ±Y, ±Z). For each pass, sweep
 // slices perpendicular to the axis (-1 .. SIZE-1 to catch boundary faces),
