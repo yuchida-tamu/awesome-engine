@@ -39,7 +39,7 @@ void World::Update(Scene &scene, Shader &shader, int centerX, int centerZ,
         break;
       }
 
-      auto chunk = m_generator.GenerateChunk(chunkX, chunkZ);
+      auto chunk = m_generator.GenerateChunk(chunkX, 0, chunkZ);
       auto chunkObj = std::make_unique<GameObject>();
 
       // Build the mesh first so we can record its quad count in the running

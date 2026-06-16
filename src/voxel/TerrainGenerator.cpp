@@ -12,30 +12,32 @@ TerrainGenerator::TerrainGenerator(int seed, float frequency) {
   m_noise.SetFractalLacunarity(2.0f); // Default
   m_noise.SetFractalGain(0.5f);       // Default
   m_noise.SetDomainWarpType(FastNoiseLite::DomainWarpType_OpenSimplex2);
-  m_noise.SetDomainWarpAmp(20.0f); // world units (see GenerateChunk)
+  m_noise.SetDomainWarpAmp(20.0f);
 }
 
 // Fills the Chunk at chunk-grid coordinate (chunkX, chunkZ), sampling noise in
 // world space so neighbouring chunks line up.
-Chunk TerrainGenerator::GenerateChunk(int chunkX, int chunkZ) const {
+Chunk TerrainGenerator::GenerateChunk(int chunkX, int chunkY,
+                                      int chunkZ) const {
   Chunk chunk;
   // x and z here are the coordinate within the chunk.
   for (int z = 0; z < Chunk::SIZE; ++z) {
     for (int x = 0; x < Chunk::SIZE; ++x) {
-      // Sample noise in WORLD space (× VOXEL_SCALE) so terrain shape depends
-      // only on world position, not on voxel resolution. Bumping resolution
-      // then adds detail without changing the terrain.
-      float worldX = (chunkX * Chunk::SIZE + x) * VOXEL_SCALE;
-      float worldZ = (chunkZ * Chunk::SIZE + z) * VOXEL_SCALE;
+      float worldX = (float)(chunkX * Chunk::SIZE + x) * VOXEL_SCALE;
+      float worldZ = (float)(chunkZ * Chunk::SIZE + z) * VOXEL_SCALE;
       m_noise.DomainWarp(worldX, worldZ);
       float n = m_noise.GetNoise(worldX, worldZ);
       // remap the noise to fit in the chunk coordinate
       float e = (n + 1.0f) * 0.5f; // 0..1
       e = std::pow(e, 3.0f);       // flattens lowlands, keeps peaks tall
-      int height = (int)(e * (Chunk::SIZE - 2)) + 1;
-      for (int y = 0; y < height; ++y) {
-        int depth = (height - 1) - y;
-        chunk.SetBlock(x, y, z, getBlockIdForDepth(depth));
+      int surfaceY = (int)(e * MAX_TERRAIN_HEIGHT);
+      for (int y = 0; y < Chunk::SIZE; ++y) {
+        int worldY = chunkY * Chunk::SIZE + y; // y cell position in world
+        if (worldY < surfaceY) {
+          int depth = (surfaceY - 1) - worldY;
+          chunk.SetBlock(x, y, z, getBlockIdForDepth(depth));
+        }
+        // else: leave air
       }
     }
   }
@@ -53,4 +55,8 @@ uint8_t TerrainGenerator::getBlockIdForDepth(int depth) {
   }
 
   return static_cast<uint8_t>(BlockType::Stone);
+}
+
+float TerrainGenerator::voxelToWorld(int chunkCoord, int local) {
+  return (chunkCoord * Chunk::SIZE + local) * VOXEL_SCALE;
 }
