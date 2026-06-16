@@ -23,8 +23,8 @@ Chunk TerrainGenerator::GenerateChunk(int chunkX, int chunkY,
   // x and z here are the coordinate within the chunk.
   for (int z = 0; z < Chunk::SIZE; ++z) {
     for (int x = 0; x < Chunk::SIZE; ++x) {
-      float worldX = (float)(chunkX * Chunk::SIZE + x) * VOXEL_SCALE;
-      float worldZ = (float)(chunkZ * Chunk::SIZE + z) * VOXEL_SCALE;
+      float worldX = voxelToWorld(chunkX, x);
+      float worldZ = voxelToWorld(chunkZ, z);
       m_noise.DomainWarp(worldX, worldZ);
       float n = m_noise.GetNoise(worldX, worldZ);
       // remap the noise to fit in the chunk coordinate
