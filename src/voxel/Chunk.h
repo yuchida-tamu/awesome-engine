@@ -28,6 +28,15 @@ public:
     m_blocks[index(x, y, z)] = id;
   }
 
+  inline bool IsEmpty() {
+    for (uint8_t id : m_blocks) {
+      if (id != AIR) {
+        return false;
+      }
+    }
+    return true;
+  }
+
 #ifdef UNIT_TEST
 public:
 #else

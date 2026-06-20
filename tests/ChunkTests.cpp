@@ -82,3 +82,16 @@ TEST_CASE("Chunk - SetBlock outside the chunk asserts") {
   CHECK_NOTHROW(
       chunk.SetBlock(Chunk::SIZE - 1, Chunk::SIZE - 1, Chunk::SIZE - 1, 1));
 }
+
+TEST_CASE("Chunk - IsEmpty returns true if all of cells are AIR") {
+  Chunk chunk;
+
+  CHECK(chunk.IsEmpty() == true);
+}
+
+TEST_CASE("Chunk - IsEmpty returns false if any of cells are non AIR") {
+  Chunk chunk;
+  chunk.SetBlock(3, 4, 10, 1);
+
+  CHECK(chunk.IsEmpty() == false);
+}

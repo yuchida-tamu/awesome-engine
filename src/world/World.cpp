@@ -41,6 +41,13 @@ void World::Update(Scene &scene, Shader &shader, int centerX, int centerZ,
         }
 
         auto chunk = m_generator.GenerateChunk(chunkX, chunkY, chunkZ);
+
+        if (chunk.IsEmpty()) {
+          m_map[EncodeKey(chunkX, chunkY, chunkZ)] = {nullptr, 0};
+          ++loaded;
+          continue;
+        }
+
         auto chunkObj = std::make_unique<GameObject>();
 
         // Build the mesh first so we can record its quad count in the running
@@ -67,7 +74,10 @@ void World::Update(Scene &scene, Shader &shader, int centerX, int centerZ,
     auto [cx, cy, cz] = DecodeKey(it->first);
     if (IsOutsideOfRadius(cx, cz, centerX, centerZ, radius)) {
       m_totalQuads -= it->second.quadCount;
-      scene.RemoveGameObject(it->second.object);
+      if (it->second.object) {
+        scene.RemoveGameObject(it->second.object);
+      }
+
       it = m_map.erase(it);
     } else {
       ++it;
