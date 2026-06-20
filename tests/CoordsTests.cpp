@@ -47,28 +47,41 @@ TEST_CASE("WorldToChunk - negative positions floor toward negative infinity") {
 // KEY ENCODE / DECODE
 // ===================================================================
 
-TEST_CASE("EncodeKey/DecodeKey round-trips a chunk coordinate") {
+TEST_CASE("EncodeKey/DecodeKey round-trips a 3D chunk coordinate") {
   SUBCASE("positive coords") {
-    auto [x, z] = DecodeKey(EncodeKey(3, 7));
+    auto [x, y, z] = DecodeKey(EncodeKey(3, 7, 5));
     CHECK(x == 3);
-    CHECK(z == 7);
+    CHECK(y == 7);
+    CHECK(z == 5);
   }
-  SUBCASE("negative coords survive the round-trip (no sign-extension bleed)") {
-    auto [x, z] = DecodeKey(EncodeKey(-3, 7));
+  SUBCASE("negative coords survive the round-trip (sign-extension)") {
+    auto [x, y, z] = DecodeKey(EncodeKey(-3, -7, -5));
     CHECK(x == -3);
-    CHECK(z == 7);
-
-    auto [x2, z2] = DecodeKey(EncodeKey(-3, -7));
-    CHECK(x2 == -3);
-    CHECK(z2 == -7);
+    CHECK(y == -7);
+    CHECK(z == -5);
+  }
+  SUBCASE("mixed signs don't bleed between axes") {
+    auto [x, y, z] = DecodeKey(EncodeKey(-3, 7, -5));
+    CHECK(x == -3);
+    CHECK(y == 7);
+    CHECK(z == -5);
+  }
+  SUBCASE("multi-bit values within range round-trip") {
+    auto [x, y, z] = DecodeKey(EncodeKey(100000, -50000, 12345));
+    CHECK(x == 100000);
+    CHECK(y == -50000);
+    CHECK(z == 12345);
   }
 }
 
 TEST_CASE("EncodeKey - distinct coords produce distinct keys") {
-  // Not symmetric: (1,2) and (2,1) must differ, and a negative z in one slot
-  // must not collide with the same magnitude in the other slot.
-  CHECK(EncodeKey(1, 2) != EncodeKey(2, 1));
-  CHECK(EncodeKey(-1, 0) != EncodeKey(0, -1));
+  // Each axis must occupy its own field: permutations and per-axis unit steps
+  // must all differ, and a negative in one axis must not collide with another.
+  CHECK(EncodeKey(1, 2, 3) != EncodeKey(3, 2, 1));
+  CHECK(EncodeKey(1, 0, 0) != EncodeKey(0, 1, 0));
+  CHECK(EncodeKey(0, 1, 0) != EncodeKey(0, 0, 1));
+  CHECK(EncodeKey(-1, 0, 0) != EncodeKey(0, -1, 0));
+  CHECK(EncodeKey(-1, 0, 0) != EncodeKey(0, 0, -1));
 }
 
 // ===================================================================

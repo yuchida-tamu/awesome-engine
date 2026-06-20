@@ -5,7 +5,9 @@
 
 class TerrainGenerator {
 public:
-  static constexpr int MAX_TERRAIN_HEIGHT = 256; // in voxel
+  static constexpr float WORLD_HEIGHT = 64.0f;
+  static constexpr int MAX_TERRAIN_HEIGHT =
+      (int)(WORLD_HEIGHT / VOXEL_SCALE); // in voxel
   explicit TerrainGenerator(int seed, float frequency = 0.015f);
 
   Chunk GenerateChunk(int chunkX, int chunkY, int chunkZ) const;

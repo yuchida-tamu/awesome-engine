@@ -80,6 +80,19 @@ TEST_CASE("TerrainGenerator - different seeds produce different terrain") {
 }
 
 // ===================================================================
+// WORLD-HEIGHT DERIVATION
+// ===================================================================
+
+TEST_CASE("TerrainGenerator - terrain height is derived from a fixed world height") {
+  // MAX_TERRAIN_HEIGHT is a voxel count, but it must represent WORLD_HEIGHT
+  // meters regardless of VOXEL_SCALE, so terrain depth stays constant as voxel
+  // resolution changes (e.g. 25cm -> 10cm). Equal to within one voxel (floor).
+  float derivedWorldHeight = TerrainGenerator::MAX_TERRAIN_HEIGHT * VOXEL_SCALE;
+  CHECK(derivedWorldHeight <= TerrainGenerator::WORLD_HEIGHT);
+  CHECK(derivedWorldHeight > TerrainGenerator::WORLD_HEIGHT - VOXEL_SCALE);
+}
+
+// ===================================================================
 // VERTICAL STRUCTURE TESTS
 // ===================================================================
 

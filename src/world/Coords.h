@@ -14,16 +14,26 @@ inline int WorldToChunk(float worldCoord) {
   return (int)std::floor(worldCoord / CHUNK_WORLD_SIZE);
 }
 
-// Packs a chunk coordinate (cx, cz) into one 64-bit key: cx in the high 32
-// bits, cz in the low 32. The (uint32_t) cast stops a negative cz from
-// sign-extending into the high half. Reversible and collision-free.
-inline int64_t EncodeKey(int chunkX, int chunkZ) {
-  return ((int64_t)chunkX << 32) | (uint32_t)chunkZ;
+// 3D chunk key: pack (cx, cy, cz) into one int64, 21 signed bits and axis
+inline int64_t EncodeKey(int chunkX, int chunkY, int chunkZ) {
+  constexpr int64_t BITS = 21;
+  constexpr int64_t MASK = (int64_t(1) << BITS) - 1; // low 21 bits
+  return (int64_t(chunkX & MASK) << (2 * BITS) |
+          int64_t(chunkY & MASK) << BITS | int64_t(chunkZ & MASK));
 }
 
 // Recovers (cx, cz) from a key produced by EncodeKey.
-inline std::tuple<int, int> DecodeKey(int64_t key) {
-  return {(int)(key >> 32), (int)(int32_t)(uint32_t)key};
+inline std::tuple<int, int, int> DecodeKey(int64_t key) {
+  // return {(int)(key >> 32), (int)(int32_t)(uint32_t)key};
+  constexpr int64_t BITS = 21;
+  constexpr int64_t MASK = (int64_t(1) << BITS) - 1; // low 21 bits
+  auto sext = [](int64_t v) {             // sign-extend a 21-bit field
+    int64_t m = int64_t(1) << (BITS - 1); // bit 20 = the field's sign bit
+    return (int)((v ^ m) - m);            // standard sign-extension trick
+  };
+
+  return {sext((key >> (2 * BITS)) & MASK), sext((key >> BITS) & MASK),
+          sext(key & MASK)};
 }
 
 // True if (cx, cz) lies outside the square of the given radius around

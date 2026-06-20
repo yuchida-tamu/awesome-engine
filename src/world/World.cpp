@@ -31,37 +31,40 @@ void World::Update(Scene &scene, Shader &shader, int centerX, int centerZ,
   for (int chunkX = centerX - radius; chunkX <= centerX + radius && allLoaded;
        ++chunkX) {
     for (int chunkZ = centerZ - radius; chunkZ <= centerZ + radius; ++chunkZ) {
-      if (isChunkLoaded(chunkX, chunkZ)) {
-        continue;
+      for (int chunkY = 0; chunkY < NUM_VERTICAL_CHUNKS; ++chunkY) {
+        if (isChunkLoaded(chunkX, chunkY, chunkZ)) {
+          continue;
+        }
+        if (loaded >= kLoadBudget) {
+          allLoaded = false; // more remain; finish them on later frames
+          break;
+        }
+
+        auto chunk = m_generator.GenerateChunk(chunkX, chunkY, chunkZ);
+        auto chunkObj = std::make_unique<GameObject>();
+
+        // Build the mesh first so we can record its quad count in the running
+        // total, then hand the VoxelChunk off to the render component.
+        auto voxelChunk = std::make_unique<VoxelChunk>(chunk);
+        size_t quadCount = voxelChunk->GetQuadCount();
+        m_totalQuads += quadCount;
+        m_map[EncodeKey(chunkX, chunkY, chunkZ)] = {chunkObj.get(), quadCount};
+
+        auto transform = chunkObj->AddComponent<TransformComponent>();
+        transform->SetPosition({chunkX * CHUNK_WORLD_SIZE,
+                                chunkY * CHUNK_WORLD_SIZE,
+                                chunkZ * CHUNK_WORLD_SIZE});
+        transform->Scale({VOXEL_SCALE, VOXEL_SCALE, VOXEL_SCALE});
+        chunkObj->AddComponent<RenderComponent>(std::move(voxelChunk), &shader);
+        scene.AddGameObject(std::move(chunkObj));
+
+        ++loaded;
       }
-      if (loaded >= kLoadBudget) {
-        allLoaded = false; // more remain; finish them on later frames
-        break;
-      }
-
-      auto chunk = m_generator.GenerateChunk(chunkX, 0, chunkZ);
-      auto chunkObj = std::make_unique<GameObject>();
-
-      // Build the mesh first so we can record its quad count in the running
-      // total, then hand the VoxelChunk off to the render component.
-      auto voxelChunk = std::make_unique<VoxelChunk>(chunk);
-      size_t quadCount = voxelChunk->GetQuadCount();
-      m_totalQuads += quadCount;
-      m_map[EncodeKey(chunkX, chunkZ)] = {chunkObj.get(), quadCount};
-
-      auto transform = chunkObj->AddComponent<TransformComponent>();
-      transform->SetPosition(
-          {chunkX * CHUNK_WORLD_SIZE, 0, chunkZ * CHUNK_WORLD_SIZE});
-      transform->Scale({VOXEL_SCALE, VOXEL_SCALE, VOXEL_SCALE});
-      chunkObj->AddComponent<RenderComponent>(std::move(voxelChunk), &shader);
-      scene.AddGameObject(std::move(chunkObj));
-
-      ++loaded;
     }
   }
 
   for (auto it = m_map.begin(); it != m_map.end();) {
-    auto [cx, cz] = DecodeKey(it->first);
+    auto [cx, cy, cz] = DecodeKey(it->first);
     if (IsOutsideOfRadius(cx, cz, centerX, centerZ, radius)) {
       m_totalQuads -= it->second.quadCount;
       scene.RemoveGameObject(it->second.object);
@@ -75,8 +78,8 @@ void World::Update(Scene &scene, Shader &shader, int centerX, int centerZ,
   m_fullyLoaded = allLoaded;
 }
 
-bool World::isChunkLoaded(int cx, int cz) const {
-  return m_map.count(EncodeKey(cx, cz)) != 0;
+bool World::isChunkLoaded(int cx, int cy, int cz) const {
+  return m_map.count(EncodeKey(cx, cy, cz)) != 0;
 }
 
 bool World::isCenterMoved(int cx, int cz) const {

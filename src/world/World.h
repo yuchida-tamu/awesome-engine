@@ -3,6 +3,7 @@
 #include "rendering/Shader.h"
 #include "scene/GameObject.h"
 #include "scene/Scene.h"
+#include "voxel/Chunk.h"
 #include "voxel/TerrainGenerator.h"
 #include <cstddef>
 #include <cstdint>
@@ -15,8 +16,11 @@ public:
     int z;
   };
 
+  static constexpr int NUM_VERTICAL_CHUNKS =
+      (TerrainGenerator::MAX_TERRAIN_HEIGHT + Chunk::SIZE - 1) / Chunk::SIZE;
+
   World(int seed = 1337);
-  void Update(Scene &scene, Shader &shader, int center, int centerZ,
+  void Update(Scene &scene, Shader &shader, int centerX, int centerZ,
               int radius);
 
   // Debug stats: cheap reads of the current streamed-in state.
@@ -40,6 +44,6 @@ private:
   std::unordered_map<int64_t, LoadedChunk> m_map;
   size_t m_totalQuads = 0;
 
-  bool isChunkLoaded(int cx, int cz) const;
+  bool isChunkLoaded(int cx, int cy, int cz) const;
   bool isCenterMoved(int cx, int cz) const;
 };
