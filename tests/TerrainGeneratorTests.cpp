@@ -122,6 +122,39 @@ TEST_CASE("TerrainGenerator - solid voxel count is non-increasing with height") 
   CHECK(mid >= high);
 }
 
+TEST_CASE("TerrainGenerator - surface height is the same WORLD height at every LOD") {
+  // e=1 is the tallest possible column. Its surface, measured in WORLD units,
+  // must equal WORLD_HEIGHT at every LOD — so coarse terrain is exactly as tall
+  // as fine terrain (no extra VoxelSize multiply, no missing one).
+  for (int lod = 0; lod <= 3; ++lod) {
+    int sv = TerrainGenerator::surfaceVoxelY(1.0f, lod);
+    CHECK(sv == TerrainGenerator::MAX_TERRAIN_HEIGHT / (1 << lod)); // level-L voxels
+    CHECK(sv * VoxelSize(lod) == doctest::Approx(TerrainGenerator::WORLD_HEIGHT));
+  }
+  // And it scales linearly with e at a fixed LOD.
+  CHECK(TerrainGenerator::surfaceVoxelY(0.5f, 0) ==
+        TerrainGenerator::MAX_TERRAIN_HEIGHT / 2);
+}
+
+TEST_CASE("TerrainGenerator - terrain height is LOD-independent (coarse not taller)") {
+  // The surface caps at the SAME world height at every LOD. In level-L voxels
+  // that cap is MAX_TERRAIN_HEIGHT / 2^L, so a chunk whose whole worldY range is
+  // above it must be all air. The bug made coarse terrain 2^L times too tall, so
+  // these "above the cap" chunks came back solid.
+  TerrainGenerator gen(1337);
+  for (int lod = 0; lod <= 2; ++lod) {
+    int step = Chunk::SIZE * (1 << lod);
+    int aboveCy =
+        (TerrainGenerator::MAX_TERRAIN_HEIGHT + step - 1) / step; // first cy past the cap
+    bool allAir = true;
+    for (int cz = -2; cz <= 2; ++cz)
+      for (int cx = -2; cx <= 2; ++cx)
+        if (!gen.GenerateChunk(cx, aboveCy, cz, lod).IsEmpty())
+          allAir = false;
+    CHECK(allAir);
+  }
+}
+
 // ===================================================================
 // VERTICAL CONTINUITY (surface independent of chunkY)
 // ===================================================================

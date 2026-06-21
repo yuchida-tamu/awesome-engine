@@ -30,7 +30,7 @@ Chunk TerrainGenerator::GenerateChunk(int chunkX, int chunkY, int chunkZ,
       // remap the noise to fit in the chunk coordinate
       float e = (n + 1.0f) * 0.5f; // 0..1
       e = std::pow(e, 3.0f);       // flattens lowlands, keeps peaks tall
-      int surfaceY = (int)(e * MAX_TERRAIN_HEIGHT);
+      int surfaceY = surfaceVoxelY(e, lod);
       for (int y = 0; y < Chunk::SIZE; ++y) {
         int worldY = chunkY * Chunk::SIZE + y; // y cell position in world
         if (worldY < surfaceY) {
@@ -59,4 +59,9 @@ uint8_t TerrainGenerator::getBlockIdForDepth(int depth) {
 
 float TerrainGenerator::voxelToWorld(int chunkCoord, int local, int lod) {
   return (chunkCoord * Chunk::SIZE + local) * VoxelSize(lod);
+}
+
+int TerrainGenerator::surfaceVoxelY(float e, int lod) {
+  // float math first so the /2^lod isn't a truncating integer divide.
+  return (int)(e * MAX_TERRAIN_HEIGHT / (1 << lod)); // level-L voxels
 }

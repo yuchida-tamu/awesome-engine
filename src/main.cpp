@@ -18,6 +18,7 @@
 #include "core/TextureLoader.h"
 
 #include "cameras/Camera.h"
+#include "debug/FpsCounter.h"
 #include "rendering/Shader.h"
 #include "scene/CameraController.h"
 #include "scene/GameObject.h"
@@ -25,10 +26,9 @@
 #include "scene/Scene.h"
 #include "stb_image.h"
 #include "ui/ButtonElement.h"
+#include "ui/DebugPanel.h"
 #include "ui/UIElement.h"
 #include "ui/UIManager.h"
-#include "debug/FpsCounter.h"
-#include "ui/DebugPanel.h"
 #include "world/Coords.h"
 #include "world/World.h"
 
@@ -155,7 +155,7 @@ int main() {
       // Draw the 3D scene in the selected polygon mode.
       glPolygonMode(GL_FRONT_AND_BACK, wireframe ? GL_LINE : GL_FILL);
       world.Update(scene, cubeShader, WorldToChunk(camera.GetPosition().x),
-                   WorldToChunk(camera.GetPosition().z), 7);
+                   WorldToChunk(camera.GetPosition().z), 4);
       scene.Update(deltaTime);
       gridGizmo.On(scene.GetRenderContext());
 
@@ -164,8 +164,8 @@ int main() {
 
       // Debug overlay stats (drawn as part of the UI pass below).
       glm::vec3 camPos = camera.GetPosition();
-      DebugStats stats{fpsCounter.Fps(),      world.GetChunkCount(),
-                       world.GetQuadCount(),  camPos,
+      DebugStats stats{fpsCounter.Fps(),       world.GetChunkCount(),
+                       world.GetQuadCount(),   camPos,
                        WorldToChunk(camPos.x), WorldToChunk(camPos.z)};
       debugPanel.Update(stats);
 

@@ -23,4 +23,8 @@ private:
   static uint8_t getBlockIdForDepth(int depth);
 
   static float voxelToWorld(int chunkCoord, int local, int lod);
+
+  // Surface height of a column, in this LOD's voxels (level-L voxels). Caps at
+  // MAX_TERRAIN_HEIGHT / 2^lod, which is the same WORLD height at every LOD.
+  static int surfaceVoxelY(float e, int lod);
 };

@@ -16,8 +16,7 @@ public:
     int z;
   };
 
-  static constexpr int NUM_VERTICAL_CHUNKS =
-      (TerrainGenerator::MAX_TERRAIN_HEIGHT + Chunk::SIZE - 1) / Chunk::SIZE;
+  static constexpr int MAX_LOD = 3;
 
   World(int seed = 1337);
   void Update(Scene &scene, Shader &shader, int centerX, int centerZ,
@@ -44,6 +43,7 @@ private:
   std::unordered_map<int64_t, LoadedChunk> m_map;
   size_t m_totalQuads = 0;
 
+  void loadChunk(Scene &scene, Shader &shader, int cx, int cy, int cz, int lod);
   bool isChunkLoaded(int cx, int cy, int cz) const;
   bool isCenterMoved(int cx, int cz) const;
 };
