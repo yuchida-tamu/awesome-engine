@@ -43,7 +43,7 @@ void World::Update(Scene &scene, Shader &shader, int centerX, int centerZ,
         auto chunk = m_generator.GenerateChunk(chunkX, chunkY, chunkZ, 0);
 
         if (chunk.IsEmpty()) {
-          m_map[EncodeKey(chunkX, chunkY, chunkZ)] = {nullptr, 0};
+          m_map[EncodeKey(chunkX, chunkY, chunkZ, 0)] = {nullptr, 0};
           ++loaded;
           continue;
         }
@@ -55,7 +55,8 @@ void World::Update(Scene &scene, Shader &shader, int centerX, int centerZ,
         auto voxelChunk = std::make_unique<VoxelChunk>(chunk);
         size_t quadCount = voxelChunk->GetQuadCount();
         m_totalQuads += quadCount;
-        m_map[EncodeKey(chunkX, chunkY, chunkZ)] = {chunkObj.get(), quadCount};
+        m_map[EncodeKey(chunkX, chunkY, chunkZ, 0)] = {chunkObj.get(),
+                                                       quadCount};
 
         auto transform = chunkObj->AddComponent<TransformComponent>();
         transform->SetPosition({chunkX * CHUNK_WORLD_SIZE,
@@ -71,7 +72,7 @@ void World::Update(Scene &scene, Shader &shader, int centerX, int centerZ,
   }
 
   for (auto it = m_map.begin(); it != m_map.end();) {
-    auto [cx, cy, cz] = DecodeKey(it->first);
+    auto [cx, cy, cz, lod] = DecodeKey(it->first);
     if (IsOutsideOfRadius(cx, cz, centerX, centerZ, radius)) {
       m_totalQuads -= it->second.quadCount;
       if (it->second.object) {
@@ -89,7 +90,7 @@ void World::Update(Scene &scene, Shader &shader, int centerX, int centerZ,
 }
 
 bool World::isChunkLoaded(int cx, int cy, int cz) const {
-  return m_map.count(EncodeKey(cx, cy, cz)) != 0;
+  return m_map.count(EncodeKey(cx, cy, cz, 0)) != 0;
 }
 
 bool World::isCenterMoved(int cx, int cz) const {

@@ -14,26 +14,28 @@ inline int WorldToChunk(float worldCoord) {
   return (int)std::floor(worldCoord / CHUNK_WORLD_SIZE);
 }
 
-// 3D chunk key: pack (cx, cy, cz) into one int64, 21 signed bits and axis
-inline int64_t EncodeKey(int chunkX, int chunkY, int chunkZ) {
-  constexpr int64_t BITS = 21;
-  constexpr int64_t MASK = (int64_t(1) << BITS) - 1; // low 21 bits
-  return (int64_t(chunkX & MASK) << (2 * BITS) |
+// 3D chunk key: pack (cx, cy, cz) into one int64, 20 signed bits and axis
+inline int64_t EncodeKey(int chunkX, int chunkY, int chunkZ, int lod) {
+  constexpr int64_t BITS = 20;
+  constexpr int64_t MASK = (int64_t(1) << BITS) - 1; // low 20 bits
+  return (int64_t(lod) << (3 * BITS) | int64_t(chunkX & MASK) << (2 * BITS) |
           int64_t(chunkY & MASK) << BITS | int64_t(chunkZ & MASK));
 }
 
-// Recovers (cx, cz) from a key produced by EncodeKey.
-inline std::tuple<int, int, int> DecodeKey(int64_t key) {
-  // return {(int)(key >> 32), (int)(int32_t)(uint32_t)key};
-  constexpr int64_t BITS = 21;
-  constexpr int64_t MASK = (int64_t(1) << BITS) - 1; // low 21 bits
-  auto sext = [](int64_t v) {             // sign-extend a 21-bit field
-    int64_t m = int64_t(1) << (BITS - 1); // bit 20 = the field's sign bit
+// Recovers (cx, cy, cz, lod) from a key produced by EncodeKey.
+inline std::tuple<int, int, int, int> DecodeKey(int64_t key) {
+  constexpr int64_t BITS = 20;
+  constexpr int64_t MASK = (int64_t(1) << BITS) - 1; // low 20 bits
+  auto sext = [](int64_t v) {             // sign-extend a 20-bit field
+    int64_t m = int64_t(1) << (BITS - 1); // bit 19 = the field's sign bit
     return (int)((v ^ m) - m);            // standard sign-extension trick
   };
 
+  // Extract bit 0 ~ 3 (lod)
+  int64_t lod = key >> (3 * BITS) & 0xF;
+
   return {sext((key >> (2 * BITS)) & MASK), sext((key >> BITS) & MASK),
-          sext(key & MASK)};
+          sext(key & MASK), lod};
 }
 
 // True if (cx, cz) lies outside the square of the given radius around

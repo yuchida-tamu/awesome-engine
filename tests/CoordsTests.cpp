@@ -47,41 +47,52 @@ TEST_CASE("WorldToChunk - negative positions floor toward negative infinity") {
 // KEY ENCODE / DECODE
 // ===================================================================
 
-TEST_CASE("EncodeKey/DecodeKey round-trips a 3D chunk coordinate") {
-  SUBCASE("positive coords") {
-    auto [x, y, z] = DecodeKey(EncodeKey(3, 7, 5));
+TEST_CASE("EncodeKey/DecodeKey round-trips a chunk coordinate + LOD") {
+  SUBCASE("positive coords with an LOD") {
+    auto [x, y, z, lod] = DecodeKey(EncodeKey(3, 7, 5, 2));
     CHECK(x == 3);
     CHECK(y == 7);
     CHECK(z == 5);
+    CHECK(lod == 2);
   }
-  SUBCASE("negative coords survive the round-trip (sign-extension)") {
-    auto [x, y, z] = DecodeKey(EncodeKey(-3, -7, -5));
+  SUBCASE("negative coords sign-extend; lod stays unsigned") {
+    auto [x, y, z, lod] = DecodeKey(EncodeKey(-3, -7, -5, 1));
     CHECK(x == -3);
     CHECK(y == -7);
     CHECK(z == -5);
+    CHECK(lod == 1);
   }
   SUBCASE("mixed signs don't bleed between axes") {
-    auto [x, y, z] = DecodeKey(EncodeKey(-3, 7, -5));
+    auto [x, y, z, lod] = DecodeKey(EncodeKey(-3, 7, -5, 0));
     CHECK(x == -3);
     CHECK(y == 7);
     CHECK(z == -5);
+    CHECK(lod == 0);
   }
-  SUBCASE("multi-bit values within range round-trip") {
-    auto [x, y, z] = DecodeKey(EncodeKey(100000, -50000, 12345));
+  SUBCASE("max 4-bit lod round-trips and doesn't bleed into coords") {
+    auto [x, y, z, lod] = DecodeKey(EncodeKey(1, 2, 3, 15));
+    CHECK(x == 1);
+    CHECK(y == 2);
+    CHECK(z == 3);
+    CHECK(lod == 15);
+  }
+  SUBCASE("multi-bit coords within the 20-bit range round-trip") {
+    auto [x, y, z, lod] = DecodeKey(EncodeKey(100000, -50000, 12345, 3));
     CHECK(x == 100000);
     CHECK(y == -50000);
     CHECK(z == 12345);
+    CHECK(lod == 3);
   }
 }
 
-TEST_CASE("EncodeKey - distinct coords produce distinct keys") {
-  // Each axis must occupy its own field: permutations and per-axis unit steps
-  // must all differ, and a negative in one axis must not collide with another.
-  CHECK(EncodeKey(1, 2, 3) != EncodeKey(3, 2, 1));
-  CHECK(EncodeKey(1, 0, 0) != EncodeKey(0, 1, 0));
-  CHECK(EncodeKey(0, 1, 0) != EncodeKey(0, 0, 1));
-  CHECK(EncodeKey(-1, 0, 0) != EncodeKey(0, -1, 0));
-  CHECK(EncodeKey(-1, 0, 0) != EncodeKey(0, 0, -1));
+TEST_CASE("EncodeKey - distinct coords OR lod produce distinct keys") {
+  // Each axis occupies its own field; permutations and per-axis steps differ.
+  CHECK(EncodeKey(1, 2, 3, 0) != EncodeKey(3, 2, 1, 0));
+  CHECK(EncodeKey(1, 0, 0, 0) != EncodeKey(0, 1, 0, 0));
+  CHECK(EncodeKey(0, 1, 0, 0) != EncodeKey(0, 0, 1, 0));
+  CHECK(EncodeKey(-1, 0, 0, 0) != EncodeKey(0, -1, 0, 0));
+  // lod is part of a chunk's identity: same coords, different lod must differ.
+  CHECK(EncodeKey(5, 6, 7, 0) != EncodeKey(5, 6, 7, 1));
 }
 
 // ===================================================================
