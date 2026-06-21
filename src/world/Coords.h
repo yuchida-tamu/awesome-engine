@@ -44,3 +44,24 @@ inline bool IsOutsideOfRadius(int cx, int cz, int centerX, int centerZ,
   bool zOutside = (centerZ - radius) > cz || (centerZ + radius) < cz;
   return xOutside || zOutside;
 }
+
+inline int CenterAtLevel(int point, int level) {
+  return floor(point / (std::pow(2, level)));
+}
+
+inline bool CoveredByFiner(int chunkX, int chunkZ, int finerX, int finerZ,
+                           int radius) {
+  bool isXCovered =
+      chunkX * 2 >= finerX - radius && chunkX * 2 + 1 <= finerX + radius;
+  bool isZCovered =
+      chunkZ * 2 >= finerZ - radius && chunkZ * 2 + 1 <= finerZ + radius;
+  return isXCovered && isZCovered;
+}
+
+inline int NumVerticalChunks(int height, int level) {
+  // here we use bit-shift instead of std::pow(2, n),
+  // since std::pow returns double and we have a risk
+  // of a rounding issue.
+  auto step = Chunk::SIZE * (1 << level);
+  return ceil((height + step - 1) / step);
+}
