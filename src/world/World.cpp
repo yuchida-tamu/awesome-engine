@@ -50,7 +50,10 @@ void World::Update(Scene &scene, Shader &shader, int centerX, int centerZ,
 
   // Phase 2: load missing desired chunkc, at most kLoadBudget per call
   // so a boundary crossing spreads is cost over several frames
-  constexpr int kLoadBudget = 2;
+  // Loads per frame. Higher = transition strips fill faster (less LOD-change
+  // flicker), at the cost of a heavier frame on big boundary crossings. -O3
+  // gives us the headroom; 2 was a conservative -O0-era value.
+  constexpr int kLoadBudget = 6;
   int loaded = 0;
   bool allLoaded = true;
   for (int64_t key : desired) {
