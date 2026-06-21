@@ -17,14 +17,14 @@ TerrainGenerator::TerrainGenerator(int seed, float frequency) {
 
 // Fills the Chunk at chunk-grid coordinate (chunkX, chunkZ), sampling noise in
 // world space so neighbouring chunks line up.
-Chunk TerrainGenerator::GenerateChunk(int chunkX, int chunkY,
-                                      int chunkZ) const {
+Chunk TerrainGenerator::GenerateChunk(int chunkX, int chunkY, int chunkZ,
+                                      int lod) const {
   Chunk chunk;
   // x and z here are the coordinate within the chunk.
   for (int z = 0; z < Chunk::SIZE; ++z) {
     for (int x = 0; x < Chunk::SIZE; ++x) {
-      float worldX = voxelToWorld(chunkX, x);
-      float worldZ = voxelToWorld(chunkZ, z);
+      float worldX = voxelToWorld(chunkX, x, lod);
+      float worldZ = voxelToWorld(chunkZ, z, lod);
       m_noise.DomainWarp(worldX, worldZ);
       float n = m_noise.GetNoise(worldX, worldZ);
       // remap the noise to fit in the chunk coordinate
@@ -57,6 +57,6 @@ uint8_t TerrainGenerator::getBlockIdForDepth(int depth) {
   return static_cast<uint8_t>(BlockType::Stone);
 }
 
-float TerrainGenerator::voxelToWorld(int chunkCoord, int local) {
-  return (chunkCoord * Chunk::SIZE + local) * VOXEL_SCALE;
+float TerrainGenerator::voxelToWorld(int chunkCoord, int local, int lod) {
+  return (chunkCoord * Chunk::SIZE + local) * VoxelSize(lod);
 }

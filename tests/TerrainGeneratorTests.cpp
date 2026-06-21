@@ -62,21 +62,21 @@ bool columnHasNoFloating(const Chunk &chunk, int x, int z) {
 TEST_CASE("TerrainGenerator - same seed and coords produce identical terrain") {
   TerrainGenerator a(1337);
   TerrainGenerator b(1337);
-  CHECK(chunksIdentical(a.GenerateChunk(2, 1, 5), b.GenerateChunk(2, 1, 5)));
+  CHECK(chunksIdentical(a.GenerateChunk(2, 1, 5, 0), b.GenerateChunk(2, 1, 5, 0)));
 }
 
 TEST_CASE("TerrainGenerator - different horizontal coords differ") {
   // If the world offset weren't applied in x/z, every column would be the same.
   TerrainGenerator gen(1337);
   CHECK_FALSE(
-      chunksIdentical(gen.GenerateChunk(0, 0, 0), gen.GenerateChunk(7, 0, 3)));
+      chunksIdentical(gen.GenerateChunk(0, 0, 0, 0), gen.GenerateChunk(7, 0, 3, 0)));
 }
 
 TEST_CASE("TerrainGenerator - different seeds produce different terrain") {
   TerrainGenerator a(1);
   TerrainGenerator b(2);
   CHECK_FALSE(
-      chunksIdentical(a.GenerateChunk(0, 0, 0), b.GenerateChunk(0, 0, 0)));
+      chunksIdentical(a.GenerateChunk(0, 0, 0, 0), b.GenerateChunk(0, 0, 0, 0)));
 }
 
 // ===================================================================
@@ -99,7 +99,7 @@ TEST_CASE("TerrainGenerator - terrain height is derived from a fixed world heigh
 TEST_CASE("TerrainGenerator - a chunk below the surface is entirely solid") {
   TerrainGenerator gen(1337);
   // worldY in [-SIZE, 0) is below every surface (surface >= 0), so all solid.
-  Chunk below = gen.GenerateChunk(0, -1, 0);
+  Chunk below = gen.GenerateChunk(0, -1, 0, 0);
   CHECK(solidCount(below) == Chunk::VOLUME);
 }
 
@@ -107,7 +107,7 @@ TEST_CASE("TerrainGenerator - a chunk above the max height is entirely air") {
   TerrainGenerator gen(1337);
   // Lowest worldY of this chunk is >= MAX_TERRAIN_HEIGHT, above every surface.
   int cy = (TerrainGenerator::MAX_TERRAIN_HEIGHT + Chunk::SIZE - 1) / Chunk::SIZE;
-  Chunk above = gen.GenerateChunk(0, cy, 0);
+  Chunk above = gen.GenerateChunk(0, cy, 0, 0);
   CHECK(solidCount(above) == 0);
 }
 
@@ -115,9 +115,9 @@ TEST_CASE("TerrainGenerator - solid voxel count is non-increasing with height") 
   // For a fixed column stack, lower chunks hold at least as much solid as higher
   // ones (the surface is a single threshold).
   TerrainGenerator gen(1337);
-  int below = solidCount(gen.GenerateChunk(0, -1, 0));
-  int mid = solidCount(gen.GenerateChunk(0, 0, 0));
-  int high = solidCount(gen.GenerateChunk(0, 1, 0));
+  int below = solidCount(gen.GenerateChunk(0, -1, 0, 0));
+  int mid = solidCount(gen.GenerateChunk(0, 0, 0, 0));
+  int high = solidCount(gen.GenerateChunk(0, 1, 0, 0));
   CHECK(below >= mid);
   CHECK(mid >= high);
 }
@@ -128,7 +128,7 @@ TEST_CASE("TerrainGenerator - solid voxel count is non-increasing with height") 
 
 TEST_CASE("TerrainGenerator - no floating blocks within a chunk") {
   TerrainGenerator gen(1337);
-  Chunk chunk = gen.GenerateChunk(0, 0, 0);
+  Chunk chunk = gen.GenerateChunk(0, 0, 0, 0);
   bool ok = true;
   for (int z = 0; z < Chunk::SIZE; ++z)
     for (int x = 0; x < Chunk::SIZE; ++x)
@@ -142,8 +142,8 @@ TEST_CASE("TerrainGenerator - stacked chunks join without a seam") {
   // stacking chunk (0,0,0) under (0,1,0) must yield one contiguous solid run
   // (no gap or overlap at the chunk boundary).
   TerrainGenerator gen(1337);
-  Chunk c0 = gen.GenerateChunk(0, 0, 0);
-  Chunk c1 = gen.GenerateChunk(0, 1, 0);
+  Chunk c0 = gen.GenerateChunk(0, 0, 0, 0);
+  Chunk c1 = gen.GenerateChunk(0, 1, 0, 0);
 
   bool ok = true;
   for (int z = 0; z < Chunk::SIZE; ++z) {
@@ -169,7 +169,7 @@ TEST_CASE("TerrainGenerator - stacked chunks join without a seam") {
 
 TEST_CASE("TerrainGenerator - surface is grass over dirt over stone") {
   TerrainGenerator gen(1337);
-  Chunk chunk = gen.GenerateChunk(0, 0, 0);
+  Chunk chunk = gen.GenerateChunk(0, 0, 0, 0);
 
   // Find a column whose surface falls *inside* this bottom chunk (solid from
   // y=0 up to some height < SIZE) and is deep enough to expose stone. For such
@@ -202,11 +202,11 @@ TEST_CASE("TerrainGenerator - surface is grass over dirt over stone") {
 // ===================================================================
 
 TEST_CASE("TerrainGenerator - voxelToWorld scales voxel indices to world units") {
-  CHECK(TerrainGenerator::voxelToWorld(0, 0) == doctest::Approx(0.0f));
-  CHECK(TerrainGenerator::voxelToWorld(0, 4) ==
+  CHECK(TerrainGenerator::voxelToWorld(0, 0, 0) == doctest::Approx(0.0f));
+  CHECK(TerrainGenerator::voxelToWorld(0, 4, 0) ==
         doctest::Approx(4 * VOXEL_SCALE));
   // Chunk N begins SIZE voxels (in world units) further along.
-  CHECK(TerrainGenerator::voxelToWorld(1, 0) ==
+  CHECK(TerrainGenerator::voxelToWorld(1, 0, 0) ==
         doctest::Approx(Chunk::SIZE * VOXEL_SCALE));
 }
 
@@ -214,11 +214,20 @@ TEST_CASE("TerrainGenerator - voxelToWorld is continuous across chunk borders") 
   // The last voxel of one chunk and the first of the next must be exactly one
   // voxel-step apart in world space, so terrain tiles seamlessly. (The earlier
   // `chunkX*VOXEL_SCALE + x` bug made this gap huge.)
-  CHECK(TerrainGenerator::voxelToWorld(1, 0) -
-            TerrainGenerator::voxelToWorld(0, Chunk::SIZE - 1) ==
+  CHECK(TerrainGenerator::voxelToWorld(1, 0, 0) -
+            TerrainGenerator::voxelToWorld(0, Chunk::SIZE - 1, 0) ==
         doctest::Approx(VOXEL_SCALE));
   // Same across a negative border (chunk -1 -> chunk 0).
-  CHECK(TerrainGenerator::voxelToWorld(0, 0) -
-            TerrainGenerator::voxelToWorld(-1, Chunk::SIZE - 1) ==
+  CHECK(TerrainGenerator::voxelToWorld(0, 0, 0) -
+            TerrainGenerator::voxelToWorld(-1, Chunk::SIZE - 1, 0) ==
         doctest::Approx(VOXEL_SCALE));
+}
+
+TEST_CASE("TerrainGenerator - voxelToWorld scales with LOD (coarser = bigger)") {
+  // A level-1 voxel spans twice the world distance of a level-0 voxel; level 2,
+  // four times. This is what makes coarse chunks cover more world.
+  CHECK(TerrainGenerator::voxelToWorld(0, 4, 1) ==
+        doctest::Approx(2 * TerrainGenerator::voxelToWorld(0, 4, 0)));
+  CHECK(TerrainGenerator::voxelToWorld(1, 0, 2) ==
+        doctest::Approx(Chunk::SIZE * VOXEL_SCALE * 4));
 }

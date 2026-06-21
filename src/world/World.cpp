@@ -40,7 +40,7 @@ void World::Update(Scene &scene, Shader &shader, int centerX, int centerZ,
           break;
         }
 
-        auto chunk = m_generator.GenerateChunk(chunkX, chunkY, chunkZ);
+        auto chunk = m_generator.GenerateChunk(chunkX, chunkY, chunkZ, 0);
 
         if (chunk.IsEmpty()) {
           m_map[EncodeKey(chunkX, chunkY, chunkZ)] = {nullptr, 0};

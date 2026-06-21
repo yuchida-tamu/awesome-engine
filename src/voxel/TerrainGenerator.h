@@ -10,7 +10,7 @@ public:
       (int)(WORLD_HEIGHT / VOXEL_SCALE); // in voxel
   explicit TerrainGenerator(int seed, float frequency = 0.015f);
 
-  Chunk GenerateChunk(int chunkX, int chunkY, int chunkZ) const;
+  Chunk GenerateChunk(int chunkX, int chunkY, int chunkZ, int lod) const;
 
 private:
   FastNoiseLite m_noise;
@@ -22,5 +22,5 @@ private:
 #endif
   static uint8_t getBlockIdForDepth(int depth);
 
-  static float voxelToWorld(int chunkCoord, int local);
+  static float voxelToWorld(int chunkCoord, int local, int lod);
 };
