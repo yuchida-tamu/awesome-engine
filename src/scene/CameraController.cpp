@@ -42,6 +42,10 @@ void CameraController::OnKey(const KeyEvent &event) {
     m_moveDirection -= m_camera.GetRight();
   if (event.key == GLFW_KEY_D)
     m_moveDirection += m_camera.GetRight();
+
+  if (event.key == GLFW_KEY_SPACE) {
+    m_moveDirection += glm::vec3(0, 1, 0);
+  }
 }
 
 void CameraController::OnMouseClick(const MouseClickEvent &event) {
