@@ -155,7 +155,7 @@ int main() {
       // Draw the 3D scene in the selected polygon mode.
       glPolygonMode(GL_FRONT_AND_BACK, wireframe ? GL_LINE : GL_FILL);
       world.Update(scene, cubeShader, WorldToChunk(camera.GetPosition().x),
-                   WorldToChunk(camera.GetPosition().z), 4);
+                   WorldToChunk(camera.GetPosition().z), 2);
       scene.Update(deltaTime);
       gridGizmo.On(scene.GetRenderContext());
 

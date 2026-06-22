@@ -5,6 +5,8 @@
 #include "voxel/Chunk.h"
 #include "voxel/TerrainGenerator.h"
 
+#include <cmath>
+
 // These tests assume the vertical-chunking model:
 //   - GenerateChunk(cx, cy, cz) fills the world-Y slice [cy*SIZE, (cy+1)*SIZE).
 //   - The surface height of a column is a WORLD value (in voxels), independent
@@ -122,14 +124,17 @@ TEST_CASE("TerrainGenerator - solid voxel count is non-increasing with height") 
   CHECK(mid >= high);
 }
 
-TEST_CASE("TerrainGenerator - surface height is the same WORLD height at every LOD") {
-  // e=1 is the tallest possible column. Its surface, measured in WORLD units,
-  // must equal WORLD_HEIGHT at every LOD — so coarse terrain is exactly as tall
-  // as fine terrain (no extra VoxelSize multiply, no missing one).
+TEST_CASE("TerrainGenerator - surface height is LOD-independent (same world height)") {
+  // e=1 is the tallest column. Its world-space height must be ~the same at every
+  // LOD so coarse terrain is as tall as fine. It's exact only when
+  // MAX_TERRAIN_HEIGHT divides by 2^lod; otherwise the per-LOD voxel cap
+  // truncates, so we allow up to one level-L voxel of difference.
+  float refHeight = TerrainGenerator::surfaceVoxelY(1.0f, 0) * VoxelSize(0);
   for (int lod = 0; lod <= 3; ++lod) {
     int sv = TerrainGenerator::surfaceVoxelY(1.0f, lod);
-    CHECK(sv == TerrainGenerator::MAX_TERRAIN_HEIGHT / (1 << lod)); // level-L voxels
-    CHECK(sv * VoxelSize(lod) == doctest::Approx(TerrainGenerator::WORLD_HEIGHT));
+    CHECK(sv == TerrainGenerator::MAX_TERRAIN_HEIGHT / (1 << lod)); // level-L voxel cap
+    float worldHeight = sv * VoxelSize(lod);
+    CHECK(std::abs(worldHeight - refHeight) < VoxelSize(lod));
   }
   // And it scales linearly with e at a fixed LOD.
   CHECK(TerrainGenerator::surfaceVoxelY(0.5f, 0) ==
@@ -202,32 +207,36 @@ TEST_CASE("TerrainGenerator - stacked chunks join without a seam") {
 
 TEST_CASE("TerrainGenerator - surface is grass over dirt over stone") {
   TerrainGenerator gen(1337);
-  Chunk chunk = gen.GenerateChunk(0, 0, 0, 0);
 
-  // Find a column whose surface falls *inside* this bottom chunk (solid from
-  // y=0 up to some height < SIZE) and is deep enough to expose stone. For such
-  // a column the top solid cell is the world surface.
-  int sx = -1, sz = -1, height = 0;
-  for (int z = 0; z < Chunk::SIZE && sx < 0; ++z) {
-    for (int x = 0; x < Chunk::SIZE; ++x) {
-      int run = 0;
-      while (run < Chunk::SIZE && chunk.BlockAt(x, run, z) != Chunk::AIR)
-        ++run;
-      if (run >= 5 && run < Chunk::SIZE) {
-        sx = x;
-        sz = z;
-        height = run;
-        break;
+  // We need a column whose surface crests *inside* a bottom chunk (solid from
+  // y=0 up to some height in [5, SIZE)) so the top solid cell is the world
+  // surface and there's depth enough to expose stone. At a fine VOXEL_SCALE a
+  // single chunk spans little world (nearly uniform terrain), so no column may
+  // crest inside chunk (0,0,0). Scan a grid of bottom chunks until one turns up
+  // (low terrain is common, so this hits quickly) and break out as soon as it
+  // does.
+  bool checked = false;
+  for (int cz = -8; cz <= 8 && !checked; ++cz) {
+    for (int cx = -8; cx <= 8 && !checked; ++cx) {
+      Chunk chunk = gen.GenerateChunk(cx, 0, cz, 0);
+      for (int z = 0; z < Chunk::SIZE && !checked; ++z) {
+        for (int x = 0; x < Chunk::SIZE && !checked; ++x) {
+          int run = 0;
+          while (run < Chunk::SIZE && chunk.BlockAt(x, run, z) != Chunk::AIR)
+            ++run;
+          if (run >= 5 && run < Chunk::SIZE) {
+            int top = run - 1;
+            CHECK(chunk.BlockAt(x, top, z) == GRASS);     // depth 0 (surface)
+            CHECK(chunk.BlockAt(x, top - 1, z) == DIRT);  // depth 1
+            CHECK(chunk.BlockAt(x, top - 3, z) == DIRT);  // depth 3 (last dirt)
+            CHECK(chunk.BlockAt(x, top - 4, z) == STONE); // depth 4 (first stone)
+            checked = true;
+          }
+        }
       }
     }
   }
-  REQUIRE(sx >= 0); // the seed must produce a column that crests inside chunk 0
-
-  int top = height - 1;
-  CHECK(chunk.BlockAt(sx, top, sz) == GRASS);     // depth 0 (surface)
-  CHECK(chunk.BlockAt(sx, top - 1, sz) == DIRT);  // depth 1
-  CHECK(chunk.BlockAt(sx, top - 3, sz) == DIRT);  // depth 3 (last dirt)
-  CHECK(chunk.BlockAt(sx, top - 4, sz) == STONE); // depth 4 (first stone)
+  REQUIRE(checked); // some chunk in the scanned area must crest inside it
 }
 
 // ===================================================================

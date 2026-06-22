@@ -60,7 +60,7 @@ private:
 // generation samples noise in world space and must not depend on world/.
 // Raising chunk resolution = increase SIZE and decrease VOXEL_SCALE together so
 // the chunk's world span (SIZE * VOXEL_SCALE) stays constant.
-inline constexpr float VOXEL_SCALE = 0.25f;
+inline constexpr float VOXEL_SCALE = 0.1f;
 
 inline constexpr float VoxelSize(int lod) { return VOXEL_SCALE * (1 << lod); }
 inline constexpr float ChunkSpan(int lod) {
