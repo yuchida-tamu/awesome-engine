@@ -1,5 +1,6 @@
 #pragma once
 
+#include "world/Coords.h"
 #include <cstdint>
 #include <unordered_set>
 #include <vector>
@@ -41,10 +42,51 @@ inline ReconcilePlan PlanReconcile(const std::unordered_set<int64_t> &desired,
   }
 
   // Unload anything loaded that's no longer desired.
+  // If its parent is in desired, it can be unloaded only when the parent is
+  // loaded Else if any of its child is in desired, it can be unloaded only when
+  // all desired children are in loaded Children = the 8 chunks one level finer
+  // at (2cx + dx, 2cy + dy, 2cz + dz, lod - 1)
   for (int64_t key : loaded) {
-    if (desired.count(key) == 0) {
-      plan.toUnload.push_back(key);
+    if (desired.count(key) != 0) {
+      continue;
     }
+    // if paratent is in desired
+    auto [x, y, z, lod] = DecodeKey(key);
+    auto parent = EncodeKey(CenterAtLevel(x, 1), CenterAtLevel(y, 1),
+                            CenterAtLevel(z, 1), lod + 1);
+    if (desired.count(parent) > 0) {
+      if (loaded.count(parent) > 0) {
+        plan.toUnload.push_back(key);
+      }
+      continue;
+    }
+
+    int childLod = lod - 1;
+    bool isAnyChildDesired = false;
+    bool isAllChildrenLoaded = true;
+    for (auto dx : {0, 1}) {
+      for (auto dy : {0, 1}) {
+        for (auto dz : {0, 1}) {
+          auto child = EncodeKey(2 * x + dx, 2 * y + dy, 2 * z + dz, childLod);
+          if (!isAnyChildDesired) {
+            isAnyChildDesired = desired.count(child) > 0;
+          }
+          if (desired.count(child) > 0 && loaded.count(child) == 0) {
+            isAllChildrenLoaded = false;
+          }
+        }
+      }
+    }
+
+    if (isAnyChildDesired) {
+      if (isAllChildrenLoaded) {
+        plan.toUnload.push_back(key);
+      }
+      continue;
+    }
+
+    // if neither its parent nor children are desired, it can be unloaded;
+    plan.toUnload.push_back(key);
   }
 
   return plan;
