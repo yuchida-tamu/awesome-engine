@@ -15,6 +15,20 @@ TerrainGenerator::TerrainGenerator(int seed, float frequency) {
   m_noise.SetDomainWarpAmp(20.0f);
 }
 
+void TerrainGenerator::UpdateConfig(Parameter param, float value) {
+  switch (param) {
+  case FREQUENCY:
+    m_noise.SetFrequency(value);
+    break;
+  case OCTAVE:
+    m_noise.SetFractalOctaves((int)value);
+    break;
+  case NOISE_AMP:
+    m_noise.SetDomainWarpAmp(value);
+    break;
+  }
+}
+
 // Fills the Chunk at chunk-grid coordinate (chunkX, chunkZ), sampling noise in
 // world space so neighbouring chunks line up.
 Chunk TerrainGenerator::GenerateChunk(int chunkX, int chunkY, int chunkZ,
@@ -29,7 +43,7 @@ Chunk TerrainGenerator::GenerateChunk(int chunkX, int chunkY, int chunkZ,
       float n = m_noise.GetNoise(worldX, worldZ);
       // remap the noise to fit in the chunk coordinate
       float e = (n + 1.0f) * 0.5f; // 0..1
-      e = std::pow(e, 3.0f);       // flattens lowlands, keeps peaks tall
+      e = std::pow(e, 2.5f);       // flattens lowlands, keeps peaks tall
       int surfaceY = surfaceVoxelY(e, lod);
       for (int y = 0; y < Chunk::SIZE; ++y) {
         int worldY = chunkY * Chunk::SIZE + y; // y cell position in world

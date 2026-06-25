@@ -31,6 +31,23 @@ bool chunksIdentical(const Chunk &a, const Chunk &b) {
   return true;
 }
 
+// Topmost solid voxel (world-Y) for one column, scanning the full vertical
+// stack from the top down. Surface-relative tests use this instead of poking a
+// fixed chunk, since which chunk holds the surface depends on WORLD_HEIGHT (at a
+// tall world the bottom chunk is just bedrock and is identical everywhere).
+int surfaceHeightAt(const TerrainGenerator &gen, int chunkX, int chunkZ,
+                    int localX, int localZ) {
+  int stack =
+      (TerrainGenerator::MAX_TERRAIN_HEIGHT + Chunk::SIZE - 1) / Chunk::SIZE;
+  for (int cy = stack - 1; cy >= 0; --cy) {
+    Chunk c = gen.GenerateChunk(chunkX, cy, chunkZ, 0);
+    for (int y = Chunk::SIZE - 1; y >= 0; --y)
+      if (c.BlockAt(localX, y, localZ) != Chunk::AIR)
+        return cy * Chunk::SIZE + y;
+  }
+  return -1;
+}
+
 int solidCount(const Chunk &chunk) {
   int count = 0;
   for (int z = 0; z < Chunk::SIZE; ++z)
@@ -68,17 +85,23 @@ TEST_CASE("TerrainGenerator - same seed and coords produce identical terrain") {
 }
 
 TEST_CASE("TerrainGenerator - different horizontal coords differ") {
-  // If the world offset weren't applied in x/z, every column would be the same.
+  // If the world offset weren't applied in x/z, every column would share a
+  // surface height. Two well-separated columns must crest at different heights.
   TerrainGenerator gen(1337);
-  CHECK_FALSE(
-      chunksIdentical(gen.GenerateChunk(0, 0, 0, 0), gen.GenerateChunk(7, 0, 3, 0)));
+  CHECK(surfaceHeightAt(gen, 0, 0, 0, 0) != surfaceHeightAt(gen, 7, 3, 0, 0));
 }
 
 TEST_CASE("TerrainGenerator - different seeds produce different terrain") {
   TerrainGenerator a(1);
   TerrainGenerator b(2);
-  CHECK_FALSE(
-      chunksIdentical(a.GenerateChunk(0, 0, 0, 0), b.GenerateChunk(0, 0, 0, 0)));
+  // Surface heights can coincide at a single column, so require a difference
+  // somewhere across a short scan of columns.
+  bool differs = false;
+  for (int cx = 0; cx < 8 && !differs; ++cx) {
+    if (surfaceHeightAt(a, cx, 0, 0, 0) != surfaceHeightAt(b, cx, 0, 0, 0))
+      differs = true;
+  }
+  CHECK(differs);
 }
 
 // ===================================================================

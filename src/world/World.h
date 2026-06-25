@@ -16,11 +16,13 @@ public:
     int z;
   };
 
-  static constexpr int MAX_LOD = 5;
+  static constexpr int MAX_LOD = 7;
 
   World(int seed = 1337);
   void Update(Scene &scene, Shader &shader, int centerX, int centerZ,
               int radius);
+
+  void UpdateTerrainConfig(TerrainGenerator::Parameter param, float value);
 
   // Debug stats: cheap reads of the current streamed-in state.
   size_t GetChunkCount() const { return m_map.size(); }

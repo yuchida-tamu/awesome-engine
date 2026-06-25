@@ -5,12 +5,14 @@
 
 class TerrainGenerator {
 public:
-  static constexpr float WORLD_HEIGHT = 64.0f;
+  enum Parameter { OCTAVE, FREQUENCY, NOISE_AMP };
+  static constexpr float WORLD_HEIGHT = 128.0f;
   static constexpr int MAX_TERRAIN_HEIGHT =
       (int)(WORLD_HEIGHT / VOXEL_SCALE); // in voxel
   explicit TerrainGenerator(int seed, float frequency = 0.015f);
 
   Chunk GenerateChunk(int chunkX, int chunkY, int chunkZ, int lod) const;
+  void UpdateConfig(Parameter param, float value);
 
 private:
   FastNoiseLite m_noise;

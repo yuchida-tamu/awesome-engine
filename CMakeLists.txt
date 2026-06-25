@@ -250,6 +250,7 @@ if(BUILD_TESTING)
         tests/TerrainGeneratorTests.cpp
         tests/CoordsTests.cpp
         tests/FpsCounterTests.cpp
+        tests/ReconcileTests.cpp
         src/voxel/ChunkMesher.cpp
         src/voxel/GreedyMesher.cpp
         src/voxel/TerrainGenerator.cpp

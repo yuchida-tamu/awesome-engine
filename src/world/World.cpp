@@ -9,6 +9,7 @@
 #include "voxel/TerrainGenerator.h"
 #include "voxel/VoxelChunk.h"
 #include "world/Coords.h"
+#include "world/Reconcile.h"
 #include <memory>
 #include <unordered_set>
 #include <utility>
@@ -48,42 +49,44 @@ void World::Update(Scene &scene, Shader &shader, int centerX, int centerZ,
     }
   }
 
-  // Phase 2: load missing desired chunkc, at most kLoadBudget per call
-  // so a boundary crossing spreads is cost over several frames
-  // Loads per frame. Higher = transition strips fill faster (less LOD-change
-  // flicker), at the cost of a heavier frame on big boundary crossings. -O3
-  // gives us the headroom; 2 was a conservative -O0-era value.
+  // Phase 2: decide what to load/unload. kLoadBudget caps loads per call so a
+  // boundary crossing spreads its cost over several frames. Higher = transition
+  // strips fill faster (less LOD-change flicker), at the cost of a heavier frame
+  // on big boundary crossings. -O3 gives us the headroom; 2 was a conservative
+  // -O0-era value. The decision itself is a pure function (PlanReconcile) so it
+  // can be unit-tested without a Scene/Shader.
   constexpr int kLoadBudget = 6;
-  int loaded = 0;
-  bool allLoaded = true;
-  for (int64_t key : desired) {
-    if (m_map.count(key) != 0) {
-      continue; // already loaded
-    }
-    if (loaded >= kLoadBudget) {
-      allLoaded = false;
-      break;
-    }
+  std::unordered_set<int64_t> loadedKeys;
+  loadedKeys.reserve(m_map.size());
+  for (const auto &entry : m_map) {
+    loadedKeys.insert(entry.first);
+  }
+  ReconcilePlan plan = PlanReconcile(desired, loadedKeys, kLoadBudget);
 
+  // Phase 3: execute the plan against the scene.
+  for (int64_t key : plan.toLoad) {
     auto [cx, cy, cz, lod] = DecodeKey(key);
     loadChunk(scene, shader, cx, cy, cz, lod);
-    ++loaded;
+  }
+  for (int64_t key : plan.toUnload) {
+    auto it = m_map.find(key);
+    if (it == m_map.end()) {
+      continue;
+    }
+    m_totalQuads -= it->second.quadCount;
+    if (it->second.object) {
+      scene.RemoveGameObject(it->second.object);
+    }
+    m_map.erase(it);
   }
 
-  // Phase 3: unload anything no longer desired
-  for (auto it = m_map.begin(); it != m_map.end();) {
-    if (desired.count(it->first) == 0) {
-      m_totalQuads -= it->second.quadCount;
-      if (it->second.object) {
-        scene.RemoveGameObject(it->second.object);
-      }
-      it = m_map.erase(it);
-    } else {
-      ++it;
-    }
-  }
   m_currentCoord = {centerX, centerZ};
-  m_fullyLoaded = allLoaded;
+  m_fullyLoaded = plan.allLoaded;
+}
+
+void World::UpdateTerrainConfig(TerrainGenerator::Parameter param,
+                                float value) {
+  m_generator.UpdateConfig(param, value);
 }
 
 void World::loadChunk(Scene &scene, Shader &shader, int chunkX, int chunkY,

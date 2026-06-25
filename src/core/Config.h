@@ -17,6 +17,6 @@ constexpr float DEFAULT_CAMERA_SPEED = 20.5f;
 
 // Projection configuration
 constexpr float FOV = 45.0f;
-constexpr float NEAR_PLANE = 0.1f;
-constexpr float FAR_PLANE = 400.0f; // ~matches LOD reach (R=2, MAX_LOD=5 -> ~410m)
+constexpr float NEAR_PLANE = 0.5f;
+constexpr float FAR_PLANE = 1600.0f; // ~matches LOD reach (R=2, MAX_LOD=7 -> ~1638m)
 } // namespace Config

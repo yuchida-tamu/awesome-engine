@@ -29,6 +29,7 @@
 #include "ui/DebugPanel.h"
 #include "ui/UIElement.h"
 #include "ui/UIManager.h"
+#include "voxel/TerrainGenerator.h"
 #include "world/Coords.h"
 #include "world/World.h"
 
@@ -118,6 +119,8 @@ int main() {
     Shader cubeShader("shaders/cube.vert.glsl", "shaders/cube.frag.glsl");
 
     World world;
+    world.UpdateTerrainConfig(TerrainGenerator::FREQUENCY, 0.00025);
+    world.UpdateTerrainConfig(TerrainGenerator::NOISE_AMP, 50);
 
     FpsCounter fpsCounter;
     DebugPanel debugPanel(uiManager);

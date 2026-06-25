@@ -11,6 +11,7 @@ VoxelChunk::VoxelChunk(const Chunk &chunk) : m_mesh(buildMesh(chunk)) {}
 void VoxelChunk::Draw(Shader &shader) { m_mesh.Draw(shader); }
 
 Mesh VoxelChunk::buildMesh(const Chunk &chunk) {
-  MeshData meshData = GreedyMesher::Build(chunk);
+  // MeshData meshData = GreedyMesher::Build(chunk);
+  MeshData meshData = ChunkMesher::Build(chunk);
   return Mesh(std::move(meshData.vertices), {}, std::move(meshData.indices));
 }
