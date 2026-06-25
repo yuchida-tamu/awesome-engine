@@ -16,7 +16,7 @@ public:
     int z;
   };
 
-  static constexpr int MAX_LOD = 7;
+  static constexpr int MAX_LOD = 5;
 
   World(int seed = 1337);
   void Update(Scene &scene, Shader &shader, int centerX, int centerZ,
