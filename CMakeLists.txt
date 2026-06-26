@@ -246,11 +246,11 @@ if(BUILD_TESTING)
         tests/ChunkTests.cpp
         tests/ChunkMesherTests.cpp
         tests/GreedyMesherTests.cpp
-        tests/BlockTests.cpp
         tests/TerrainGeneratorTests.cpp
         tests/CoordsTests.cpp
         tests/FpsCounterTests.cpp
         tests/ReconcileTests.cpp
+        tests/DesiredSetTests.cpp
         src/voxel/ChunkMesher.cpp
         src/voxel/GreedyMesher.cpp
         src/voxel/TerrainGenerator.cpp

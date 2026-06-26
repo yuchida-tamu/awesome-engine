@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstdint>
 #include <tuple>
+#include <unordered_set>
 
 // VOXEL_SCALE comes from voxel/Chunk.h. The world span of one chunk.
 inline constexpr float CHUNK_WORLD_SIZE = Chunk::SIZE * VOXEL_SCALE;
@@ -66,4 +67,46 @@ inline int NumVerticalChunks(int height, int level) {
   // of a rounding issue.
   auto step = Chunk::SIZE * (1 << level);
   return ceil((height + step - 1) / step);
+}
+
+inline std::unordered_set<int64_t> ComputeDesired(int centerX, int centerZ,
+                                                  int radius, int maxLOD,
+                                                  int maxHeight) {
+
+  std::unordered_set<int64_t> desired;
+
+  for (int lod = 0; lod <= maxLOD; ++lod) {
+    int centerAtLevelX = CenterAtLevel(centerX, lod);
+    int centerAtLevelZ = CenterAtLevel(centerZ, lod);
+    int finerCenterAtLevelX = CenterAtLevel(centerX, lod - 1);
+    int finerCenterAtLevelZ = CenterAtLevel(centerZ, lod - 1);
+    int verticalChunks = NumVerticalChunks(maxHeight, lod);
+
+    for (int cx = centerAtLevelX - radius; cx <= centerAtLevelX + radius;
+         ++cx) {
+      for (int cz = centerAtLevelZ - radius; cz <= centerAtLevelZ + radius;
+           ++cz) {
+        // Check if the chunk's whole sibling pair is inside the radius
+        // If not, it should not load yet to avoid overlapping with still loaded
+        // coarser chunks
+        int baseX = (cx % 2 == 0) ? cx : cx - 1;
+        int baseZ = (cz % 2 == 0) ? cz : cz - 1;
+        bool pairInX = baseX >= centerAtLevelX - radius &&
+                       baseX + 1 <= centerAtLevelX + radius;
+        bool pairInZ = baseZ >= centerAtLevelZ - radius &&
+                       baseZ + 1 <= centerAtLevelZ + radius;
+        if (!(pairInX && pairInZ))
+          continue;
+
+        if (lod > 0 && CoveredByFiner(cx, cz, finerCenterAtLevelX,
+                                      finerCenterAtLevelZ, radius)) {
+          continue;
+        }
+        for (int cy = 0; cy < verticalChunks; ++cy) {
+          desired.insert(EncodeKey(cx, cy, cz, lod));
+        }
+      }
+    }
+  }
+  return desired;
 }

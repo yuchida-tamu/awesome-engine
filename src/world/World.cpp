@@ -10,6 +10,7 @@
 #include "voxel/VoxelChunk.h"
 #include "world/Coords.h"
 #include "world/Reconcile.h"
+#include <cstdint>
 #include <memory>
 #include <unordered_set>
 #include <utility>
@@ -25,30 +26,8 @@ void World::Update(Scene &scene, Shader &shader, int centerX, int centerZ,
 
   // Phase 1: enumerate the full desired set across all LOD rings. No budget. No
   // loading
-  std::unordered_set<int64_t> desired;
-  for (int lod = 0; lod <= MAX_LOD; ++lod) {
-    int centerAtLevelX = CenterAtLevel(centerX, lod);
-    int centerAtLevelZ = CenterAtLevel(centerZ, lod);
-    int finerCenterAtLevelX = CenterAtLevel(centerX, lod - 1);
-    int finerCenterAtLevelZ = CenterAtLevel(centerZ, lod - 1);
-    int verticalChunks =
-        NumVerticalChunks(TerrainGenerator::MAX_TERRAIN_HEIGHT, lod);
-
-    for (int cx = centerAtLevelX - radius; cx <= centerAtLevelX + radius;
-         ++cx) {
-      for (int cz = centerAtLevelZ - radius; cz <= centerAtLevelZ + radius;
-           ++cz) {
-        if (lod > 0 && CoveredByFiner(cx, cz, finerCenterAtLevelX,
-                                      finerCenterAtLevelZ, radius)) {
-          continue;
-        }
-        for (int cy = 0; cy < verticalChunks; ++cy) {
-          desired.insert(EncodeKey(cx, cy, cz, lod));
-        }
-      }
-    }
-  }
-
+  std::unordered_set<int64_t> desired = ComputeDesired(
+      centerX, centerZ, radius, MAX_LOD, TerrainGenerator::MAX_TERRAIN_HEIGHT);
   // Phase 2: decide what to load/unload. kLoadBudget caps loads per call so a
   // boundary crossing spreads its cost over several frames. Higher = transition
   // strips fill faster (less LOD-change flicker), at the cost of a heavier
