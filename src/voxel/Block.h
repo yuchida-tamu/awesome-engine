@@ -1,13 +1,19 @@
 #pragma once
 #include <cstdint>
+#include <cstdlib>
 #include <glm/glm.hpp>
 
 enum class BlockType : uint8_t { Air = 0, Solid = 1 };
 
+// return a random valud between 0.0 and 1.0
+inline float randFloadScaler() {
+  return static_cast<float>(std::rand()) / static_cast<float>(RAND_MAX);
+}
+
 inline glm::vec3 BlockColor(uint8_t id) {
   switch (static_cast<BlockType>(id)) {
   default: {
-    return {0.7f, 0.7f, 0.7f};
+    return {randFloadScaler(), randFloadScaler(), randFloadScaler()};
   }
   }
 }

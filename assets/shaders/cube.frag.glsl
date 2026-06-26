@@ -18,7 +18,7 @@ void main() {
     // Ambient
     float ambientStrength = 0.5;
     //vec3 ambient = ambientStrength * vec3(1.0);
-    vec3 ambient = ambientStrength * colorOverlay;
+    vec3 ambient = ambientStrength * colorOverlay * Color;
 
     // Diffuse
     float diff = max(dot(norm, lightDir), 0.0);
