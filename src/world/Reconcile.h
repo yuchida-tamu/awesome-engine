@@ -30,7 +30,7 @@ inline ReconcilePlan PlanReconcile(const std::unordered_set<int64_t> &desired,
   // Load missing desired chunks, up to the per-frame budget.
   for (int64_t key : desired) {
     if (loaded.count(key) != 0) {
-      continue; // already loaded
+      continue;
     }
     if (static_cast<int>(plan.toLoad.size()) < budget) {
       plan.toLoad.push_back(key);

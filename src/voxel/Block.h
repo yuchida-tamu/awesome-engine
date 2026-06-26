@@ -19,3 +19,22 @@ inline bool IsAir(uint8_t id) {
 inline bool IsSolid(uint8_t id) {
   return id != static_cast<uint8_t>(BlockType::Air);
 }
+
+inline glm::vec3 GetColorByLOD(int lod) {
+  switch (lod) {
+  case 0:
+    return {0.1, 0.4, 0.5};
+  case 1:
+    return {0.1, 0.3, 0.6};
+  case 2:
+    return {0.2, 0.2, 0.7};
+  case 3:
+    return {0.4, 0.1, 0.7};
+  case 4:
+    return {0.7, 0.2, 0.5};
+  case 5:
+    return {0.3, 0.8, 0.4};
+  default:
+    return {0.9, 0.1, 0.3};
+  }
+}

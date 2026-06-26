@@ -8,6 +8,7 @@ in vec3 Color;
 out vec4 FragColor;
 
 uniform sampler2D texture_diffuse1;
+uniform vec3 colorOverlay;
 
 void main() {
     // Simple directional light
@@ -15,13 +16,13 @@ void main() {
     vec3 norm = normalize(Normal);
 
     // Ambient
-    float ambientStrength = 0.3;
+    float ambientStrength = 0.5;
     //vec3 ambient = ambientStrength * vec3(1.0);
-    vec3 ambient = ambientStrength * Color;
+    vec3 ambient = ambientStrength * colorOverlay;
 
     // Diffuse
     float diff = max(dot(norm, lightDir), 0.0);
-    vec3 diffuse = diff * vec3(1.0);
+    vec3 diffuse = diff * colorOverlay;
 
     // Sample texture
     vec4 texColor = texture(texture_diffuse1, TexCoords);

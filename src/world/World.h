@@ -16,6 +16,8 @@ public:
     int z;
   };
 
+  enum class ColorMode { Default, LOD };
+
   static constexpr int MAX_LOD = 5;
 
   World(int seed = 1337);
@@ -34,6 +36,7 @@ private:
   // Update keeps working across frames until the region is fully streamed in.
   bool m_fullyLoaded = false;
   Coord m_currentCoord;
+  glm::vec3 m_defaultColor{0.5, 0.5, 0.5};
 
   TerrainGenerator m_generator;
   // A loaded chunk: its scene object plus the quad count of its mesh, so the

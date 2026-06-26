@@ -51,10 +51,10 @@ void World::Update(Scene &scene, Shader &shader, int centerX, int centerZ,
 
   // Phase 2: decide what to load/unload. kLoadBudget caps loads per call so a
   // boundary crossing spreads its cost over several frames. Higher = transition
-  // strips fill faster (less LOD-change flicker), at the cost of a heavier frame
-  // on big boundary crossings. -O3 gives us the headroom; 2 was a conservative
-  // -O0-era value. The decision itself is a pure function (PlanReconcile) so it
-  // can be unit-tested without a Scene/Shader.
+  // strips fill faster (less LOD-change flicker), at the cost of a heavier
+  // frame on big boundary crossings. -O3 gives us the headroom; 2 was a
+  // conservative -O0-era value. The decision itself is a pure function
+  // (PlanReconcile) so it can be unit-tested without a Scene/Shader.
   constexpr int kLoadBudget = 6;
   std::unordered_set<int64_t> loadedKeys;
   loadedKeys.reserve(m_map.size());
@@ -102,7 +102,7 @@ void World::loadChunk(Scene &scene, Shader &shader, int chunkX, int chunkY,
 
   // Build the mesh first so we can record its quad count in the running
   // total, then hand the VoxelChunk off to the render component.
-  auto voxelChunk = std::make_unique<VoxelChunk>(chunk);
+  auto voxelChunk = std::make_unique<VoxelChunk>(chunk, lod);
   size_t quadCount = voxelChunk->GetQuadCount();
   m_totalQuads += quadCount;
   m_map[EncodeKey(chunkX, chunkY, chunkZ, lod)] = {chunkObj.get(), quadCount};

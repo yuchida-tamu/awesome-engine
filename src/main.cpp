@@ -19,6 +19,7 @@
 
 #include "cameras/Camera.h"
 #include "debug/FpsCounter.h"
+#include "glm/gtc/type_ptr.hpp"
 #include "rendering/Shader.h"
 #include "scene/CameraController.h"
 #include "scene/GameObject.h"
@@ -128,6 +129,8 @@ int main() {
     GridGizmo gridGizmo{};
 
     bool wireframe = false; // toggled with F: GL_LINE vs GL_FILL
+
+    glm::vec3 overlayColor{1.0, 0.0, 0.0};
 
     // Main loop
     while (!glfwWindowShouldClose(window)) {
