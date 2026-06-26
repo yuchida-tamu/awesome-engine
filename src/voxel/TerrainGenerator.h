@@ -22,7 +22,6 @@ public:
 #else
 private:
 #endif
-  static uint8_t getBlockIdForDepth(int depth);
 
   static float voxelToWorld(int chunkCoord, int local, int lod);
 

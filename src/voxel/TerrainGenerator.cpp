@@ -49,7 +49,7 @@ Chunk TerrainGenerator::GenerateChunk(int chunkX, int chunkY, int chunkZ,
         int worldY = chunkY * Chunk::SIZE + y; // y cell position in world
         if (worldY < surfaceY) {
           int depth = (surfaceY - 1) - worldY;
-          chunk.SetBlock(x, y, z, getBlockIdForDepth(depth));
+          chunk.SetBlock(x, y, z, static_cast<uint8_t>(BlockType::Solid));
         }
         // else: leave air
       }
@@ -57,18 +57,6 @@ Chunk TerrainGenerator::GenerateChunk(int chunkX, int chunkY, int chunkZ,
   }
 
   return chunk;
-}
-
-uint8_t TerrainGenerator::getBlockIdForDepth(int depth) {
-  if (depth == 0) {
-    return static_cast<uint8_t>(BlockType::Grass);
-  }
-
-  if (depth <= 3) {
-    return static_cast<uint8_t>(BlockType::Dirt);
-  }
-
-  return static_cast<uint8_t>(BlockType::Stone);
 }
 
 float TerrainGenerator::voxelToWorld(int chunkCoord, int local, int lod) {

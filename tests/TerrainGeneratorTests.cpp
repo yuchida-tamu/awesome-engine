@@ -6,6 +6,7 @@
 #include "voxel/TerrainGenerator.h"
 
 #include <cmath>
+#include <cstdint>
 
 // These tests assume the vertical-chunking model:
 //   - GenerateChunk(cx, cy, cz) fills the world-Y slice [cy*SIZE, (cy+1)*SIZE).
@@ -18,10 +19,6 @@
 
 namespace {
 
-const int GRASS = static_cast<uint8_t>(BlockType::Grass);
-const int DIRT = static_cast<uint8_t>(BlockType::Dirt);
-const int STONE = static_cast<uint8_t>(BlockType::Stone);
-
 bool chunksIdentical(const Chunk &a, const Chunk &b) {
   for (int z = 0; z < Chunk::SIZE; ++z)
     for (int y = 0; y < Chunk::SIZE; ++y)
@@ -33,8 +30,8 @@ bool chunksIdentical(const Chunk &a, const Chunk &b) {
 
 // Topmost solid voxel (world-Y) for one column, scanning the full vertical
 // stack from the top down. Surface-relative tests use this instead of poking a
-// fixed chunk, since which chunk holds the surface depends on WORLD_HEIGHT (at a
-// tall world the bottom chunk is just bedrock and is identical everywhere).
+// fixed chunk, since which chunk holds the surface depends on WORLD_HEIGHT (at
+// a tall world the bottom chunk is just bedrock and is identical everywhere).
 int surfaceHeightAt(const TerrainGenerator &gen, int chunkX, int chunkZ,
                     int localX, int localZ) {
   int stack =
@@ -81,7 +78,8 @@ bool columnHasNoFloating(const Chunk &chunk, int x, int z) {
 TEST_CASE("TerrainGenerator - same seed and coords produce identical terrain") {
   TerrainGenerator a(1337);
   TerrainGenerator b(1337);
-  CHECK(chunksIdentical(a.GenerateChunk(2, 1, 5, 0), b.GenerateChunk(2, 1, 5, 0)));
+  CHECK(chunksIdentical(a.GenerateChunk(2, 1, 5, 0),
+                        b.GenerateChunk(2, 1, 5, 0)));
 }
 
 TEST_CASE("TerrainGenerator - different horizontal coords differ") {
@@ -108,7 +106,8 @@ TEST_CASE("TerrainGenerator - different seeds produce different terrain") {
 // WORLD-HEIGHT DERIVATION
 // ===================================================================
 
-TEST_CASE("TerrainGenerator - terrain height is derived from a fixed world height") {
+TEST_CASE(
+    "TerrainGenerator - terrain height is derived from a fixed world height") {
   // MAX_TERRAIN_HEIGHT is a voxel count, but it must represent WORLD_HEIGHT
   // meters regardless of VOXEL_SCALE, so terrain depth stays constant as voxel
   // resolution changes (e.g. 25cm -> 10cm). Equal to within one voxel (floor).
@@ -131,14 +130,16 @@ TEST_CASE("TerrainGenerator - a chunk below the surface is entirely solid") {
 TEST_CASE("TerrainGenerator - a chunk above the max height is entirely air") {
   TerrainGenerator gen(1337);
   // Lowest worldY of this chunk is >= MAX_TERRAIN_HEIGHT, above every surface.
-  int cy = (TerrainGenerator::MAX_TERRAIN_HEIGHT + Chunk::SIZE - 1) / Chunk::SIZE;
+  int cy =
+      (TerrainGenerator::MAX_TERRAIN_HEIGHT + Chunk::SIZE - 1) / Chunk::SIZE;
   Chunk above = gen.GenerateChunk(0, cy, 0, 0);
   CHECK(solidCount(above) == 0);
 }
 
-TEST_CASE("TerrainGenerator - solid voxel count is non-increasing with height") {
-  // For a fixed column stack, lower chunks hold at least as much solid as higher
-  // ones (the surface is a single threshold).
+TEST_CASE(
+    "TerrainGenerator - solid voxel count is non-increasing with height") {
+  // For a fixed column stack, lower chunks hold at least as much solid as
+  // higher ones (the surface is a single threshold).
   TerrainGenerator gen(1337);
   int below = solidCount(gen.GenerateChunk(0, -1, 0, 0));
   int mid = solidCount(gen.GenerateChunk(0, 0, 0, 0));
@@ -147,15 +148,17 @@ TEST_CASE("TerrainGenerator - solid voxel count is non-increasing with height") 
   CHECK(mid >= high);
 }
 
-TEST_CASE("TerrainGenerator - surface height is LOD-independent (same world height)") {
-  // e=1 is the tallest column. Its world-space height must be ~the same at every
-  // LOD so coarse terrain is as tall as fine. It's exact only when
+TEST_CASE("TerrainGenerator - surface height is LOD-independent (same world "
+          "height)") {
+  // e=1 is the tallest column. Its world-space height must be ~the same at
+  // every LOD so coarse terrain is as tall as fine. It's exact only when
   // MAX_TERRAIN_HEIGHT divides by 2^lod; otherwise the per-LOD voxel cap
   // truncates, so we allow up to one level-L voxel of difference.
   float refHeight = TerrainGenerator::surfaceVoxelY(1.0f, 0) * VoxelSize(0);
   for (int lod = 0; lod <= 3; ++lod) {
     int sv = TerrainGenerator::surfaceVoxelY(1.0f, lod);
-    CHECK(sv == TerrainGenerator::MAX_TERRAIN_HEIGHT / (1 << lod)); // level-L voxel cap
+    CHECK(sv == TerrainGenerator::MAX_TERRAIN_HEIGHT /
+                    (1 << lod)); // level-L voxel cap
     float worldHeight = sv * VoxelSize(lod);
     CHECK(std::abs(worldHeight - refHeight) < VoxelSize(lod));
   }
@@ -164,16 +167,17 @@ TEST_CASE("TerrainGenerator - surface height is LOD-independent (same world heig
         TerrainGenerator::MAX_TERRAIN_HEIGHT / 2);
 }
 
-TEST_CASE("TerrainGenerator - terrain height is LOD-independent (coarse not taller)") {
+TEST_CASE("TerrainGenerator - terrain height is LOD-independent (coarse not "
+          "taller)") {
   // The surface caps at the SAME world height at every LOD. In level-L voxels
-  // that cap is MAX_TERRAIN_HEIGHT / 2^L, so a chunk whose whole worldY range is
-  // above it must be all air. The bug made coarse terrain 2^L times too tall, so
-  // these "above the cap" chunks came back solid.
+  // that cap is MAX_TERRAIN_HEIGHT / 2^L, so a chunk whose whole worldY range
+  // is above it must be all air. The bug made coarse terrain 2^L times too
+  // tall, so these "above the cap" chunks came back solid.
   TerrainGenerator gen(1337);
   for (int lod = 0; lod <= 2; ++lod) {
     int step = Chunk::SIZE * (1 << lod);
-    int aboveCy =
-        (TerrainGenerator::MAX_TERRAIN_HEIGHT + step - 1) / step; // first cy past the cap
+    int aboveCy = (TerrainGenerator::MAX_TERRAIN_HEIGHT + step - 1) /
+                  step; // first cy past the cap
     bool allAir = true;
     for (int cz = -2; cz <= 2; ++cz)
       for (int cx = -2; cx <= 2; ++cx)
@@ -249,10 +253,14 @@ TEST_CASE("TerrainGenerator - surface is grass over dirt over stone") {
             ++run;
           if (run >= 5 && run < Chunk::SIZE) {
             int top = run - 1;
-            CHECK(chunk.BlockAt(x, top, z) == GRASS);     // depth 0 (surface)
-            CHECK(chunk.BlockAt(x, top - 1, z) == DIRT);  // depth 1
-            CHECK(chunk.BlockAt(x, top - 3, z) == DIRT);  // depth 3 (last dirt)
-            CHECK(chunk.BlockAt(x, top - 4, z) == STONE); // depth 4 (first stone)
+            CHECK(chunk.BlockAt(x, top, z) ==
+                  static_cast<uint8_t>(BlockType::Solid));
+            CHECK(chunk.BlockAt(x, top - 1, z) ==
+                  static_cast<uint8_t>(BlockType::Solid));
+            CHECK(chunk.BlockAt(x, top - 3, z) ==
+                  static_cast<uint8_t>(BlockType::Solid));
+            CHECK(chunk.BlockAt(x, top - 4, z) ==
+                  static_cast<uint8_t>(BlockType::Solid));
             checked = true;
           }
         }
@@ -266,7 +274,8 @@ TEST_CASE("TerrainGenerator - surface is grass over dirt over stone") {
 // VOXEL -> WORLD MAPPING (horizontal cross-chunk continuity)
 // ===================================================================
 
-TEST_CASE("TerrainGenerator - voxelToWorld scales voxel indices to world units") {
+TEST_CASE(
+    "TerrainGenerator - voxelToWorld scales voxel indices to world units") {
   CHECK(TerrainGenerator::voxelToWorld(0, 0, 0) == doctest::Approx(0.0f));
   CHECK(TerrainGenerator::voxelToWorld(0, 4, 0) ==
         doctest::Approx(4 * VOXEL_SCALE));
@@ -275,7 +284,8 @@ TEST_CASE("TerrainGenerator - voxelToWorld scales voxel indices to world units")
         doctest::Approx(Chunk::SIZE * VOXEL_SCALE));
 }
 
-TEST_CASE("TerrainGenerator - voxelToWorld is continuous across chunk borders") {
+TEST_CASE(
+    "TerrainGenerator - voxelToWorld is continuous across chunk borders") {
   // The last voxel of one chunk and the first of the next must be exactly one
   // voxel-step apart in world space, so terrain tiles seamlessly. (The earlier
   // `chunkX*VOXEL_SCALE + x` bug made this gap huge.)
@@ -288,7 +298,8 @@ TEST_CASE("TerrainGenerator - voxelToWorld is continuous across chunk borders") 
         doctest::Approx(VOXEL_SCALE));
 }
 
-TEST_CASE("TerrainGenerator - voxelToWorld scales with LOD (coarser = bigger)") {
+TEST_CASE(
+    "TerrainGenerator - voxelToWorld scales with LOD (coarser = bigger)") {
   // A level-1 voxel spans twice the world distance of a level-0 voxel; level 2,
   // four times. This is what makes coarse chunks cover more world.
   CHECK(TerrainGenerator::voxelToWorld(0, 4, 1) ==
