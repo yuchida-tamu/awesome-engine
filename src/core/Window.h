@@ -13,6 +13,8 @@ public:
   void EndFrame();
   void Close();
 
+  float GetTime();
+
   void SetKeyCallback(void callback(GLFWwindow *window, int key, int scancode,
                                     int action, int mods));
 

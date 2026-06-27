@@ -59,6 +59,8 @@ void Window::EndFrame() {
 
 void Window::Close() { glfwSetWindowShouldClose(m_window, true); }
 
+float Window::GetTime() { return glfwGetTime(); }
+
 void Window::SetKeyCallback(void callback(GLFWwindow *window, int key,
                                           int scancode, int action, int mods)) {
   glfwSetKeyCallback(m_window, callback);
