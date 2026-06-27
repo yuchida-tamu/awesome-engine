@@ -35,9 +35,10 @@ else()
     message(WARNING "Assimp not found via find_package. You may need to install it: brew install assimp")
 endif()
 
-# Add our executable target with all its source files
-add_executable(awesome-engine
-    src/main.cpp
+# ===================================================================
+# Engine Library Setup
+# ===================================================================
+set(ENGINE_SOURCES 
     vendor/glad/src/glad.c
     vendor/loader/src/stb_image.cpp
     src/cameras/Camera.cpp
@@ -68,32 +69,24 @@ add_executable(awesome-engine
     src/voxel/TerrainGenerator.cpp
     src/world/World.cpp
 )
-
-# Tell our target where to find its public header files
-# This is especially important for IntelliSense to work correctly
-target_include_directories(awesome-engine PUBLIC
-    ${CMAKE_SOURCE_DIR}/src
-    ${CMAKE_SOURCE_DIR}/vendor/glad/include
-    ${CMAKE_SOURCE_DIR}/vendor/loader/include
-    ${CMAKE_SOURCE_DIR}/vendor/glm
-    ${CMAKE_SOURCE_DIR}/vendor/FastnoiseLite
+set(ENGINE_INCLUDES   ${CMAKE_SOURCE_DIR}/src
+  ${CMAKE_SOURCE_DIR}/vendor/glad/include
+  ${CMAKE_SOURCE_DIR}/vendor/loader/include
+  ${CMAKE_SOURCE_DIR}/vendor/glm
+  ${CMAKE_SOURCE_DIR}/vendor/FastNoiseLite
 )
-
-# Add Assimp include directories if found
+add_library(engine STATIC ${ENGINE_SOURCES}) # production, no UNIT_TEST
+target_include_directories(engine PUBLIC ${ENGINE_INCLUDES})
+target_link_libraries(engine PUBLIC glfw OpenGL::GL Freetype::Freetype)
 if(assimp_FOUND)
-    target_include_directories(awesome-engine PUBLIC ${assimp_INCLUDE_DIRS})
+    target_include_directories(engine PUBLIC ${assimp_INCLUDE_DIRS})
 endif()
+add_executable(awesome-engine src/main.cpp)
+target_link_libraries(awesome-engine PRIVATE engine)
 
-# Link the libraries.
-# The order is important here. We link our executable to GLFW.
-# GLFW then needs to link to the system's OpenGL library.
-target_link_libraries(awesome-engine PRIVATE glfw OpenGL::GL Freetype::Freetype)
-
-# Link Assimp if available
 if(assimp_FOUND)
-    target_link_libraries(awesome-engine PRIVATE assimp::assimp)
+  target_link_libraries(awesome-engine PRIVATE assimp::assimp)
 endif()
-
 
 # Define the output directory for the shaders
 set(SHADER_OUTPUT_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/shaders)
@@ -228,6 +221,12 @@ if(BUILD_TESTING)
     # Enable the CTest module, which helps run tests
     enable_testing()
 
+    add_library(engine_test STATIC ${ENGINE_SOURCES})
+    target_include_directories(engine_test PUBLIC ${ENGINE_INCLUDES})
+    target_link_libraries(engine_test PUBLIC glfw OpenGL::GL Freetype::Freetype)
+    target_compile_definitions(engine_test PUBLIC UNIT_TEST)
+
+
     # Add a new executable for our tests.
     # It needs to compile the test files AND the source files they depend on.
     add_executable(run-tests
@@ -250,40 +249,18 @@ if(BUILD_TESTING)
         tests/CoordsTests.cpp
         tests/FpsCounterTests.cpp
         tests/ReconcileTests.cpp
-        tests/DesiredSetTests.cpp
-        src/voxel/ChunkMesher.cpp
-        src/voxel/GreedyMesher.cpp
-        src/voxel/TerrainGenerator.cpp
-        src/core/Input.cpp
-        src/cameras/Camera.cpp
-        src/scene/CameraController.cpp
-        src/scene/GameObject.cpp
-        src/scene/Scene.cpp
-        src/ui/UIManager.cpp
-        src/ui/TextElement.cpp
-        src/ui/ButtonElement.cpp
-        src/rendering/Shader.cpp
-        vendor/glad/src/glad.c
+        tests/DesiredSetTests.cpp)
+
+    target_include_directories(run-tests PRIVATE
+      ${CMAKE_SOURCE_DIR}/vendor/doctest
+      ${CMAKE_SOURCE_DIR}/tests
     )
-
-    # Add a compile definition to expose private members for testing
-    target_compile_definitions(run-tests PRIVATE UNIT_TEST)
-
-    # The test executable needs to know where to find headers, just like our main app.
-    target_include_directories(run-tests PUBLIC
-        ${CMAKE_SOURCE_DIR}/src
-        ${CMAKE_SOURCE_DIR}/vendor/doctest
-        # We need GLFW headers because Input.h includes it
-        ${CMAKE_SOURCE_DIR}/vendor/glfw/include
-        ${CMAKE_SOURCE_DIR}/vendor/glad/include
-        ${CMAKE_SOURCE_DIR}/vendor/glm
-        ${CMAKE_SOURCE_DIR}/vendor/FastNoiseLite
-        ${CMAKE_SOURCE_DIR}/tests
-    )
-
+    
     # Link the test executable to the libraries it needs.
     # We need GLFW because the Input class calls GLFW functions.
-    target_link_libraries(run-tests PRIVATE glfw Freetype::Freetype)
+    # target_link_libraries(run-tests PRIVATE glfw Freetype::Freetype)
+    target_link_libraries(run-tests PRIVATE engine_test)
+
 
     # Add the test to CTest so we can run it easily
     add_test(NAME AllTests COMMAND run-tests)
