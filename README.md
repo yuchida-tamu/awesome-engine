@@ -11,9 +11,9 @@ A modern OpenGL 4.1 graphics engine built with C++17, GLFW, and GLAD, evolving t
 - **First-person camera** with mouse look and keyboard movement
 - **Texturing** via stb_image (PNG/JPG)
 - **Model loading** through Assimp
-- **Voxel terrain** — procedural heightmap generation (FastNoiseLite: fBm + OpenSimplex2 + domain warp) meshed with greedy meshing
-- **World streaming** — chunks generate, load, and unload around the camera
-- **Block types** — grass / dirt / stone with depth-based layering and per-vertex colors
+- **Voxel terrain** — procedural heightmap (FastNoiseLite: fBm + OpenSimplex2 + domain warp) with 3D (vertical) chunking and runtime-tunable noise; ~10 cm voxels near the player. Meshed to triangle geometry (a simple per-face mesher and a greedy mesher are both available).
+- **Level-of-detail streaming** — camera-centered clipmap rings: fine voxels near the player, progressively coarser with distance, with exactly one LOD per region and **load-before-unload** transitions (no holes or popping)
+- **General voxels** — a single solid/air voxel type (no game-specific block materials); a debug view color-codes voxels by their LOD level
 - **Debug overlay** — live FPS, chunk/quad counts, and camera position (toggle with F3)
 - **Unit testing** with doctest
 
@@ -27,28 +27,31 @@ This is an active work-in-progress; internal structure and APIs change frequentl
 
 - [x] Core renderer: shaders, camera, input, textures, lighting
 - [x] Mesh abstraction + model loading (Assimp)
-- [x] Chunk data structure + greedy meshing (voxel geometry)
+- [x] Chunk data structure + meshing (greedy + simple per-face)
 - [x] Render chunks within the Scene
-- [x] Heightmap terrain generation (FastNoiseLite: fBm + OpenSimplex2 + domain warp)
+- [x] Heightmap terrain generation (FastNoiseLite: fBm + OpenSimplex2 + domain warp), runtime-tunable
+- [x] 3D (vertical) chunking — chunks stack in Y for vertical voxel range
 - [x] Multi-chunk world streaming (camera-centered, per-frame load budget)
-- [x] Block types with depth layering (grass / dirt / stone) + per-vertex colors
-- [x] Configurable, resolution-independent voxel scale
+- [x] Level-of-detail streaming — clipmap rings, fine near / coarse far
+- [x] Load-before-unload LOD transitions — gap-free, no holes or popping
+- [x] Correct LOD ring tiling — exactly one LOD per region (no overlap, no gaps)
+- [x] Configurable, resolution-independent voxel scale (~10 cm near the player)
+- [x] General voxel model — single solid/air type (game-specific materials removed) + LOD-debug color view
 - [x] Debug overlay (FPS, chunk/quad counts, camera) + wireframe toggle
 - [x] Optimized (`-O3`) Release build by default
 
 **Next — small-voxel FPS foundation** (roughly in order)
 
-- [ ] 3D (vertical) chunking — stack chunks in Y so small voxels have vertical range _(immediate next step)_
-- [ ] Level-of-detail (LOD) streaming — fine voxels near the player, coarser with distance (the core enabler for ~10 cm at range; seams hidden with skirts)
-- [ ] Threaded chunk generation — keep frame time stable at high voxel density
+- [ ] Threaded chunk generation — move generation/meshing off the main thread to keep frame time stable while moving
 - [ ] Frustum culling — skip chunks outside the view
+- [ ] Per-voxel ambient occlusion — the aesthetic driver behind the per-face mesher (greedy meshing conflicts with per-voxel AO)
 - [ ] Player–voxel collision — make it a true first-person experience (also the basis for debris physics)
 
 **Then — destruction & content**
 
 - [ ] Destructible objects — discrete voxel objects + debris physics, near-field (Teardown-style)
 - [ ] Terrain digging — carve/remove terrain voxels
-- [ ] Visual & content polish (slotted in opportunistically): biomes, ambient occlusion, block textures / atlas, wiring up the multi-light Phong shaders
+- [ ] Visual & content polish (slotted in opportunistically): biomes, block textures / atlas, wiring up the multi-light Phong shaders
 
 **Possible pivot**
 
