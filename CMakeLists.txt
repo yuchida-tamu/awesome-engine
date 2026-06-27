@@ -45,6 +45,7 @@ set(ENGINE_SOURCES
     src/core/Input.cpp
     src/core/Window.cpp
     src/core/TextureLoader.cpp
+    src/core/LayerStack.cpp
     src/meshes/Model.cpp
     src/meshes/Mesh.cpp
     src/meshes/Cube.cpp
@@ -250,7 +251,10 @@ if(BUILD_TESTING)
         tests/CoordsTests.cpp
         tests/FpsCounterTests.cpp
         tests/ReconcileTests.cpp
-        tests/DesiredSetTests.cpp)
+        tests/DesiredSetTests.cpp
+        tests/TimestepTests.cpp
+        tests/LayerStackTests.cpp
+      )
 
     target_include_directories(run-tests PRIVATE
       ${CMAKE_SOURCE_DIR}/vendor/doctest
