@@ -43,6 +43,7 @@ set(ENGINE_SOURCES
     vendor/loader/src/stb_image.cpp
     src/cameras/Camera.cpp
     src/core/Input.cpp
+    src/core/Window.cpp
     src/core/TextureLoader.cpp
     src/meshes/Model.cpp
     src/meshes/Mesh.cpp

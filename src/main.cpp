@@ -11,15 +11,14 @@
 #include <utility>
 
 // Core
-#include "core/Config.h"
 #include "core/EventBus.h"
 #include "core/Input.h"
 #include "core/InputEvents.h"
 #include "core/TextureLoader.h"
 
 #include "cameras/Camera.h"
+#include "core/Window.h"
 #include "debug/FpsCounter.h"
-#include "glm/gtc/type_ptr.hpp"
 #include "rendering/Shader.h"
 #include "scene/CameraController.h"
 #include "scene/GameObject.h"
@@ -34,54 +33,13 @@
 #include "world/Coords.h"
 #include "world/World.h"
 
-void error_callback(int error, const char *description) {
-  std::cerr << "GLFW Error: " << description << std::endl;
-}
-
 int main() {
-  // Set the error callback before initializing GLFW
-  glfwSetErrorCallback(error_callback);
-
-  if (!glfwInit()) {
-    std::cerr << "Failed to initialize GLFW" << std::endl;
-    return -1;
+  Window window;
+  if (!window.SetUp()) {
+    std::cerr << "Failed to setup Window" << std::endl;
   }
-
-  // Set window hints for OpenGL 4.1 Core Profile
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
-  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-  glfwWindowHint(GLFW_SAMPLES, 4);
-
-#ifdef __APPLE__
-  glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#endif
-
-  GLFWwindow *window =
-      glfwCreateWindow(Config::WINDOW_WIDTH, Config::WINDOW_HEIGHT,
-                       "Awesome Engine", NULL, NULL);
-
-  if (window == NULL) {
-    std::cerr << "Failed to create GLFW window" << std::endl;
-    glfwTerminate();
-    return -1;
-  }
-  glfwMakeContextCurrent(window);
-
-  // Initialize GLAD after create the context
-  if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-    std::cerr << "Failed to initialize GLAD" << std::endl;
-    glfwTerminate();
-    return -1;
-  }
-
-  glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-  glEnable(GL_MULTISAMPLE);
-  glEnable(GL_DEPTH_TEST);
-  glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-
   EventBus eventBus;
-  Input::Initialize(window, eventBus);
+  Input::Initialize(&window, eventBus);
 
   // tell stb_image.h to flip loaded texture's on the y-axis (before loading
   // model).
@@ -133,7 +91,9 @@ int main() {
     glm::vec3 overlayColor{1.0, 0.0, 0.0};
 
     // Main loop
-    while (!glfwWindowShouldClose(window)) {
+    while (!window.ShouldClose()) {
+      window.BeginFrame();
+
       float currentFrame = glfwGetTime();
       deltaTime = currentFrame - lastFrame;
       lastFrame = currentFrame;
@@ -141,7 +101,7 @@ int main() {
       Input::Update();
 
       if (Input::IsKeyDown(GLFW_KEY_ESCAPE)) {
-        glfwSetWindowShouldClose(window, true);
+        window.Close();
       }
 
       // Toggle wireframe with F (edge-triggered: one tap = one flip).
@@ -179,9 +139,7 @@ int main() {
       uiManager.Update(deltaTime);
       uiManager.Render();
 
-      // Swap buffers and poll events
-      glfwSwapBuffers(window);
-      glfwPollEvents();
+      window.EndFrame();
     }
   } catch (const std::exception &e) {
     std::cerr << "Error: " << e.what() << std::endl;

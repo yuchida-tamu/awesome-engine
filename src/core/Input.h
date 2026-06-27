@@ -1,6 +1,7 @@
 #pragma once
 #include "core/Config.h"
 #include "core/EventBus.h"
+#include "core/Window.h"
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -10,7 +11,7 @@ struct GLFWwindow;
 
 class Input {
 public:
-  static void Initialize(GLFWwindow *window, EventBus &eventBus);
+  static void Initialize(Window *window, EventBus &eventBus);
   static void Update();
   static bool IsKeyDown(int key);
   static bool IsKeyHeld(int key);
@@ -31,7 +32,7 @@ private:
   static void MouseButtonCallBack(GLFWwindow *window, int button, int action,
                                   int mods);
   static void ScrollCallBack(GLFWwindow *window, double xOffset,
-                              double yOffset);
+                             double yOffset);
   // We need three states for robust polling: current frame, previous frame, and
   // raw state.
   static bool s_Keys[];

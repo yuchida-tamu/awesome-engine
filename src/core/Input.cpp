@@ -1,8 +1,9 @@
 #include "core/Input.h"
+#include "core/Assert.h"
 #include "core/Config.h"
 #include "core/EventBus.h"
 #include "core/InputEvents.h"
-#include "core/Assert.h"
+#include "core/Window.h"
 #include <cstring>
 #include <iostream>
 // Define and initialize our static member variables.
@@ -29,7 +30,7 @@ double Input::s_CurrentY = Config::WINDOW_HEIGHT / 2.0;
 bool Input::s_FirstMouse = true;
 EventBus *Input::s_EventBus = nullptr;
 
-void Input::Initialize(GLFWwindow *window, EventBus &eventBus) {
+void Input::Initialize(Window *window, EventBus &eventBus) {
   memset(s_Keys, 0, sizeof(s_Keys));
   memset(s_KeysLastFrame, 0, sizeof(s_KeysLastFrame));
   memset(s_KeysRaw, 0, sizeof(s_KeysRaw));
@@ -38,11 +39,10 @@ void Input::Initialize(GLFWwindow *window, EventBus &eventBus) {
   memset(s_MouseButtonsRaw, 0, sizeof(s_MouseButtonsRaw));
   s_EventBus = &eventBus;
 
-  glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-  glfwSetKeyCallback(window, KeyCallBack);
-  glfwSetCursorPosCallback(window, MouseCallBack);
-  glfwSetMouseButtonCallback(window, MouseButtonCallBack);
-  glfwSetScrollCallback(window, ScrollCallBack);
+  window->SetCursorPosCallback(MouseCallBack);
+  window->SetMousebuttonCallback(MouseButtonCallBack);
+  window->SetScrollCallback(ScrollCallBack);
+  window->SetKeyCallback(KeyCallBack);
 }
 
 void Input::Update() {
@@ -179,7 +179,6 @@ void Input::MouseCallBack(GLFWwindow *window, double xPos, double yPos) {
   s_CurrentY = yPos;
 }
 
-void Input::ScrollCallBack(GLFWwindow *window, double xOffset,
-                            double yOffset) {
+void Input::ScrollCallBack(GLFWwindow *window, double xOffset, double yOffset) {
   s_ScrollYRaw = static_cast<float>(yOffset);
 }
