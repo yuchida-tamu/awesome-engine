@@ -10,6 +10,7 @@ set(ENGINE_SOURCES
     core/TextureLoader.cpp
     core/LayerStack.cpp
     core/Application.cpp
+    core/ImGuiLayer.cpp
     meshes/Model.cpp
     meshes/Mesh.cpp
     meshes/Cube.cpp

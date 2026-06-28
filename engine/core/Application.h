@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/ImGuiLayer.h"
 #include "core/LayerStack.h"
 #include "core/Window.h"
 #include <memory>
@@ -17,4 +18,5 @@ private:
   static Application *s_instance;
   Window m_window;
   LayerStack m_stack;
+  ImGuiLayer *m_imguiLayer;
 };

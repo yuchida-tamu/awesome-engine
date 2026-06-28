@@ -1,4 +1,5 @@
 #include "core/Application.h"
+#include "core/ImGuiLayer.h"
 #include "core/LayerStack.h"
 #include "core/Timestep.h"
 #include "core/Window.h"
@@ -14,6 +15,11 @@ Application::Application() {
     std::cerr << "Failed to set up Window" << std::endl;
     return;
   }
+
+  auto imgui = std::make_unique<ImGuiLayer>();
+  m_imguiLayer = imgui.get();
+
+  PushOverlay(std::move(imgui));
 }
 
 void Application::Run() {
@@ -26,9 +32,12 @@ void Application::Run() {
     deltaTs = currentTime - lastTs;
     lastTs = currentTime;
 
+    m_imguiLayer->Begin();
     for (auto &layer : m_stack) {
       layer->OnUpdate(deltaTs);
+      layer->OnImGuiRender();
     }
+    m_imguiLayer->End();
 
     m_window.EndFrame();
   }

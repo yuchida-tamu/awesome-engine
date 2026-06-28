@@ -17,6 +17,7 @@ public:
         m_cubeShader("shaders/cube.vert.glsl", "shaders/cube.frag.glsl") {}
   void OnAttach() override;
   void OnUpdate(Timestep ts) override;
+  void OnImGuiRender() override;
 
 private:
   EventBus m_eventBus;

@@ -14,6 +14,7 @@ public:
   void Close();
 
   float GetTime();
+  GLFWwindow *GetNativeWindow() { return m_window; }
 
   void SetKeyCallback(void callback(GLFWwindow *window, int key, int scancode,
                                     int action, int mods));

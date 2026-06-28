@@ -3,6 +3,7 @@
 #include "core/Input.h"
 #include "core/TextureLoader.h"
 #include "core/Timestep.h"
+#include "imgui.h"
 #include "scene/CameraController.h"
 #include "ui/DebugPanel.h"
 #include "voxel/TerrainGenerator.h"
@@ -74,3 +75,5 @@ void GameLayer::OnUpdate(Timestep ts) {
     glfwTerminate();
   }
 }
+
+void GameLayer::OnImGuiRender() { ImGui::ShowDemoWindow(); }
