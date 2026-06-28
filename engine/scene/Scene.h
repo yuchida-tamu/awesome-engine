@@ -31,6 +31,8 @@ public:
   void Update(float deltaTime);
   RenderContext GetRenderContext();
 
+  void SetViewPortSize(int width, int height);
+
 private:
   EventBus &m_eventBus;
   std::vector<std::unique_ptr<GameObject>> m_gameObjects = {};

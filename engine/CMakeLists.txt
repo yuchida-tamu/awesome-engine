@@ -11,6 +11,7 @@ set(ENGINE_SOURCES
     core/LayerStack.cpp
     core/Application.cpp
     core/ImGuiLayer.cpp
+    core/FrameBuffer.cpp
     meshes/Model.cpp
     meshes/Mesh.cpp
     meshes/Cube.cpp

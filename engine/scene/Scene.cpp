@@ -55,3 +55,12 @@ RenderContext Scene::GetRenderContext() {
   }
   return context;
 }
+
+// TODO: Aspect Ration should be a responsibility of Camera. Refactor it to move
+// the projection to Camera.
+void Scene::SetViewPortSize(int width, int height) {
+  m_projection =
+      glm::perspective(glm::radians(Config::FOV),
+                       static_cast<float>(width) / static_cast<float>(height),
+                       Config::NEAR_PLANE, Config::FAR_PLANE);
+}
