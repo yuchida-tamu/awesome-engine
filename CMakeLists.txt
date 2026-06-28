@@ -46,6 +46,7 @@ set(ENGINE_SOURCES
     src/core/Window.cpp
     src/core/TextureLoader.cpp
     src/core/LayerStack.cpp
+    src/core/Application.cpp
     src/meshes/Model.cpp
     src/meshes/Mesh.cpp
     src/meshes/Cube.cpp
@@ -83,7 +84,12 @@ target_link_libraries(engine PUBLIC glfw OpenGL::GL Freetype::Freetype)
 if(assimp_FOUND)
     target_include_directories(engine PUBLIC ${assimp_INCLUDE_DIRS})
 endif()
-add_executable(awesome-engine src/main.cpp)
+# Game executable: the entry point (GameApp.cpp includes EntryPoint.h -> main())
+# and the game-specific layer. Engine systems come from the `engine` library.
+add_executable(awesome-engine
+    src/game/GameApp.cpp
+    src/game/GameLayer.cpp
+)
 target_link_libraries(awesome-engine PRIVATE engine)
 
 if(assimp_FOUND)

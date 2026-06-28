@@ -5,7 +5,11 @@
 #include <iostream>
 #include <memory>
 
+Application *Application::s_instance = nullptr;
+
 Application::Application() {
+  s_instance = this;
+
   if (!m_window.SetUp()) {
     std::cerr << "Failed to set up Window" << std::endl;
     return;
@@ -18,7 +22,6 @@ void Application::Run() {
 
   while (!m_window.ShouldClose()) {
     m_window.BeginFrame();
-    // deltaTime
     float currentTime = m_window.GetTime();
     deltaTs = currentTime - lastTs;
     lastTs = currentTime;
@@ -38,3 +41,5 @@ void Application::PushLayer(std::unique_ptr<Layer> layer) {
 void Application::PushOverlay(std::unique_ptr<Layer> layer) {
   m_stack.PushOverlay(std::move(layer));
 }
+
+Window *Application::GetWindow() { return &m_window; }
