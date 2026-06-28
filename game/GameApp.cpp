@@ -1,7 +1,7 @@
 #include "core/EntryPoint.h"
 
 #include "core/Application.h"
-#include "game/GameLayer.h"
+#include "GameLayer.h"
 #include <memory>
 class GameApp : public Application {
 public:

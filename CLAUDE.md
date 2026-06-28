@@ -8,15 +8,19 @@ A 3D OpenGL engine built in C++17 as a learning project. Uses GLFW for windowing
 
 It is being specialized into a **voxel engine** — the foundation for a first-person experience with small (~10 cm) voxels over a large, finite, procedurally-generated world. Rendering is mesh-based with level-of-detail streaming; the world is procedural-on-demand + streaming + LOD, since the full ~10 cm × ~1 km volume can't be materialized in memory. See `README.md` for the roadmap.
 
-## Architecture (voxel pipeline)
+## Architecture
 
-- **`src/voxel/`** — pure, GL-free leaf (unit-testable headless):
+Top-level layout: **`engine/`** (reusable static library, no `main()`), **`game/`** (the executable — `GameApp`/`GameLayer`, links `engine`), **`tests/`** (links a `UNIT_TEST` build, `engine_test`), plus `vendor/` and `assets/`. Each has its own `CMakeLists.txt`; the root orchestrates via `add_subdirectory`. `engine/` is the include root, so engine headers are included as `"core/..."`, `"world/..."`, etc.
+
+The voxel pipeline:
+
+- **`engine/voxel/`** — pure, GL-free leaf (unit-testable headless):
   - `Chunk` — voxel data, `std::array<uint8_t, SIZE³>` (SIZE = 64); `Air` / `Solid`.
   - `TerrainGenerator` — world-space noise → heightmap; 3D `GenerateChunk(cx, cy, cz, lod)`; runtime-tunable via `UpdateConfig`.
   - `ChunkMesher` (simple per-face) and `GreedyMesher` (coplanar merge) — `Build(Chunk) → MeshData`.
   - `Block` — `Air` / `Solid` + `GetColorByLOD` (debug palette).
   - `VoxelChunk` — a `Drawable`; owns a `Mesh` and sets its own color uniform in `Draw`.
-- **`src/world/`** — orchestration (may depend on `voxel/` and `scene/`):
+- **`engine/world/`** — orchestration (may depend on `voxel/` and `scene/`):
   - `World` — camera-centered chunk streaming.
   - `Coords.h` — pure LOD/key math: `EncodeKey` / `DecodeKey`, `CenterAtLevel`, `CoveredByFiner`, `NumVerticalChunks`, and `ComputeDesired` (the LOD desired-set / ring tiling).
   - `Reconcile.h` — `PlanReconcile`, the pure load/unload decision (load-before-unload).
