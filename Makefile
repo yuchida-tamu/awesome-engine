@@ -1,4 +1,4 @@
-.PHONY: run clean rebuild build test test-verbose test-list
+.PHONY: run clean rebuild build 
 
 # Build only (no run)
 build:
@@ -13,19 +13,13 @@ run: clean
 	@cd build && cmake .. && make
 	@cd bin && ./awesome-engine
 
+# Clean rebuild and run (Editor)
+run-editor: clean
+	@cd build && cmake .. && make
+	@cd bin && ./awesome-engine-editor
+
 # Rebuild without cleaning and run
 rebuild:
 	@cd build && cmake .. && make
 	@cd bin && ./awesome-engine
 
-# Run tests
-test: build
-	@cd bin && ./run-tests
-
-# Run tests with verbose output (show all assertions + timing)
-test-verbose: build
-	@cd bin && ./run-tests -s -d
-
-# List all test cases
-test-list: build
-	@cd bin && ./run-tests --list-test-cases

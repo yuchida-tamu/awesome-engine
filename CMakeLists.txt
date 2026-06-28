@@ -48,6 +48,7 @@ endif()
 
 add_subdirectory(engine)   # reusable static library: `engine` (+ `engine_test`)
 add_subdirectory(game)     # the game executable, links `engine`
+add_subdirectory(editor)   # the editor executable, links `engine`
 
 if(BUILD_TESTING)
   add_subdirectory(tests)  # `run-tests`, links `engine_test`
