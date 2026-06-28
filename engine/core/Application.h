@@ -6,7 +6,7 @@
 #include <memory>
 class Application {
 public:
-  Application();
+  Application(bool isEditorInputEnabled = false);
   virtual ~Application() {}
   static Application &Get() { return *s_instance; }
   void Run();

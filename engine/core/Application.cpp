@@ -8,7 +8,7 @@
 
 Application *Application::s_instance = nullptr;
 
-Application::Application() {
+Application::Application(bool isEditorInputEnabled) {
   s_instance = this;
 
   if (!m_window.SetUp()) {
@@ -16,7 +16,7 @@ Application::Application() {
     return;
   }
 
-  auto imgui = std::make_unique<ImGuiLayer>();
+  auto imgui = std::make_unique<ImGuiLayer>(isEditorInputEnabled);
   m_imguiLayer = imgui.get();
 
   PushOverlay(std::move(imgui));

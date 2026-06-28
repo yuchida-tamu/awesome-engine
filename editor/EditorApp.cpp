@@ -5,7 +5,9 @@
 #include <memory>
 class EditorApp : public Application {
 public:
-  EditorApp() { PushLayer(std::make_unique<EditorLayer>()); }
+  EditorApp() : Application(true) {
+    PushLayer(std::make_unique<EditorLayer>());
+  }
 };
 
 Application *CreateApplication() { return new EditorApp(); }

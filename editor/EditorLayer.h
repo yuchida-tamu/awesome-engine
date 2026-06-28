@@ -3,6 +3,6 @@
 #include "core/Layer.h"
 class EditorLayer : public Layer {
 public:
-  void OnAttach() override;
+  void OnUpdate(Timestep ts) override;
   void OnImGuiRender() override;
 };
