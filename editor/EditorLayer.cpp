@@ -9,10 +9,12 @@ void EditorLayer::OnUpdate(Timestep ts) {
 }
 
 void EditorLayer::OnImGuiRender() {
+  ImGuiID dockspaceId = ImGui::GetID("Awesome Engine Editor");
+  ImGuiViewport *viewport = ImGui::GetMainViewport();
+
   // Setup editor layout on the first frame
   if (!m_isInitialized) {
-    ImGuiID dockspaceId = ImGui::GetID("Awesome Engine Editor");
-    ImGuiViewport *viewport = ImGui::GetMainViewport();
+    m_isInitialized = true;
 
     if (ImGui::DockBuilderGetNode(dockspaceId) == nullptr) {
       ImGui::DockBuilderAddNode(dockspaceId, ImGuiDockNodeFlags_DockSpace);
@@ -30,15 +32,10 @@ void EditorLayer::OnImGuiRender() {
 
       ImGui::DockBuilderFinish(dockspaceId);
     }
-
-    ImGui::DockSpaceOverViewport(dockspaceId, viewport,
-                                 ImGuiDockNodeFlags_PassthruCentralNode);
-
-  } else {
-    m_isInitialized = true;
   }
 
-  ImGui::DockSpaceOverViewport();
+  ImGui::DockSpaceOverViewport(dockspaceId, viewport,
+                               ImGuiDockNodeFlags_PassthruCentralNode);
 
   ImGui::Begin("Scene Hierachy");
   ImGui::Text("(objects list here)");
