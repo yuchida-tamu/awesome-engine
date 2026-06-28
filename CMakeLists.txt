@@ -22,6 +22,23 @@ else()
   message(WARNING "Assimp not found via find_package. Install it: brew install assimp")
 endif()
 
+# Dear ImGui (docking branch, vendored in vendor/imgui) — a small static lib
+# that the engine's ImGuiLayer and the editor link. Backends: GLFW + OpenGL3.
+add_library(imgui STATIC
+    vendor/imgui/imgui.cpp
+    vendor/imgui/imgui_draw.cpp
+    vendor/imgui/imgui_tables.cpp
+    vendor/imgui/imgui_widgets.cpp
+    vendor/imgui/imgui_demo.cpp
+    vendor/imgui/backends/imgui_impl_glfw.cpp
+    vendor/imgui/backends/imgui_impl_opengl3.cpp
+)
+target_include_directories(imgui PUBLIC
+    ${CMAKE_SOURCE_DIR}/vendor/imgui
+    ${CMAKE_SOURCE_DIR}/vendor/imgui/backends
+)
+target_link_libraries(imgui PUBLIC glfw OpenGL::GL)
+
 # The tests option must be known before engine/ is processed, because engine/
 # builds the `engine_test` (UNIT_TEST) library only when testing is on.
 option(BUILD_TESTING "Build the unit tests" ON)
